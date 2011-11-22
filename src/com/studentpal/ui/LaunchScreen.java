@@ -35,23 +35,23 @@ import com.studentpal.util.logger.Logger;
 
 public class LaunchScreen extends Activity {
   private static final String TAG = "LaunchScreen";
-  
-  /* 
+
+  /*
    * Constants
    */
   private static boolean showUI = true;
-  
+
   /*
    * Member fields
    */
   private Button btnStart, btnStop;
   private TextView tvMainSvcStatus, tvMainSvcInfo;
-  
+
   private Button btnStartDae, btnStopDae, btnExitDae;
   private TextView tvDaeSvcStatus, tvDaeSvcInfo;
 
   private Button btnSendAction, btnInstDaemon;
-  
+
   /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -62,14 +62,14 @@ public class LaunchScreen extends Activity {
       showUI = cfgParams.getBoolean(CFG_SHOW_LAUNCHER_UI, showUI) ;
     }
     Logger.d(TAG, "showUI is set to: "+showUI);
-    
+
     enableDeviceAdmin();
-    
+
     if (showUI) {
       setContentView(R.layout.launcher_screen);
       initMainSvcView();
       initDaemonSvcView();
-      
+
       IntentFilter intentFilter = new IntentFilter();
       intentFilter.addAction(ACTION_MAINSVC_INFO_UPDATED);
       intentFilter.addAction(ACTION_DAEMONSVC_INFO_UPDATED);
@@ -80,7 +80,7 @@ public class LaunchScreen extends Activity {
             Logger.w(TAG, "Intent should NOT be NULL");
             return;
           }
-          
+
           String action = intent.getAction();
           String info = intent.getStringExtra("info");
           //Logger.d(TAG, "Received action in " + action);
@@ -89,25 +89,25 @@ public class LaunchScreen extends Activity {
             tvMainSvcInfo.setText(info);
           } else if (action.equals(ACTION_DAEMONSVC_INFO_UPDATED)) {
             tvDaeSvcInfo.setText(info);
-          } 
-     
+          }
+
         }
-      }, intentFilter); 
-      
-     
+      }, intentFilter);
+
+
     } else {
       _startWatchingService();
       _startDaemonService();
       this.finish();
     }
-    
+
   }
 
   @Override
   public void onBackPressed() {
     ActivityUtil.showQuitAppDialog(this);
   }
-  
+
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     switch (requestCode) {
@@ -122,48 +122,48 @@ public class LaunchScreen extends Activity {
 
     super.onActivityResult(requestCode, resultCode, data);
   }
-  
+
   //////////////////////////////////////////////////////////////////////////////
   private void enableDeviceAdmin() {
-    //Enable the Device Administration 
+    //Enable the Device Administration
     try {
       MyDeviceAdminReceiver mAdminReceiver =  new MyDeviceAdminReceiver(this);
       if (false) mAdminReceiver.enableAdmin();  //FIXME
-      
-      if (true == ActivityUtil.checkAppIsInstalled(this, 
+
+      if (true == ActivityUtil.checkAppIsInstalled(this,
           ResourceManager.DAEMON_SVC_PKG_NAME)) {
         Intent daemonIntent = new Intent();
-        daemonIntent.setAction(ACTION_DAEMON_LAUNCHER_SCR);  
+        daemonIntent.setAction(ACTION_DAEMON_LAUNCHER_SCR);
         this.startActivity(daemonIntent);
       }
     } catch (STDException e) {
       Logger.w(TAG, e.toString());
     }
   }
-  
+
   private void _startWatchingService() {
     if (ActivityUtil.checkServiceIsRunning(this, MainAppService.class.getName())) {
       Logger.d(TAG, "Watching Service is already running!");
       return;
     }
-    
+
     Intent i = new Intent(this, com.studentpal.app.MainAppService.class);
     i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     i.putExtra(TAGNAME_BUNDLE_PARAM, com.studentpal.app.MainAppService.CMD_START_WATCHING_APP);
     startService(i);
   }
-  
+
   private void _stopWatchingService() {
     if (false == ActivityUtil.checkServiceIsRunning(this, MainAppService.class.getName())) {
       Logger.d(TAG, "Watching Service is NOT running!");
       return;
     }
-    
+
     Intent i = new Intent(this, com.studentpal.app.MainAppService.class);
 //    i.putExtra(Event.TAGNAME_BUNDLE_PARAM, com.studentpal.app.MainAppService.CMD_STOP_WATCHING_APP);
     stopService(i);
   }
-  
+
   private void _startDaemonService() {
     if (true) {
       ClientEngine.getInstance().getDaemonHandler().startDaemonTask();
@@ -171,7 +171,7 @@ public class LaunchScreen extends Activity {
       ActivityUtil.startDaemonService(this);
     }
   }
-  
+
   private void _stopDaemonService(boolean bExitDaemon) {
     if (ActivityUtil.checkServiceIsRunning(this, MainAppService.class.getName())) {
       try {
@@ -187,11 +187,11 @@ public class LaunchScreen extends Activity {
       ActivityUtil.stopDaemonService(this);
     }
   }
-  
+
   private void initMainSvcView() {
     tvMainSvcStatus = (TextView) findViewById(R.id.mainSvcStatus);
     tvMainSvcInfo   = (TextView) findViewById(R.id.tvMainAppSvcInfo);
-    
+
     btnStart = (Button) findViewById(R.id.btnStart);
     btnStart.setOnClickListener(new View.OnClickListener() {
       public void onClick(View view) {
@@ -224,10 +224,10 @@ public class LaunchScreen extends Activity {
         //btnStop.setClickable(false);
       }
     });
-    
+
     //btnStart.setClickable(true);
     //btnStop.setClickable(false);
-    
+
     btnSendAction = (Button) findViewById(R.id.btnSendAction);
     btnSendAction.setOnClickListener(new View.OnClickListener() {
       public void onClick(View view) {
@@ -250,15 +250,15 @@ public class LaunchScreen extends Activity {
           //apkPath = "assets/SPal_ClientDaemon.apk";
           File apkFile = new File(apkPath);
           if (false == apkFile.exists()) {
-            Logger.w(TAG, "Daemon APK file NOT exists!");
+            Logger.w(TAG, "Daemon APK file("+ apkFile.getAbsolutePath() +") NOT exists!");
             return;
           }
-          
-          Uri apkUri = Uri.fromFile(apkFile); 
+
+          Uri apkUri = Uri.fromFile(apkFile);
           Intent intent = new Intent(Intent.ACTION_VIEW);
           intent.setDataAndType(apkUri,"application/vnd.android.package-archive");
           startActivity(intent);
-          
+
         } else {
           String info = "Daemon APK is already installed!";
           ActivityUtil.showToast(LaunchScreen.this, info);
@@ -266,13 +266,32 @@ public class LaunchScreen extends Activity {
         }
       }
     });
-    
+
+    btnUninstDaemon = (Button) findViewById(R.id.btnUninstallDaemonApk);
+    btnUninstDaemon.setOnClickListener(new View.OnClickListener() {
+      public void onClick(View view) {
+        Logger.i(TAG, btnUninstDaemon.getText() + " is clicked!");
+        if (true == ActivityUtil.checkAppIsInstalled(
+            view.getContext(),
+            ResourceManager.DAEMON_SVC_PKG_NAME)) {
+
+          Uri packageURI = Uri.parse("package:"+ResourceManager.DAEMON_SVC_PKG_NAME);
+          Intent uninstallIntent = new Intent(Intent.ACTION_DELETE, packageURI);
+          startActivity(uninstallIntent);
+
+        } else {
+          String info = "Daemon APK is NOT installed!";
+          ActivityUtil.showToast(LaunchScreen.this, info);
+          Logger.d(TAG, info);
+        }
+      }
+    });
   }
-  
+
   private void initDaemonSvcView() {
     tvDaeSvcStatus = (TextView) findViewById(R.id.daemonSvcStatus);
     tvDaeSvcInfo   = (TextView)findViewById(R.id.tvDaemonSvcInfo);
-    
+
     btnStartDae = (Button) findViewById(R.id.btnStartDaemon);
     btnStartDae.setOnClickListener(new View.OnClickListener() {
       public void onClick(View view) {
@@ -298,7 +317,7 @@ public class LaunchScreen extends Activity {
         //btnStopDae.setClickable(false);
       }
     });
-    
+
     btnExitDae = (Button) findViewById(R.id.btnExitDaemon);
     btnExitDae.setOnClickListener(new View.OnClickListener() {
       public void onClick(View view) {
@@ -315,6 +334,6 @@ public class LaunchScreen extends Activity {
     //btnStartDae.setClickable(true);
     //btnStopDae.setClickable(false);
   }
-  
-  
+
+
 }
