@@ -62,7 +62,7 @@ public class Event {
    * Intent action / Activity name constants
    */
   public static final String ACTION_DAEMON_SVC          = "spaldaemon.intent.action.daemonsvc";
-  //Must be the same as value in the Daemon application's Manifest
+  //launch the deamon service screen, must be the same as value in the Daemon application's Manifest
   public static final String ACTION_DAEMON_LAUNCHER_SCR = "spaldaemon.intent.action.launcherscr";
 
   public static final String ACTION_MAINSVC_INFO_UPDATED    = "studentpal.action.mainappsvc.updated";
@@ -86,10 +86,10 @@ public class Event {
   public static final int MSG_ID_INVALID = -1;
   public static final int MSG_ID_NOTUSED = 0;
 
-  public static final int RECUR_TYPE_DAILY    = 0x01;
-  public static final int RECUR_TYPE_WEEKLY   = 0x02;
-  public static final int RECUR_TYPE_MONTHLY  = 0x03;
-  public static final int RECUR_TYPE_YEARLY   = 0x04;
+  public static final int    RECUR_TYPE_DAILY    = 0x01;
+  public static final int    RECUR_TYPE_WEEKLY   = 0x02;
+  public static final int    RECUR_TYPE_MONTHLY  = 0x03;
+  public static final int    RECUR_TYPE_YEARLY   = 0x04;
   public static final String TXT_RECUR_TYPE_DAILY    = "daily";
   public static final String TXT_RECUR_TYPE_WEEKLY   = "weekly";
   public static final String TXT_RECUR_TYPE_MONTHLY  = "monthly";

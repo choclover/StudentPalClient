@@ -1,84 +1,196 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-  android:weightSum="1" android:layout_height="wrap_content"
-  android:layout_width="wrap_content" android:orientation="vertical">
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:weightSum="1" >
 
-  <TextView android:layout_width="fill_parent"
-    android:layout_height="wrap_content" android:text="@string/launcher_name" />
-  <RelativeLayout android:id="@+id/relativeLayout1"
-    android:layout_height="wrap_content" android:layout_width="match_parent">
-    <EditText android:layout_alignParentTop="true"
-      android:layout_height="wrap_content" android:text="@string/target_svr_ip"
-      android:layout_alignParentRight="true" android:layout_width="170dp"
-      android:id="@+id/editSvrIP" android:layout_marginRight="18dp"></EditText>
-    <TextView android:layout_alignParentLeft="true"
-      android:layout_centerVertical="true" android:id="@+id/tvSvrIP"
-      android:layout_height="wrap_content" android:layout_width="wrap_content"
-      android:textAppearance="?android:attr/textAppearanceMedium"
-      android:layout_marginLeft="16dp" android:text="Server IP"></TextView>
-  </RelativeLayout>
-  <RelativeLayout android:layout_width="match_parent"
-    android:id="@+id/mainSvcLayout" android:layout_height="wrap_content">
-    <Button android:id="@+id/btnStop" android:layout_width="wrap_content"
-      android:text="Stop Service" android:layout_height="wrap_content"
-      android:layout_alignParentTop="true" android:layout_toRightOf="@+id/btnStart"></Button>
-    <Button android:id="@+id/btnStart" android:layout_width="wrap_content"
-      android:text="Start Service" android:layout_height="wrap_content"
-      android:layout_alignParentTop="true"
-      android:layout_alignParentLeft="true" android:layout_marginLeft="20dp"></Button>
-  </RelativeLayout>
+    <TextView
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/launcher_name" />
 
-  <RelativeLayout android:layout_width="match_parent"
-    android:id="@+id/mainSvcLayout2" android:layout_height="wrap_content">
-    <TextView android:layout_width="wrap_content" android:text="INITIAIZED"
-      android:id="@+id/mainSvcStatus" android:layout_height="wrap_content"
-      android:layout_centerVertical="true"
-      android:layout_alignParentLeft="true" android:layout_marginLeft="10dp"></TextView>
-  </RelativeLayout>
-  <TextView android:id="@+id/tvMainAppSvcInfo"
-    android:layout_height="32dp" android:text="MainApp Svc Info"
-    android:layout_marginLeft="10dp" android:layout_width="wrap_content"></TextView>
+    <RelativeLayout
+        android:id="@+id/relativeLayout1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
 
-  <View android:layout_width="wrap_content" android:id="@+id/view1"
-    android:layout_height="4px" android:background="#FFFFFF"></View>
+        <EditText
+            android:id="@+id/editSvrIP"
+            android:layout_width="170dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginRight="18dp"
+            android:text="@string/target_svr_ip" >
+        </EditText>
 
-  <RelativeLayout android:id="@+id/daemonSvrLayout"
-    android:layout_height="wrap_content" android:layout_width="match_parent">
-    <Button android:text="Start Daemon" android:layout_height="wrap_content"
-      android:id="@+id/btnStartDaemon" android:layout_width="wrap_content"
-      android:layout_alignParentTop="true"
-      android:layout_alignParentLeft="true" android:layout_marginLeft="5dp"></Button>
-    <Button android:id="@+id/btnStopDaemon" android:layout_width="wrap_content"
-      android:text="Stop Daemon" android:layout_height="wrap_content"
-      android:layout_alignParentTop="true" android:layout_toRightOf="@+id/btnStartDaemon"></Button>
-    <Button android:text="Exit Daemon" android:layout_height="wrap_content"
-      android:id="@+id/btnExitDaemon" android:layout_width="wrap_content"
-      android:layout_alignParentTop="true" android:layout_toRightOf="@+id/btnStopDaemon"></Button>
-  </RelativeLayout>
+        <TextView
+            android:id="@+id/tvSvrIP"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="16dp"
+            android:text="Server IP"
+            android:textAppearance="?android:attr/textAppearanceMedium" >
+        </TextView>
+    </RelativeLayout>
 
-  <RelativeLayout android:layout_width="match_parent"
-    android:id="@+id/daemonSvrLayout2" android:layout_height="wrap_content">
-    <TextView android:layout_width="wrap_content" android:text="INITIAIZED"
-      android:id="@+id/daemonSvcStatus" android:layout_height="wrap_content"
-      android:layout_alignParentLeft="true" android:layout_marginLeft="10dp"></TextView>
-  </RelativeLayout>
-  <TextView android:id="@+id/tvDaemonSvcInfo"
-    android:layout_height="32dp" android:layout_marginLeft="10dp"
-    android:text="Daemon Svc Info" android:layout_width="wrap_content"></TextView>
+    <RelativeLayout
+        android:id="@+id/mainSvcLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
 
-  <View android:layout_width="wrap_content" android:id="@+id/view1"
-    android:layout_height="3px" android:background="#FFFFFF"></View>
+        <Button
+            android:id="@+id/btnStop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@+id/btnStart"
+            android:text="Stop Service" >
+        </Button>
 
-  <RelativeLayout android:id="@+id/relativeLayout2"
-    android:layout_height="wrap_content" android:layout_width="match_parent">
-    <Button android:text="Send Action" android:layout_height="wrap_content"
-      android:id="@+id/btnSendAction" android:layout_width="wrap_content"
-      android:layout_alignParentTop="true"
-      android:layout_alignParentLeft="true" android:layout_marginLeft="5dp"></Button>
-    <Button android:text="Install Daemon" android:layout_height="wrap_content"
-      android:id="@+id/btnInstallDaemonApk" android:layout_width="wrap_content"
-      android:layout_alignParentTop="true"
-      android:layout_alignParentLeft="true" android:layout_marginLeft="98dp"></Button>
-  </RelativeLayout>
+        <Button
+            android:id="@+id/btnStart"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="20dp"
+            android:text="Start Service" >
+        </Button>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/mainSvcLayout2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <TextView
+            android:id="@+id/mainSvcStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"
+            android:text="INITIAIZED" >
+        </TextView>
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/tvMainAppSvcInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="32dp"
+        android:layout_marginLeft="10dp"
+        android:text="MainApp Svc Info" >
+    </TextView>
+
+    <View
+        android:id="@+id/view1"
+        android:layout_width="wrap_content"
+        android:layout_height="4px"
+        android:background="#FFFFFF" >
+    </View>
+
+    <RelativeLayout
+        android:id="@+id/daemonSvrLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <Button
+            android:id="@+id/btnStartDaemon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="5dp"
+            android:text="Start Daemon" >
+        </Button>
+
+        <Button
+            android:id="@+id/btnStopDaemon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@+id/btnStartDaemon"
+            android:text="Stop Daemon" >
+        </Button>
+
+        <Button
+            android:id="@+id/btnExitDaemon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@+id/btnStopDaemon"
+            android:text="Exit Daemon" >
+        </Button>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/daemonSvrLayout2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <TextView
+            android:id="@+id/daemonSvcStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_marginLeft="10dp"
+            android:text="INITIAIZED" >
+        </TextView>
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/tvDaemonSvcInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="32dp"
+        android:layout_marginLeft="10dp"
+        android:text="Daemon Svc Info" >
+    </TextView>
+
+    <View
+        android:id="@+id/view1"
+        android:layout_width="wrap_content"
+        android:layout_height="3px"
+        android:background="#FFFFFF" >
+    </View>
+
+    <RelativeLayout
+        android:id="@+id/relativeLayout2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <Button
+            android:id="@+id/btnSendAction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="5dp"
+            android:text="Send Action" >
+        </Button>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/relativeLayout3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <Button
+            android:id="@+id/btnUninstallDaemonApk"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/btnInstallDaemonApk"
+            android:text="Uninstall Daemon" />
+
+        <Button
+            android:id="@+id/btnInstallDaemonApk"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
+            android:text="Install Daemon" />
+    </RelativeLayout>
+
 </LinearLayout>

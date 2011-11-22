@@ -50,7 +50,7 @@ public class LaunchScreen extends Activity {
   private Button btnStartDae, btnStopDae, btnExitDae;
   private TextView tvDaeSvcStatus, tvDaeSvcInfo;
 
-  private Button btnSendAction, btnInstDaemon;
+  private Button btnSendAction, btnInstDaemon, btnUninstDaemon;
 
   /** Called when the activity is first created. */
   @Override
@@ -86,9 +86,9 @@ public class LaunchScreen extends Activity {
           //Logger.d(TAG, "Received action in " + action);
 
           if (action.equals(ACTION_MAINSVC_INFO_UPDATED)) {
-            tvMainSvcInfo.setText(info);
+            tvMainSvcInfo.setText(""+info);
           } else if (action.equals(ACTION_DAEMONSVC_INFO_UPDATED)) {
-            tvDaeSvcInfo.setText(info);
+            tvDaeSvcInfo.setText(""+info);
           }
 
         }
