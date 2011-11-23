@@ -5,19 +5,19 @@ import java.util.HashMap;
 public class Event {
   private static final String TAG = "Engine.Event";
 
-  public static final String MESSAGE_HEADER_ACK     = "A";
-  public static final String MESSAGE_HEADER_REQ     = "R";
-  public static final String MESSAGE_HEADER_NOTIF   = "N";
-  
-  public static final String TAGNAME_MSG_TYPE       = "msg_type";
-  public static final String TAGNAME_MSG_ID         = "msg_id";
-  public static final String TAGNAME_CMD_TYPE       = "cmd_type";
-  public static final String TAGNAME_ERR_CODE       = "err_code";
-  public static final String TAGNAME_ERR_DESC       = "err_desc";
-  public static final String TAGNAME_RESULT         = "result";
-  public static final String TAGNAME_ARGUMENTS      = "args";
-  public static final String TAGNAME_BUNDLE_PARAM   = "bundle_param";
-  
+  public static final String MESSAGE_HEADER_ACK      = "A";
+  public static final String MESSAGE_HEADER_REQ      = "R";
+  public static final String MESSAGE_HEADER_NOTIF    = "N";
+
+  public static final String TAGNAME_MSG_TYPE        = "msg_type";
+  public static final String TAGNAME_MSG_ID          = "msg_id";
+  public static final String TAGNAME_CMD_TYPE        = "cmd_type";
+  public static final String TAGNAME_ERR_CODE        = "err_code";
+  public static final String TAGNAME_ERR_DESC        = "err_desc";
+  public static final String TAGNAME_RESULT          = "result";
+  public static final String TAGNAME_ARGUMENTS       = "args";
+  //public static final String TAGNAME_BUNDLE_PARAM    = "bundle_param";
+
   public static final String TAGNAME_PHONE_NUM       = "phone_no";
   public static final String TAGNAME_PHONE_IMSI      = "phone_imsi";
   public static final String TAGNAME_PHONE_IMEI      = "phone_imei";
@@ -26,12 +26,12 @@ public class Event {
   public static final String TAGNAME_APP_NAME        = "app_name";
   public static final String TAGNAME_APP_CLASSNAME   = "app_classname";
   public static final String TAGNAME_APP_PKGNAME     = "app_pkgname";
-  
+
   public static final String TAGNAME_ACCESS_CATEGORIES = "access_categories";
   public static final String TAGNAME_ACCESS_CATEGORY   = "access_cate";
   public static final String TAGNAME_ACCESS_CATE_ID    = "cate_id";
   public static final String TAGNAME_ACCESS_CATE_NAME  = "cate_name";
-  
+
   public static final String TAGNAME_ACCESS_RULES      = "access_rules";
   public static final String TAGNAME_ACCESS_RULE       = "access_rule";
   public static final String TAGNAME_RULE_AUTH_TYPE    = "auth_type";
@@ -41,7 +41,15 @@ public class Event {
   public static final String TAGNAME_ACCESS_TIMERANGE  = "time_range";
   public static final String TAGNAME_RULE_REPEAT_STARTTIME  = "start_time";
   public static final String TAGNAME_RULE_REPEAT_ENDTIME    = "end_time";
-  
+
+  /*
+   * Extras contstants
+   */
+  public static final String EXTRANAME_COMMAND_TYPE = "command_type";
+  public static final String EXTRANAME_FILTERED_PKG = "filtered_pkgname";
+  public static final int    EXTRACMD_REG_FILTERED_PKG   = 1001;
+  public static final int    EXTRACMD_UNREG_FILTERED_PKG = 1002;
+
   /*
    * TASK constants
    */
@@ -52,25 +60,28 @@ public class Event {
   /* Tasks from Phone */
   public static final String TASKNAME_LOGIN   = "LOGIN";
   public static final String TASKNAME_LOGOUT  = "LOGOUT";
-  
+
   /*
    * Configuration constants
    */
   public static final String CFG_SHOW_LAUNCHER_UI = "show_launcher_ui";
-  
+
   /*
    * Intent action / Activity name constants
    */
+  //launch the deamon service
   public static final String ACTION_DAEMON_SVC          = "spaldaemon.intent.action.daemonsvc";
-  //launch the deamon service screen, must be the same as value in the Daemon application's Manifest
+  //launch the deamon activity screen, must be the same as value in the Daemon application's Manifest
   public static final String ACTION_DAEMON_LAUNCHER_SCR = "spaldaemon.intent.action.launcherscr";
 
   public static final String ACTION_MAINSVC_INFO_UPDATED    = "studentpal.action.mainappsvc.updated";
   public static final String ACTION_DAEMONSVC_INFO_UPDATED  = "studentpal.action.daemonsvc.updated";
 
-  
+  public static final String ACTION_PKGINSTALLER_REG_FILTER   = "studentpal.intent.action.reg_filter";
+  public static final String ACTION_PKGINSTALLER_UNREG_FILTER = "studentpal.intent.action.ung_filter";
+
   /*
-   * Error code constants 
+   * Error code constants
    */
   public static final int ERRCODE_NOERROR                   = 0;
   public static final int ERRCODE_TIMEOUT                   = 100;
@@ -86,45 +97,45 @@ public class Event {
   public static final int MSG_ID_INVALID = -1;
   public static final int MSG_ID_NOTUSED = 0;
 
-  public static final int    RECUR_TYPE_DAILY    = 0x01;
-  public static final int    RECUR_TYPE_WEEKLY   = 0x02;
-  public static final int    RECUR_TYPE_MONTHLY  = 0x03;
-  public static final int    RECUR_TYPE_YEARLY   = 0x04;
+  public static final int    RECUR_TYPE_DAILY        = 0x01;
+  public static final int    RECUR_TYPE_WEEKLY       = 0x02;
+  public static final int    RECUR_TYPE_MONTHLY      = 0x03;
+  public static final int    RECUR_TYPE_YEARLY       = 0x04;
   public static final String TXT_RECUR_TYPE_DAILY    = "daily";
   public static final String TXT_RECUR_TYPE_WEEKLY   = "weekly";
   public static final String TXT_RECUR_TYPE_MONTHLY  = "monthly";
   public static final String TXT_RECUR_TYPE_YEARLY   = "yearly";
-  
+
   public static final int ACCESS_TYPE_DENIED    = 0x01;
   public static final int ACCESS_TYPE_PERMITTED = 0x02;
   public static final String TXT_ACCESS_TYPE_DENIED    = "access_denied";
   public static final String TXT_ACCESS_TYPE_PERMITTED = "access_permitted";
 
   //signaling that a request or response is coming in
-  public static final int SIGNAL_TYPE_REQACK                     = 101;  
+  public static final int SIGNAL_TYPE_REQACK                     = 101;
   public static final int SIGNAL_TYPE_OUTSTREAM_READY            = 102;
-  
+
   public static final int SIGNAL_TYPE_DEVICE_ADMIN_ENABLED       = 106;
   public static final int SIGNAL_TYPE_DEVICE_ADMIN_DISABLED      = 107;
-  
+
   public static final int SIGNAL_SHOW_ACCESS_DENIED_NOTIFICATION = 111;
   public static final int SIGNAL_ACCESS_RESCHEDULE_DAILY         = 112;
-  
+
   public static final int SIGNAL_TYPE_START_DAEMONTASK           = 121;
   public static final int SIGNAL_TYPE_STOP_DAEMONTASK            = 122;
   public static final int SIGNAL_TYPE_EXIT_DAEMONTASK            = 123;
   //Daemon WatchDog message related
-  public static final int SIGNAL_TYPE_DAEMON_WD_REQ              = 126;  
+  public static final int SIGNAL_TYPE_DAEMON_WD_REQ              = 126;
   public static final int SIGNAL_TYPE_DAEMON_WD_RESP             = 127;
   public static final int SIGNAL_TYPE_DAEMON_WD_TIMEOUT          = 128;
-  
-  
-  private static final HashMap<Integer, String> ERRCODE_DESC_MAPPER 
+
+
+  private static final HashMap<Integer, String> ERRCODE_DESC_MAPPER
     = new HashMap<Integer, String>();
   // static {
   // ERRCODE_DESC_MAPPER.put(ERRCODE_NOERROR, "SUCCESS");
   // }
-  
+
   //////////////////////////////////////////////////////////////////////////////
   /*
    * Member fields
@@ -132,7 +143,7 @@ public class Event {
   private int type = 0;
   private int errcoe = 0;
   private Object data = null;
-  
+
   public void setData(int type, int code, Object data) {
     this.type = type;
     this.errcoe = code;
@@ -150,6 +161,6 @@ public class Event {
   public Object getData() {
     return this.data;
   }
-  
+
 
 }

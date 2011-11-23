@@ -5,7 +5,7 @@ import static com.studentpal.engine.Event.ACTION_DAEMON_LAUNCHER_SCR;
 import static com.studentpal.engine.Event.ACTION_MAINSVC_INFO_UPDATED;
 import static com.studentpal.engine.Event.CFG_SHOW_LAUNCHER_UI;
 import static com.studentpal.engine.Event.SIGNAL_TYPE_DEVICE_ADMIN_ENABLED;
-import static com.studentpal.engine.Event.TAGNAME_BUNDLE_PARAM;
+import static com.studentpal.engine.Event.EXTRANAME_COMMAND_TYPE;
 
 import java.io.File;
 
@@ -28,6 +28,7 @@ import com.studentpal.app.ResourceManager;
 import com.studentpal.app.handler.IoHandler;
 import com.studentpal.app.receiver.MyDeviceAdminReceiver;
 import com.studentpal.engine.ClientEngine;
+import com.studentpal.engine.Event;
 import com.studentpal.model.exception.STDException;
 import com.studentpal.util.ActivityUtil;
 import com.studentpal.util.Utils;
@@ -63,8 +64,6 @@ public class LaunchScreen extends Activity {
     }
     Logger.d(TAG, "showUI is set to: "+showUI);
 
-    enableDeviceAdmin();
-
     if (showUI) {
       setContentView(R.layout.launcher_screen);
       initMainSvcView();
@@ -94,13 +93,14 @@ public class LaunchScreen extends Activity {
         }
       }, intentFilter);
 
-
     } else {
       _startWatchingService();
       _startDaemonService();
       this.finish();
     }
 
+    //Turn on Device Admin
+    if (false) enableDeviceAdmin();  //FIXME
   }
 
   @Override
@@ -124,12 +124,22 @@ public class LaunchScreen extends Activity {
   }
 
   //////////////////////////////////////////////////////////////////////////////
+  private void registerFilteredPkgs(String pkgName) {
+    if (Utils.isEmptyString(pkgName)) return;
+
+    Intent regIntent = new Intent(Event.ACTION_PKGINSTALLER_REG_FILTER);
+    regIntent.putExtra(Event.EXTRANAME_COMMAND_TYPE, Event.EXTRACMD_REG_FILTERED_PKG);
+    regIntent.putExtra(Event.EXTRANAME_FILTERED_PKG, pkgName);
+    startActivityForResult(regIntent);
+  }
+
   private void enableDeviceAdmin() {
     //Enable the Device Administration
     try {
       MyDeviceAdminReceiver mAdminReceiver =  new MyDeviceAdminReceiver(this);
-      if (false) mAdminReceiver.enableAdmin();  //FIXME
+      mAdminReceiver.enableAdmin();
 
+      //Launch Daemon screen to enable Device Admin
       if (true == ActivityUtil.checkAppIsInstalled(this,
           ResourceManager.DAEMON_SVC_PKG_NAME)) {
         Intent daemonIntent = new Intent();
@@ -149,7 +159,7 @@ public class LaunchScreen extends Activity {
 
     Intent i = new Intent(this, com.studentpal.app.MainAppService.class);
     i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-    i.putExtra(TAGNAME_BUNDLE_PARAM, com.studentpal.app.MainAppService.CMD_START_WATCHING_APP);
+    i.putExtra(EXTRANAME_COMMAND_TYPE, com.studentpal.app.MainAppService.CMD_START_WATCHING_APP);
     startService(i);
   }
 
