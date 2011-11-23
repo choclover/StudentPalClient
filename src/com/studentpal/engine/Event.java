@@ -47,8 +47,8 @@ public class Event {
    */
   public static final String EXTRANAME_COMMAND_TYPE = "command_type";
   public static final String EXTRANAME_FILTERED_PKG = "filtered_pkgname";
-  public static final int    EXTRACMD_REG_FILTERED_PKG   = 1001;
-  public static final int    EXTRACMD_UNREG_FILTERED_PKG = 1002;
+//  public static final int    EXTRACMD_REG_FILTERED_PKG   = 1001;
+//  public static final int    EXTRACMD_UNREG_FILTERED_PKG = 1002;
 
   /*
    * TASK constants
@@ -114,10 +114,14 @@ public class Event {
   //signaling that a request or response is coming in
   public static final int SIGNAL_TYPE_REQACK                     = 101;
   public static final int SIGNAL_TYPE_OUTSTREAM_READY            = 102;
-
+  public static final int SIGNAL_TYPE_START_WATCHING_APP         = 103;
+  public static final int SIGNAL_TYPE_STOP_WATCHING_APP          = 104;
+  
   public static final int SIGNAL_TYPE_DEVICE_ADMIN_ENABLED       = 106;
   public static final int SIGNAL_TYPE_DEVICE_ADMIN_DISABLED      = 107;
-
+  public static final int SIGNAL_TYPE_REG_FILTERED_PKG           = 108;
+  public static final int SIGNAL_TYPE_UNREG_FILTERED_PKG         = 109;
+  
   public static final int SIGNAL_SHOW_ACCESS_DENIED_NOTIFICATION = 111;
   public static final int SIGNAL_ACCESS_RESCHEDULE_DAILY         = 112;
 

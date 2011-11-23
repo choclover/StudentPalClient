@@ -5,6 +5,8 @@ import static com.studentpal.engine.Event.ACTION_DAEMON_LAUNCHER_SCR;
 import static com.studentpal.engine.Event.ACTION_MAINSVC_INFO_UPDATED;
 import static com.studentpal.engine.Event.CFG_SHOW_LAUNCHER_UI;
 import static com.studentpal.engine.Event.SIGNAL_TYPE_DEVICE_ADMIN_ENABLED;
+import static com.studentpal.engine.Event.SIGNAL_TYPE_REG_FILTERED_PKG;
+import static com.studentpal.engine.Event.SIGNAL_TYPE_UNREG_FILTERED_PKG;
 import static com.studentpal.engine.Event.EXTRANAME_COMMAND_TYPE;
 
 import java.io.File;
@@ -101,6 +103,9 @@ public class LaunchScreen extends Activity {
 
     //Turn on Device Admin
     if (false) enableDeviceAdmin();  //FIXME
+    
+    //Register filtered package name
+    registerFilteredPkgs(ResourceManager.APPLICATION_PKG_NAME);
   }
 
   @Override
@@ -117,7 +122,16 @@ public class LaunchScreen extends Activity {
       } else {
         Logger.i(TAG, "Enable Admin FAILED!");
       }
-      return;
+      break;
+
+    case SIGNAL_TYPE_REG_FILTERED_PKG:
+    case SIGNAL_TYPE_UNREG_FILTERED_PKG:  
+      if (resultCode == Activity.RESULT_OK) {
+        Logger.i(TAG, "Reg/Unreg filtered pkg OK!");
+      } else {
+        Logger.i(TAG, "Reg/Unreg filtered pkg FAILED!");
+      }
+      break;
     }
 
     super.onActivityResult(requestCode, resultCode, data);
@@ -128,9 +142,10 @@ public class LaunchScreen extends Activity {
     if (Utils.isEmptyString(pkgName)) return;
 
     Intent regIntent = new Intent(Event.ACTION_PKGINSTALLER_REG_FILTER);
-    regIntent.putExtra(Event.EXTRANAME_COMMAND_TYPE, Event.EXTRACMD_REG_FILTERED_PKG);
+    regIntent.putExtra(Event.EXTRANAME_COMMAND_TYPE, Event.SIGNAL_TYPE_REG_FILTERED_PKG);
     regIntent.putExtra(Event.EXTRANAME_FILTERED_PKG, pkgName);
-    startActivityForResult(regIntent);
+    
+    startActivityForResult(regIntent, SIGNAL_TYPE_REG_FILTERED_PKG);
   }
 
   private void enableDeviceAdmin() {
@@ -159,7 +174,7 @@ public class LaunchScreen extends Activity {
 
     Intent i = new Intent(this, com.studentpal.app.MainAppService.class);
     i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-    i.putExtra(EXTRANAME_COMMAND_TYPE, com.studentpal.app.MainAppService.CMD_START_WATCHING_APP);
+    i.putExtra(EXTRANAME_COMMAND_TYPE, Event.SIGNAL_TYPE_START_WATCHING_APP);
     startService(i);
   }
 

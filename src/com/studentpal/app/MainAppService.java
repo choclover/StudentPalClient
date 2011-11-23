@@ -1,6 +1,9 @@
 package com.studentpal.app;
 
 import static com.studentpal.app.ResourceManager.APPLICATION_PKG_NAME;
+import static com.studentpal.engine.Event.SIGNAL_TYPE_START_WATCHING_APP;
+import static com.studentpal.engine.Event.SIGNAL_TYPE_STOP_WATCHING_APP;
+
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
@@ -8,7 +11,6 @@ import android.os.IBinder;
 import com.studentpal.engine.ClientEngine;
 import com.studentpal.engine.Event;
 import com.studentpal.model.exception.STDException;
-import com.studentpal.util.Utils;
 import com.studentpal.util.logger.Logger;
 
 public class MainAppService extends Service {
@@ -18,9 +20,9 @@ public class MainAppService extends Service {
   /*
    * Constants
    */
-  public static final int CMD_START_WATCHING_APP = 100;
-  public static final int CMD_STOP_WATCHING_APP  = 101;
-
+//  public static final int CMD_START_WATCHING_APP = 100;
+//  public static final int CMD_STOP_WATCHING_APP  = 101;
+  
   public static final boolean forTest = true;
 
   /*
@@ -89,7 +91,7 @@ public class MainAppService extends Service {
   private void handleCommand(Intent intent) {
     int cmd = intent.getIntExtra(Event.EXTRANAME_COMMAND_TYPE, -1);
     switch (cmd) {
-    case CMD_START_WATCHING_APP:
+    case SIGNAL_TYPE_START_WATCHING_APP:
       try {
         engine.initialize(this);
         engine.launch();
@@ -99,7 +101,7 @@ public class MainAppService extends Service {
       }
       break;
 
-    case CMD_STOP_WATCHING_APP:
+    case SIGNAL_TYPE_STOP_WATCHING_APP:
       break;
 
     default:
