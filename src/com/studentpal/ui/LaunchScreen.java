@@ -103,9 +103,10 @@ public class LaunchScreen extends Activity {
 
     //Turn on Device Admin
     if (false) enableDeviceAdmin();  //FIXME
-    
+
     //Register filtered package name
-    registerFilteredPkgs(ResourceManager.APPLICATION_PKG_NAME);
+    //registerFilteredPkgs(ResourceManager.APPLICATION_PKG_NAME);
+    registerFilteredPkgs(ResourceManager.DAEMON_SVC_PKG_NAME);
   }
 
   @Override
@@ -125,7 +126,7 @@ public class LaunchScreen extends Activity {
       break;
 
     case SIGNAL_TYPE_REG_FILTERED_PKG:
-    case SIGNAL_TYPE_UNREG_FILTERED_PKG:  
+    case SIGNAL_TYPE_UNREG_FILTERED_PKG:
       if (resultCode == Activity.RESULT_OK) {
         Logger.i(TAG, "Reg/Unreg filtered pkg OK!");
       } else {
@@ -144,7 +145,7 @@ public class LaunchScreen extends Activity {
     Intent regIntent = new Intent(Event.ACTION_PKGINSTALLER_REG_FILTER);
     regIntent.putExtra(Event.EXTRANAME_COMMAND_TYPE, Event.SIGNAL_TYPE_REG_FILTERED_PKG);
     regIntent.putExtra(Event.EXTRANAME_FILTERED_PKG, pkgName);
-    
+
     startActivityForResult(regIntent, SIGNAL_TYPE_REG_FILTERED_PKG);
   }
 
