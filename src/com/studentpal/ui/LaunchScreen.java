@@ -110,7 +110,7 @@ public class LaunchScreen extends Activity {
     pkgsName.add(ResourceManager.APPLICATION_PKG_NAME);
     pkgsName.add(ResourceManager.DAEMON_SVC_PKG_NAME);
     registerFilteredPkgs(pkgsName);
-   
+
   }//onCreate
 
   @Override
@@ -162,7 +162,7 @@ public class LaunchScreen extends Activity {
 
     startActivityForResult(regIntent, SIGNAL_TYPE_REG_FILTERED_PKG);
   }
-  
+
   private void enableDeviceAdmin() {
     //Enable the Device Administration
     try {
@@ -290,7 +290,9 @@ public class LaunchScreen extends Activity {
           //apkPath = "assets/SPal_ClientDaemon.apk";
           File apkFile = new File(apkPath);
           if (false == apkFile.exists()) {
-            Logger.w(TAG, "Daemon APK file("+ apkFile.getAbsolutePath() +") NOT exists!");
+            String info = "Daemon APK file("+ apkFile.getAbsolutePath() +") NOT exists!";
+            Logger.w(TAG, info);
+            ActivityUtil.showToast(LaunchScreen.this, info);
             return;
           }
 

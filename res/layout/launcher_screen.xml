@@ -169,7 +169,7 @@
             android:layout_alignParentLeft="true"
             android:layout_alignParentTop="true"
             android:layout_marginLeft="5dp"
-            android:text="Send Action" >
+            android:text="Send Main Action" >
         </Button>
     </RelativeLayout>
 
@@ -179,18 +179,38 @@
         android:layout_height="wrap_content" >
 
         <Button
-            android:id="@+id/btnUninstallDaemonApk"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_toRightOf="@+id/btnInstallDaemonApk"
-            android:text="Uninstall Daemon" />
-
-        <Button
             android:id="@+id/btnInstallDaemonApk"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="5dp"
             android:text="Install Daemon" />
+
+        <Button
+            android:id="@+id/btnUninstallDaemonApk"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/btnInstallDaemonApk"
+            android:text="Uninstall Daemon" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/relativeLayout4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <Button
+            android:id="@+id/btnRegPkgFilter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
+            android:text="Reg Pkg Filter" />
+
+        <Button
+            android:id="@+id/btnUnregPkgFilter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@+id/btnRegPkgFilter"
+            android:text="Unreg Pkg Filter" />
     </RelativeLayout>
 
 </LinearLayout>
