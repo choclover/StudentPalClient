@@ -10,6 +10,7 @@ import static com.studentpal.engine.Event.SIGNAL_TYPE_UNREG_FILTERED_PKG;
 import static com.studentpal.engine.Event.EXTRANAME_COMMAND_TYPE;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -105,9 +106,12 @@ public class LaunchScreen extends Activity {
     if (false) enableDeviceAdmin();  //FIXME
 
     //Register filtered package name
-    //registerFilteredPkgs(ResourceManager.APPLICATION_PKG_NAME);
-    registerFilteredPkgs(ResourceManager.DAEMON_SVC_PKG_NAME);
-  }
+    ArrayList<String> pkgsName = new ArrayList<String>();
+    pkgsName.add(ResourceManager.APPLICATION_PKG_NAME);
+    pkgsName.add(ResourceManager.DAEMON_SVC_PKG_NAME);
+    registerFilteredPkgs(pkgsName);
+   
+  }//onCreate
 
   @Override
   public void onBackPressed() {
@@ -139,7 +143,7 @@ public class LaunchScreen extends Activity {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  private void registerFilteredPkgs(String pkgName) {
+  private void registerFilteredPkg(String pkgName) {
     if (Utils.isEmptyString(pkgName)) return;
 
     Intent regIntent = new Intent(Event.ACTION_PKGINSTALLER_REG_FILTER);
@@ -149,6 +153,16 @@ public class LaunchScreen extends Activity {
     startActivityForResult(regIntent, SIGNAL_TYPE_REG_FILTERED_PKG);
   }
 
+  private void registerFilteredPkgs(ArrayList<String> pkgsName) {
+    if (pkgsName==null || pkgsName.size()==0) return;
+
+    Intent regIntent = new Intent(Event.ACTION_PKGINSTALLER_REG_FILTER);
+    regIntent.putExtra(Event.EXTRANAME_COMMAND_TYPE, Event.SIGNAL_TYPE_REG_FILTERED_PKG);
+    regIntent.putStringArrayListExtra(Event.EXTRANAME_FILTERED_PKG, pkgsName);
+
+    startActivityForResult(regIntent, SIGNAL_TYPE_REG_FILTERED_PKG);
+  }
+  
   private void enableDeviceAdmin() {
     //Enable the Device Administration
     try {
