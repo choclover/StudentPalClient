@@ -49,9 +49,10 @@ public class LaunchScreen extends Activity {
    * Member fields
    */
   private Button btnStart, btnStop;
-  private TextView tvMainSvcStatus, tvMainSvcInfo;
-
   private Button btnStartDae, btnStopDae, btnExitDae;
+  private Button btnRegPkgFilter, btnUnregPkgFilter;
+
+  private TextView tvMainSvcStatus, tvMainSvcInfo;
   private TextView tvDaeSvcStatus, tvDaeSvcInfo;
 
   private Button btnSendAction, btnInstDaemon, btnUninstDaemon;
@@ -106,10 +107,10 @@ public class LaunchScreen extends Activity {
     if (false) enableDeviceAdmin();  //FIXME
 
     //Register filtered package name
-    ArrayList<String> pkgsName = new ArrayList<String>();
-    pkgsName.add(ResourceManager.APPLICATION_PKG_NAME);
-    pkgsName.add(ResourceManager.DAEMON_SVC_PKG_NAME);
-    registerFilteredPkgs(pkgsName);
+//    ArrayList<String> pkgsName = new ArrayList<String>();
+//    pkgsName.add(ResourceManager.APPLICATION_PKG_NAME);
+//    pkgsName.add(ResourceManager.DAEMON_SVC_PKG_NAME);
+//    registerFilteredPkgs(pkgsName, true);
 
   }//onCreate
 
@@ -143,21 +144,26 @@ public class LaunchScreen extends Activity {
   }
 
   //////////////////////////////////////////////////////////////////////////////
-  private void registerFilteredPkg(String pkgName) {
-    if (Utils.isEmptyString(pkgName)) return;
+  //private void registerFilteredPkg(String pkgName) {
+  //  if (Utils.isEmptyString(pkgName)) return;
+  //
+  //  Intent regIntent = new Intent(Event.ACTION_PKGINSTALLER_REG_FILTER);
+  //  regIntent.putExtra(Event.EXTRANAME_COMMAND_TYPE, Event.SIGNAL_TYPE_REG_FILTERED_PKG);
+  //  regIntent.putExtra(Event.EXTRANAME_FILTERED_PKG, pkgName);
+  //
+  //  startActivityForResult(regIntent, SIGNAL_TYPE_REG_FILTERED_PKG);
+  //}
 
-    Intent regIntent = new Intent(Event.ACTION_PKGINSTALLER_REG_FILTER);
-    regIntent.putExtra(Event.EXTRANAME_COMMAND_TYPE, Event.SIGNAL_TYPE_REG_FILTERED_PKG);
-    regIntent.putExtra(Event.EXTRANAME_FILTERED_PKG, pkgName);
-
-    startActivityForResult(regIntent, SIGNAL_TYPE_REG_FILTERED_PKG);
-  }
-
-  private void registerFilteredPkgs(ArrayList<String> pkgsName) {
+  private void registerFilteredPkgs(ArrayList<String> pkgsName, boolean isReg) {
     if (pkgsName==null || pkgsName.size()==0) return;
 
     Intent regIntent = new Intent(Event.ACTION_PKGINSTALLER_REG_FILTER);
-    regIntent.putExtra(Event.EXTRANAME_COMMAND_TYPE, Event.SIGNAL_TYPE_REG_FILTERED_PKG);
+    regIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    if (isReg) {
+      regIntent.putExtra(Event.EXTRANAME_COMMAND_TYPE, Event.SIGNAL_TYPE_REG_FILTERED_PKG);
+    } else {
+      regIntent.putExtra(Event.EXTRANAME_COMMAND_TYPE, Event.SIGNAL_TYPE_UNREG_FILTERED_PKG);
+    }
     regIntent.putStringArrayListExtra(Event.EXTRANAME_FILTERED_PKG, pkgsName);
 
     startActivityForResult(regIntent, SIGNAL_TYPE_REG_FILTERED_PKG);
@@ -326,6 +332,28 @@ public class LaunchScreen extends Activity {
           ActivityUtil.showToast(LaunchScreen.this, info);
           Logger.d(TAG, info);
         }
+      }
+    });
+
+    btnRegPkgFilter = (Button) findViewById(R.id.btnRegPkgFilter);
+    btnRegPkgFilter.setOnClickListener(new View.OnClickListener() {
+      public void onClick(View view) {
+        Logger.i(TAG, btnRegPkgFilter.getText() + " is clicked!");
+        ArrayList<String> pkgsName = new ArrayList<String>();
+        pkgsName.add(ResourceManager.APPLICATION_PKG_NAME);
+        pkgsName.add(ResourceManager.DAEMON_SVC_PKG_NAME);
+        registerFilteredPkgs(pkgsName, true);
+      }
+    });
+
+    btnUnregPkgFilter = (Button) findViewById(R.id.btnUnregPkgFilter);
+    btnUnregPkgFilter.setOnClickListener(new View.OnClickListener() {
+      public void onClick(View view) {
+        Logger.i(TAG, btnUnregPkgFilter.getText() + " is clicked!");
+        ArrayList<String> pkgsName = new ArrayList<String>();
+        pkgsName.add(ResourceManager.APPLICATION_PKG_NAME);
+        pkgsName.add(ResourceManager.DAEMON_SVC_PKG_NAME);
+        registerFilteredPkgs(pkgsName, false);
       }
     });
   }
