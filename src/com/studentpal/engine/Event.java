@@ -54,7 +54,7 @@ public class Event {
    * TASK constants
    */
   public static final String TASKNAME_Generic     = "Generic";
-  public static final String TASKNAME_GetAppList  = "GetAppList";
+  public static final String TASKNAME_RefreshAppList  = "RefreshAppList";
   public static final String TASKNAME_SetAppAccessCategory = "SetAppAccessCategory";
   //public static final String TASKNAME_SetAccessCategories  = "SetAccessCategories";
   /* Tasks from Phone */
@@ -78,7 +78,8 @@ public class Event {
   public static final String ACTION_DAEMONSVC_INFO_UPDATED  = "studentpal.action.daemonsvc.updated";
 
   public static final String ACTION_PKGINSTALLER_REG_FILTER   = "studentpal.intent.action.reg_filter";
-  public static final String ACTION_PKGINSTALLER_UNREG_FILTER = "studentpal.intent.action.ung_filter";
+  //Not used yet
+  //public static final String ACTION_PKGINSTALLER_UNREG_FILTER = "studentpal.intent.action.unreg_filter";
 
   /*
    * Error code constants
@@ -116,12 +117,12 @@ public class Event {
   public static final int SIGNAL_TYPE_OUTSTREAM_READY            = 102;
   public static final int SIGNAL_TYPE_START_WATCHING_APP         = 103;
   public static final int SIGNAL_TYPE_STOP_WATCHING_APP          = 104;
-  
+
   public static final int SIGNAL_TYPE_DEVICE_ADMIN_ENABLED       = 106;
   public static final int SIGNAL_TYPE_DEVICE_ADMIN_DISABLED      = 107;
   public static final int SIGNAL_TYPE_REG_FILTERED_PKG           = 108;
   public static final int SIGNAL_TYPE_UNREG_FILTERED_PKG         = 109;
-  
+
   public static final int SIGNAL_SHOW_ACCESS_DENIED_NOTIFICATION = 111;
   public static final int SIGNAL_ACCESS_RESCHEDULE_DAILY         = 112;
 

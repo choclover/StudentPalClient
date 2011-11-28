@@ -15,7 +15,7 @@ import com.studentpal.util.logger.Logger;
 public class GetAppListRequest extends Request {
 
   public String getName() {
-    return Event.TASKNAME_GetAppList;
+    return Event.TASKNAME_RefreshAppList;
   }
   
   public void execute() {
