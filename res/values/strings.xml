@@ -6,7 +6,20 @@
     <string name="target_svr_ip">192.168.11.252</string>
     <string name="target_svr_ip2">192.168.10.101</string>
     <string name="device_admin_label">学伴成长</string>
-    <string name="device_admin_deactivated_warning">
-      若禁用此选项，您可能丧失对目标终端的管理。确定此操作吗？
+    
+    <string name="device_admin_deactivated_warning">若禁用此选项，您可能丧失对目标终端的管理。确定此操作吗？
     </string>
+    <string name="operation_forbidden_warning">很抱歉，您的操作被管理员所禁止！
+    </string>
+
+    <string name="confirm">确定</string>
+    <string name="cancel">取消</string>
+    <string name="warning">警告</string>
+    <string name="error">错误</string>
+
+    <string name="send_request">发送请求</string>
+    <string name="start_time">开始时间</string>
+    <string name="end_time">结束时间</string>
+    <string name="exit_app">退出程序？</string>
+    
 </resources>

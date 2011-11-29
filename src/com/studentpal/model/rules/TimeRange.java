@@ -1,30 +1,32 @@
 package com.studentpal.model.rules;
 
+import com.studentpal.R;
 import com.studentpal.app.ResourceManager;
 import com.studentpal.model.exception.STDException;
+import com.studentpal.util.ActivityUtil;
 import com.studentpal.util.logger.Logger;
 
 public class TimeRange {
   private static final String TAG = "@@ TimeRange";
-  
+
   public static final int TIME_TYPE_START = 0x1;
   public static final int TIME_TYPE_END = 0x2;
-  
+
   private ScheduledTime startTime, endTime;
 
   public TimeRange() {
   }
-  
-  public TimeRange(int startHour, int startMin, int endHour, int endMin) 
+
+  public TimeRange(int startHour, int startMin, int endHour, int endMin)
     throws STDException {
     setStartTime(startHour, startMin);
     setEndTime(endHour, endMin);
   }
-  
+
   //@Deprecated
   private void setStartTime(int hour, int minute) throws STDException {
     if (startTime == null) {
-      startTime = new ScheduledTime(ResourceManager.RES_STR_START_TIME, true);
+      startTime = new ScheduledTime(ActivityUtil.getString(R.string.start_time), true);
     }
     _setTime(startTime, hour, minute);
   }
@@ -32,27 +34,27 @@ public class TimeRange {
   //@Deprecated
   private void setEndTime(int hour, int minute) throws STDException {
     if (endTime == null) {
-      endTime = new ScheduledTime(ResourceManager.RES_STR_END_TIME, false);
+      endTime = new ScheduledTime(ActivityUtil.getString(R.string.end_time), false);
     }
     _setTime(endTime, hour, minute);
   }
-  
+
   public void setTime(int timeType, int hour, int minute) throws STDException {
     switch (timeType) {
     case TIME_TYPE_START:
       setStartTime(hour, minute);
       break;
-      
+
     case TIME_TYPE_END:
       setEndTime(hour, minute);
       break;
-      
+
     default:
       Logger.d(TAG, "Invalid Time type of "+timeType);
       break;
     }
   }
-  
+
   public void setTime(int timeType, String timeStr) throws STDException {
     try {
       int idx = timeStr.indexOf(':');
@@ -60,17 +62,17 @@ public class TimeRange {
         int hour = Integer.parseInt(timeStr.substring(0, idx));
         int min  = Integer.parseInt(timeStr.substring(idx+1));
         setTime(timeType, hour, min);
-        
+
       } else {
         throw new STDException("Invalid time range format!");
       }
-      
+
     } catch (Exception ex) {
       Logger.w(TAG, ex.toString());
       throw new STDException(ex.toString());
     }
   }
-  
+
   public ScheduledTime getStartTime() {
     return startTime;
   }
@@ -145,9 +147,9 @@ public class TimeRange {
     }
 
     /*
-     * 计算距离指定时间点的seconds数目。 
-     * = 0: 本scheduled time正好等于指定的特定时间点 
-     * > 0: 本scheduled time在指定的指定时间点之前(尚未到达指定时间点) 
+     * 计算距离指定时间点的seconds数目。
+     * = 0: 本scheduled time正好等于指定的特定时间点
+     * > 0: 本scheduled time在指定的指定时间点之前(尚未到达指定时间点)
      * < 0: 本scheduled time在指定的指定时间点之后(已经超过指定时间点)
      */
     public int calcSecondsToSpecificTime(int hour, int minute, int second) {
@@ -158,7 +160,7 @@ public class TimeRange {
     public int calcSecondsToSpecificTime(ScheduledTime time) {
       return calcSecondsToSpecificTime(time._hour, time._minute, 0);
     }
-    
+
     public String toString() {
       return "" +_hour+ ":" +_minute;
     }

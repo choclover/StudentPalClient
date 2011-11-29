@@ -58,8 +58,9 @@ public class Event {
   public static final String TASKNAME_SetAppAccessCategory = "SetAppAccessCategory";
   //public static final String TASKNAME_SetAccessCategories  = "SetAccessCategories";
   /* Tasks from Phone */
-  public static final String TASKNAME_LOGIN   = "LOGIN";
-  public static final String TASKNAME_LOGOUT  = "LOGOUT";
+  public static final String TASKNAME_LOGIN         = "LOGIN";
+  public static final String TASKNAME_LOGIN_ADMIN   = "LOGIN_ADMIN";
+  public static final String TASKNAME_LOGOUT        = "LOGOUT";
 
   /*
    * Configuration constants
@@ -113,11 +114,11 @@ public class Event {
   public static final String TXT_ACCESS_TYPE_PERMITTED = "access_permitted";
 
   //signaling that a request or response is coming in
-  public static final int SIGNAL_TYPE_REQACK                     = 101;
-  public static final int SIGNAL_TYPE_OUTSTREAM_READY            = 102;
+  public static final int SIGNAL_TYPE_MSG_FROM_SVR               = 101;
+  public static final int SIGNAL_TYPE_MSG_TO_SVR                 = 102;
   public static final int SIGNAL_TYPE_START_WATCHING_APP         = 103;
   public static final int SIGNAL_TYPE_STOP_WATCHING_APP          = 104;
-
+  public static final int SIGNAL_TYPE_OUTSTREAM_READY            = 105;
   public static final int SIGNAL_TYPE_DEVICE_ADMIN_ENABLED       = 106;
   public static final int SIGNAL_TYPE_DEVICE_ADMIN_DISABLED      = 107;
   public static final int SIGNAL_TYPE_REG_FILTERED_PKG           = 108;
@@ -126,13 +127,13 @@ public class Event {
   public static final int SIGNAL_SHOW_ACCESS_DENIED_NOTIFICATION = 111;
   public static final int SIGNAL_ACCESS_RESCHEDULE_DAILY         = 112;
 
-  public static final int SIGNAL_TYPE_START_DAEMONTASK           = 121;
-  public static final int SIGNAL_TYPE_STOP_DAEMONTASK            = 122;
-  public static final int SIGNAL_TYPE_EXIT_DAEMONTASK            = 123;
+  public static final int SIGNAL_TYPE_START_DAEMONTASK           = 201;
+  public static final int SIGNAL_TYPE_STOP_DAEMONTASK            = 202;
+  public static final int SIGNAL_TYPE_EXIT_DAEMONTASK            = 203;
   //Daemon WatchDog message related
-  public static final int SIGNAL_TYPE_DAEMON_WD_REQ              = 126;
-  public static final int SIGNAL_TYPE_DAEMON_WD_RESP             = 127;
-  public static final int SIGNAL_TYPE_DAEMON_WD_TIMEOUT          = 128;
+  public static final int SIGNAL_TYPE_DAEMON_WD_REQ              = 204;
+  public static final int SIGNAL_TYPE_DAEMON_WD_RESP             = 205;
+  public static final int SIGNAL_TYPE_DAEMON_WD_TIMEOUT          = 206;
 
 
   private static final HashMap<Integer, String> ERRCODE_DESC_MAPPER

@@ -378,7 +378,7 @@ public class IoHandler implements AppHandler {
                   }
                   
                   // send incoming request to MessageHandler to handle
-                  msgHandler.sendRequestToSvr(request);
+                  msgHandler.sendMessageToServer(request);
                 }
                 
               } else if (msgType.equals(Event.MESSAGE_HEADER_ACK)) {

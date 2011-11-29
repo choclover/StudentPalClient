@@ -2,21 +2,12 @@
 
 import java.util.List;
 
-import com.studentpal.app.ResourceManager;
-import com.studentpal.app.handler.DaemonHandler;
-import com.studentpal.app.receiver.MyDeviceAdminReceiver;
-import com.studentpal.engine.Event;
-import com.studentpal.ui.LaunchScreen;
-import com.studentpal.util.logger.Logger;
-
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.ActivityManager.RunningServiceInfo;
 import android.app.ActivityManager.RunningTaskInfo;
 import android.app.AlertDialog;
-import android.app.ActivityManager.RunningAppProcessInfo;
-import android.app.admin.DevicePolicyManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -25,12 +16,18 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.Resources;
 import android.os.Environment;
 import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
+
+import com.studentpal.R;
+import com.studentpal.app.ResourceManager;
+import com.studentpal.engine.Event;
+import com.studentpal.util.logger.Logger;
 
 public class ActivityUtil {
   /*
@@ -39,7 +36,24 @@ public class ActivityUtil {
   private static final String TAG = "@@ ActivityUtil";
   private static final String PREFS_NAME = ResourceManager.APPLICATION_PKG_NAME;
 
+  /*
+   * Member fields
+   */
+  private static Resources inner_res = null;
+  //private static Activity  instance  = null;
+
+  static {
+    if (inner_res == null) {
+      inner_res = new Activity().getResources();
+    }
+  }
+
   private ActivityUtil() {
+  }
+
+  //////////////////////////////////////////////////////////////////////////////
+  public static String getString(int strResId) {
+    return inner_res.getString(strResId);
   }
 
   /*
@@ -92,7 +106,9 @@ public class ActivityUtil {
         WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
   }
 
-  // 获取AndroidManifest.xml中android:versionName
+  /*
+   * 获取AndroidManifest.xml中android:versionName
+   */
   public static String getSoftwareVersion(Context context) {
     String packageName = PREFS_NAME;
     String result = "";
@@ -106,7 +122,9 @@ public class ActivityUtil {
     return result;
   }
 
-  // 获取AndroidManifest.xml中android:versionCode
+  /*
+   * 获取AndroidManifest.xml中android:versionCode
+   */
   public static int getVersionCode(Context context) {
     String packageName = PREFS_NAME;
     int result = 0;
@@ -136,10 +154,18 @@ public class ActivityUtil {
     directToIntent(context, classname, null);
   }
 
-  public static void directToFinish(Context context, Class<?> classname, String param) {
-    directToIntent(context, classname, param);
-    ((Activity) context).finish();
+  public static void launchNewActivity(Context _launcher, Class<?> activity) {
+    if (activity != null) {
+      Intent i = new Intent(_launcher, activity);
+      i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+      _launcher.startActivity(i);
+    }
   }
+
+//  public static void directToFinish(Context context, Class<?> classname, String param) {
+//    directToIntent(context, classname, param);
+//    ((Activity) context).finish();
+//  }
 
   public static View inflate(Activity context, int layoutId) {
     return context.getLayoutInflater().inflate(layoutId, null);
@@ -158,23 +184,34 @@ public class ActivityUtil {
     Toast localToast = Toast.makeText(context, param, Toast.LENGTH_LONG);
     localToast.show();
   }
-  
+
   public static void showQuitAppDialog(final Activity parent) {
     AlertDialog.Builder builder = new AlertDialog.Builder(parent);
-    builder.setTitle(ResourceManager.RES_STR_QUITAPP).setMessage(
-        ResourceManager.RES_STR_QUITAPP);
-    builder.setPositiveButton(ResourceManager.RES_STR_OK,
+    builder.setTitle(getString(R.string.exit_app)).setMessage(
+        getString(R.string.exit_app));
+    builder.setPositiveButton(R.string.confirm,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int whichButton) {
             parent.finish();
             exitApp();
           }
-        }).setNegativeButton(ResourceManager.RES_STR_CANCEL, null);
+        }).setNegativeButton(getString(R.string.cancel), null);
 
     builder.create().show();
   }
-  
-  //////////////////////////////////////////////////////////////////////////////
+
+  public static void showConfirmDialog(final Activity parent,
+      String title, String msgStr) {
+    AlertDialog.Builder builder = new AlertDialog.Builder(parent);
+    builder.setTitle(title);
+    builder.setMessage(msgStr);
+    builder.setCancelable(false);
+    builder.setPositiveButton(R.string.confirm, null);
+
+    AlertDialog alert = builder.create();
+    alert.show();
+  }
+
   public static String getTopActivityName(Object app) {
     String result = "";
     if (app instanceof RunningAppProcessInfo) {
@@ -182,10 +219,10 @@ public class ActivityUtil {
     } else if (app instanceof RunningTaskInfo) {
       result = ((RunningTaskInfo)app).topActivity.getPackageName();
     }
-    
+
     return result;
   }
-  
+
   public static String getTopActivityClassName(Object app) {
     String result = "";
     if (app instanceof RunningAppProcessInfo) {
@@ -193,33 +230,37 @@ public class ActivityUtil {
     } else if (app instanceof RunningTaskInfo) {
       result = ((RunningTaskInfo)app).topActivity.getClassName();
     }
-    
+
     return result;
   }
-  
+
   public static String getFilePathOnSdCard(String rFilePath) {
     if (rFilePath == null) {
       Logger.w(TAG, "Input file path parameter is NULL!");
       return null;
     }
-    
+
     String path = Environment.getExternalStorageDirectory().toString()
         +'/'+ rFilePath;
     return path;
   }
-  
+
   public static void exitApp() {
-    int pid = android.os.Process.myPid();
-    android.os.Process.killProcess(pid);
-    System.exit(1);
+    try {
+      int pid = android.os.Process.myPid();
+      android.os.Process.killProcess(pid);
+      System.exit(1);
+    } catch (Exception ex) {
+      Logger.w(TAG, ex.toString());
+    }
   }
-  
+
   public static void killProcess(Context context, RunningAppProcessInfo p) {
     ActivityManager activityManager = (ActivityManager) context
         .getSystemService(Context.ACTIVITY_SERVICE);
     killProcess(activityManager, p);
   }
-  
+
   public static boolean killProcess(ActivityManager activityManager,
       RunningAppProcessInfo p) {
     if (activityManager==null || p==null) {
@@ -242,7 +283,7 @@ public class ActivityUtil {
 
     return true;
   }
-  
+
   public static void killServiceById(Context context, int pid) {
     if (pid > 0) {
       android.os.Process.killProcess(pid);
@@ -250,12 +291,12 @@ public class ActivityUtil {
       Logger.d(TAG, "Invalid PID of "+pid);
     }
   }
-  
+
   public static void startDaemonService(Context context) {
     Intent i = new Intent();
     i.setAction(Event.ACTION_DAEMON_SVC);
     i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-    
+
     Object result = context.startService(i);
     if (result != null) {
       Logger.d(TAG, "Starting daemon service OK!");
@@ -263,12 +304,12 @@ public class ActivityUtil {
       Logger.d(TAG, "Starting daemon service FAIL!");
     }
   }
-  
+
   public static void stopDaemonService(Context context) {
     Intent i = new Intent();
     i.setAction(Event.ACTION_DAEMON_SVC);
     Logger.d(TAG, "Ready to stop daemon service!");
-    
+
     boolean succ = context.stopService(i);
     if (succ) {
       Logger.d(TAG, "Stopping daemon service OK!");
@@ -280,7 +321,7 @@ public class ActivityUtil {
   /*
    * 判断应用是否已经安装.
    * @param context
-   * @param className 判断的服务的class name
+   * @param pkgName 应用的package name
    */
   public static boolean checkAppIsInstalled(Context context, String pkgName) {
     if (context==null || Utils.isEmptyString(pkgName)) {
@@ -298,10 +339,10 @@ public class ActivityUtil {
     } catch (NameNotFoundException e) {
       Logger.w(TAG, e.toString());
     }
-    
+
     return isInstalled;
   }
-  
+
   /*
    * 判断服务是否运行.
    * @param context
@@ -314,25 +355,25 @@ public class ActivityUtil {
     }
     return isRunning;
   }
-  
-  
+
+
   public static RunningServiceInfo findRunningService(
       Context mContext, String svcClsName) {
     if (mContext==null || Utils.isEmptyString(svcClsName)) {
       Logger.w(TAG, "Context is NULL or Service name is empty!");
       return null;
     }
-    
+
     RunningServiceInfo result = null;
-    
+
     ActivityManager activityManager = (ActivityManager) mContext
         .getSystemService(Context.ACTIVITY_SERVICE);
     List<RunningServiceInfo> serviceList = activityManager
         .getRunningServices(30);
 
     for (int i=0; i<serviceList.size(); i++) {
-      RunningServiceInfo tmpSvc = serviceList.get(i); 
-      if (tmpSvc != null 
+      RunningServiceInfo tmpSvc = serviceList.get(i);
+      if (tmpSvc != null
           && tmpSvc.service.getClassName().equals(svcClsName)) {
         result = tmpSvc;
         break;
@@ -340,15 +381,15 @@ public class ActivityUtil {
     }
     return result;
   }
-  
+
   public static RunningAppProcessInfo findRunningAppProcess(
       Context mContext, String classname) {
     ActivityManager activityManager = (ActivityManager) mContext
         .getSystemService(Context.ACTIVITY_SERVICE);
-    
+
     return findRunningAppProcess(activityManager, classname);
   }
-  
+
   public static RunningAppProcessInfo findRunningAppProcess(
       ActivityManager activityManager, String classname) {
     RunningAppProcessInfo result = null;
@@ -365,9 +406,17 @@ public class ActivityUtil {
     }
     return result;
   }
-  
-  
+
+  public static void returnToHomeScreen(Context _launcher) {
+    Logger.v(TAG, "enter returnToHomeScreen!");
+    Intent startMain = new Intent(Intent.ACTION_MAIN);
+    startMain.addCategory(Intent.CATEGORY_HOME);
+    startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    _launcher.startActivity(startMain);
+  }
+
+
 }//class ActivityUtil
-  
-  
-  
+
+
+
