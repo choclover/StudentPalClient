@@ -26,10 +26,10 @@ import android.os.Message;
 
 
 public class IoHandler implements AppHandler {
-  
+
   private static final String TAG = "IoHandler";
   private static final int SLEEP_TIME = 100;  //mill-seconds
-  
+
   /*
    * Field members
    */
@@ -37,13 +37,13 @@ public class IoHandler implements AppHandler {
 
   private ClientEngine  engine = null;
   private MessageHandler msgHandler = null;
-  
+
   private Socket socketConn = null;
   private BufferedInputStream bis = null;
   private BufferedOutputStream bos = null;
   //private boolean isLogin = false;  //TODO how to use this flag in client?
   private static String serverIP = "";
-  
+
   private InputConnectionThread inputConnThread  = null;
   private OutputConnectionThread outputConnThread  = null;
 
@@ -53,7 +53,7 @@ public class IoHandler implements AppHandler {
   private IoHandler() {
     initialize();
   }
-  
+
   public static IoHandler getInstance() {
     if (instance == null) {
       instance = new IoHandler();
@@ -63,9 +63,9 @@ public class IoHandler implements AppHandler {
 
   @Override
   public void launch() {
-    this.engine = ClientEngine.getInstance();  
+    this.engine = ClientEngine.getInstance();
     this.msgHandler = this.engine.getMsgHandler();
-    
+
     Runnable r = new Runnable() {
       @Override
       public void run() {
@@ -74,7 +74,7 @@ public class IoHandler implements AppHandler {
     };
     new Thread(r).start();
   }
-  
+
   @Override
   public void terminate() {
     if (inputConnThread != null) {
@@ -83,7 +83,7 @@ public class IoHandler implements AppHandler {
     if (outputConnThread != null) {
       outputConnThread.terminate();
     }
-    
+
     if (bis != null)
       try {
         bis.close();
@@ -105,22 +105,22 @@ public class IoHandler implements AppHandler {
         Logger.w(TAG, e.toString());
       }
   }
-  
-  public String getRemoteSvrIP() {        
-    /* 
-     * Do NOT use localhost/127.0.0.1 which is the phone itself 
+
+  public String getRemoteSvrIP() {
+    /*
+     * Do NOT use localhost/127.0.0.1 which is the phone itself
      */
     // TODO read from config
     String addr = "";
     addr = "192.168.10.100";
     //addr = "10.60.4.64";
-    addr = engine.getContext().getResources().getString(R.string.target_svr_ip);
-    
+    addr = engine.getContext().getString(R.string.target_svr_ip);
+
     //Read from Launcher Screen
     if (Utils.isEmptyString(serverIP) == false) {
       addr = serverIP;
     }
-    
+
     return addr;
   }
 
@@ -137,7 +137,7 @@ public class IoHandler implements AppHandler {
   public String getEncoding() {
     return "UTF-8";
   }
-  
+
   public void sendMsgStr(String msg) {
     try {
       if (outputConnThread != null) {
@@ -149,22 +149,22 @@ public class IoHandler implements AppHandler {
       Logger.w(TAG, "SendMsgStr() got error of "+e.getMessage());
     }
   }
-  
+
   public void handleResponseMessage(JSONObject msgObj) {
     //TODO
   }
-  
+
   public static void setServerIP(String ip) {
     serverIP = ip;
   }
-  
+
   //////////////////////////////////////////////////////////////////////////////
   private void initialize() {
   }
-  
+
   private void init_network() {
     if (socketConn != null) {
-      try { socketConn.close(); } 
+      try { socketConn.close(); }
       catch (IOException e) { e.printStackTrace(); }
       socketConn = null;
     }
@@ -178,8 +178,8 @@ public class IoHandler implements AppHandler {
         } catch (InterruptedException e) {
           e.printStackTrace();
         }
-      } 
-      
+      }
+
       break;  //FIXME: design a re-connect or retry method
     }
 
@@ -187,41 +187,41 @@ public class IoHandler implements AppHandler {
       try {
         bis = new BufferedInputStream(socketConn.getInputStream());
         bos = new BufferedOutputStream(socketConn.getOutputStream());
-        
-        inputConnThread = new InputConnectionThread(); 
+
+        inputConnThread = new InputConnectionThread();
         inputConnThread.start();
-        outputConnThread = new OutputConnectionThread(); 
-        outputConnThread.start(); 
-        
+        outputConnThread = new OutputConnectionThread();
+        outputConnThread.start();
+
       } catch (IOException e) {
         Logger.w(TAG, e.toString());
       }
     }
   }
-  
+
   private Socket constructSocketConnection() {
     Socket aSock = null;
     final int RETRY_TIMES = 5;
-    
+
     for (int i=0; i<RETRY_TIMES; i++) {
       try {
         String svrAddr = getRemoteSvrDomainName();
         svrAddr = getRemoteSvrIP();
         int svrPort = getRemoteSvrPort();
-        
+
         Logger.d(TAG, "Connecting to " + svrAddr +":"+ svrPort);
         aSock = new Socket(InetAddress.getByName(svrAddr), svrPort);
         aSock.setKeepAlive(true);
         Logger.d(TAG, "Connected to "+aSock.getInetAddress().toString());
-        
+
       } catch (UnknownHostException e) {
         Logger.w(TAG, e.toString());
       } catch (IOException e) {
         Logger.w(TAG, e.toString());
       }
-      
+
       if (aSock != null) break;
-      
+
       try {
         Thread.sleep((i*10+5) * 1000);
       } catch (InterruptedException e) {
@@ -231,18 +231,18 @@ public class IoHandler implements AppHandler {
 
     return aSock;
   }
-  
+
   //**************************************************************************//
   //Connection thread
   class OutputConnectionThread extends Thread/*HandlerThread*/ {
     private static final String TAG = "@@ OutputConnectionThread";
     private Handler outputMsgHandler = null;
     private boolean isReady = false;
-    
+
     public OutputConnectionThread() {
       super(TAG);
     }
-    
+
     public void terminate() {
       this.interrupt();
 
@@ -251,17 +251,17 @@ public class IoHandler implements AppHandler {
         outputMsgHandler = null;
       }
     }
-    
+
 //    public boolean isReady() {
 //      return isReady;
 //    }
-    
+
     public void run() {
       /*
        * Output message handler
        */
       Looper.prepare();
-      
+
       this.outputMsgHandler = new Handler(/*this.getLooper()*/) {
         @Override
         public void handleMessage(android.os.Message message) {
@@ -274,27 +274,27 @@ public class IoHandler implements AppHandler {
           }
         }
       };
-      
+
       //we can start to login server now since OUTPUT stream is ready
       Message signal = msgHandler.obtainMessage(Event.SIGNAL_TYPE_OUTSTREAM_READY);
       msgHandler.sendMessage(signal);
-      
+
       Looper.loop();
     }
-    
+
     private void sendMsgStr_internal(String msg) throws STDException {
       if (bos == null) {
         throw new STDException("Output stream should NOT be null!");
       }
 
       Logger.i("Ready to send msg:\n"+msg);
-      
+
       try {
         byte[] msgBytes;
         msgBytes = msg.getBytes(getEncoding());
         msgBytes = Codec.encode(msgBytes);
 
-        bos.write(msgBytes);  
+        bos.write(msgBytes);
         bos.flush();
 
       } catch (UnsupportedEncodingException e) {
@@ -303,7 +303,7 @@ public class IoHandler implements AppHandler {
         Logger.w(TAG, e.toString());
       }
     }
-    
+
     ////////////////////////////////////////////////////////////////////////////
     public void sendMsgStr(String msgStr) throws STDException {
       if (this.outputMsgHandler == null) {
@@ -312,16 +312,16 @@ public class IoHandler implements AppHandler {
       Message msg = this.outputMsgHandler.obtainMessage(0, msgStr);
       this.outputMsgHandler.sendMessage(msg);
     }
-    
+
   }//class OutputConnectionThread
-  
+
   //**************************************************************************//
   class InputConnectionThread extends Thread {
     private static final String TAG = "@@ InputConnectionThread";
 
     private boolean isStop = false;
 //    private boolean isReady = false;
-    
+
     public void terminate() {
       isStop = true;
       this.interrupt();
@@ -330,7 +330,7 @@ public class IoHandler implements AppHandler {
 //    public boolean isReady() {
 //      return isReady;
 //    }
-    
+
     public void run() {
       try {
         /*
@@ -348,7 +348,7 @@ public class IoHandler implements AppHandler {
             if (Utils.isEmptyString(msgStr)) {
               continue;
             }
-            
+
             try {
               JSONObject msgObjRoot = new JSONObject(msgStr);
               String msgType = msgObjRoot.getString(Event.TAGNAME_MSG_TYPE);
@@ -364,32 +364,32 @@ public class IoHandler implements AppHandler {
                 String reqType = msgObjRoot.getString(Event.TAGNAME_CMD_TYPE);
                 String reqClazName = reqPkgName + reqType + "Request";
                 Logger.i(TAG, "Ready to new instance of:"+reqClazName);
-                
+
                 Request request;
                 request = (Request) Class.forName(reqClazName).newInstance();
 
                 if (request != null) {
                   int msgId = msgObjRoot.getInt(Event.TAGNAME_MSG_ID);
                   request.setRequestSeq(msgId);
-                  
+
                   if (msgObjRoot.has(Event.TAGNAME_ARGUMENTS)) {
                     String args = msgObjRoot.getString(Event.TAGNAME_ARGUMENTS);
                     request.setInputArguments(args);
                   }
-                  
+
                   // send incoming request to MessageHandler to handle
                   msgHandler.sendMessageToServer(request);
                 }
-                
+
               } else if (msgType.equals(Event.MESSAGE_HEADER_ACK)) {
                 //This is a response message
                 handleResponseMessage(msgObjRoot);
-                
+
               } else {
                 Logger.i(TAG, "Unsupported Incoming MESSAGE type(" + msgType
                     + ") in this version.");
               }
-              
+
             } catch (JSONException ex) {
               Logger.w(TAG, "JSON paring error for request:\n\t" + msgStr);
               Logger.w(TAG, ex.toString());
@@ -403,7 +403,7 @@ public class IoHandler implements AppHandler {
           }
 
           Thread.sleep(SLEEP_TIME);
-          
+
         }// while !stopped
 
       } catch (InterruptedException e) {
@@ -414,7 +414,7 @@ public class IoHandler implements AppHandler {
         Logger.w(TAG, e.toString());
       }
     }
-    
+
   }// class RemoteConnectionThread
 
 }//class IoHandler
