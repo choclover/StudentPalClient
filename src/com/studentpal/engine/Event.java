@@ -21,6 +21,8 @@ public class Event {
   public static final String TAGNAME_PHONE_NUM       = "phone_no";
   public static final String TAGNAME_PHONE_IMSI      = "phone_imsi";
   public static final String TAGNAME_PHONE_IMEI      = "phone_imei";
+  public static final String TAGNAME_LOGIN_NAME      = "login_name";
+  public static final String TAGNAME_LOGIN_PASSWD       = "login_passwd";
   public static final String TAGNAME_APPLICATIONS    = "applications";
   public static final String TAGNAME_APP             = "application";
   public static final String TAGNAME_APP_NAME        = "app_name";

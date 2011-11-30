@@ -7,9 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import android.app.ActivityManager;
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
@@ -17,7 +15,6 @@ import android.content.pm.PackageManager;
 import android.telephony.TelephonyManager;
 
 import com.studentpal.app.MainAppService;
-import com.studentpal.app.ResourceManager;
 import com.studentpal.app.db.DBaseManager;
 import com.studentpal.app.handler.AccessController;
 import com.studentpal.app.handler.AppHandler;
@@ -29,8 +26,9 @@ import com.studentpal.engine.request.LoginRequest;
 import com.studentpal.engine.request.Request;
 import com.studentpal.model.ClientAppInfo;
 import com.studentpal.model.exception.STDException;
+import com.studentpal.model.user.AdminUser;
+import com.studentpal.model.user.ClientUser;
 import com.studentpal.ui.AccessDeniedNotification;
-import com.studentpal.ui.AccessRequestForm;
 import com.studentpal.util.ActivityUtil;
 import com.studentpal.util.Utils;
 import com.studentpal.util.logger.Logger;
@@ -253,7 +251,22 @@ public class ClientEngine implements AppHandler {
           + ", invalid IMSI number of " + imsiNum);
     }
 
-    Request request = new LoginRequest(phoneNum, imsiNum);
+    ClientUser user = new ClientUser(phoneNum, imsiNum);
+    Request request = new LoginRequest(Event.TASKNAME_LOGIN, user);
+    msgHandler.sendMessageToServer(request);
+  }
+
+  public void loginServerAdmin(String loginName, String loginPwd) throws STDException {
+    Logger.i(TAG, "enter loginServerAdmin");
+
+    if (Utils.isValidPhoneNumber(loginName) == false &&
+        Utils.isValidPhoneIMSI(loginPwd) == false) {
+      throw new STDException("Unable to login, got invalid login name of " + loginName
+          + ", invalid login password of " + loginPwd);
+    }
+
+    AdminUser user = new AdminUser(loginName, loginPwd);
+    Request request = new LoginRequest(Event.TASKNAME_LOGIN_ADMIN, user);
     msgHandler.sendMessageToServer(request);
   }
 
