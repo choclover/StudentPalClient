@@ -32,15 +32,19 @@ import com.studentpal.ui.AccessDeniedNotification;
 import com.studentpal.util.ActivityUtil;
 import com.studentpal.util.Utils;
 import com.studentpal.util.logger.Logger;
+import com.studentpaladmin.ui.AdminLoginScreen;
 
 public class ClientEngine implements AppHandler {
 
-  private static final String TAG = "ClientEngine";
+  private static final String TAG = "@@ ClientEngine";
 
   /*
    * Field Members
    */
   private static ClientEngine instance = null;
+
+  //Flag for indicating if it is the device admin controller
+  private boolean             _isAdmin           = false;
 
   private Context             _launcher;
   private PackageManager      _packageManager   = null;
@@ -66,22 +70,26 @@ public class ClientEngine implements AppHandler {
     return instance;
   }
 
-  public void initialize(Context context) throws STDException {
+  public void initialize(Context context, boolean isAdmin) throws STDException {
     if (context == null) {
       throw new STDException("Context launcher should NOT be NULL");
     } else {
       this._launcher = context;
     }
 
+    this._isAdmin = isAdmin;
+
     this._activityManager = (ActivityManager)this._launcher.getSystemService(Context.ACTIVITY_SERVICE);
 
     //Register System State Broadcast receiver
-    IntentFilter intentFilter = new IntentFilter();
-    intentFilter.addAction(Intent.ACTION_SCREEN_OFF);
-    intentFilter.addAction(Intent.ACTION_SCREEN_ON);
-    intentFilter.addAction(Intent.ACTION_MAIN);
-    this._sysStateReceiver = new SystemStateReceiver();
-    this._launcher.registerReceiver(_sysStateReceiver, intentFilter);
+    if (_isAdmin) {
+      IntentFilter intentFilter = new IntentFilter();
+      intentFilter.addAction(Intent.ACTION_SCREEN_OFF);
+      intentFilter.addAction(Intent.ACTION_SCREEN_ON);
+      intentFilter.addAction(Intent.ACTION_MAIN);
+      this._sysStateReceiver = new SystemStateReceiver();
+      this._launcher.registerReceiver(_sysStateReceiver, intentFilter);
+    }
 
     //Create Telephony Manager
     this._teleManager = (TelephonyManager)this._launcher.getSystemService(Context.TELEPHONY_SERVICE);
@@ -95,23 +103,29 @@ public class ClientEngine implements AppHandler {
     //Create IoHandler instance
     this.ioHandler =  IoHandler.getInstance();
 
-    //Create AccessController instance
-    this.accController = AccessController.getInstance();
+    if (_isAdmin) {
+      //Create AccessController instance
+      this.accController = AccessController.getInstance();
 
-    //Create DaemonHandler instance
-    this.daemonHandler = DaemonHandler.getInstance();
+      //Create DaemonHandler instance
+      this.daemonHandler = DaemonHandler.getInstance();
+    }
 
     //Create DBaseManager instance
     this.dbaseManager = DBaseManager.getInstance();
 
     if (appHandlerSet == null) {
       appHandlerSet = new HashSet<AppHandler>();
+
       appHandlerSet.add(msgHandler);
       appHandlerSet.add(ioHandler);
-      appHandlerSet.add(accController);
-      appHandlerSet.add(daemonHandler);
 
-//      appHandlerAry.add(dbaseManager);
+      if (_isAdmin) {
+        appHandlerSet.add(accController);
+        appHandlerSet.add(daemonHandler);
+      }
+
+//      appHandlerSet.add(dbaseManager);
     }
   }
 
@@ -264,6 +278,9 @@ public class ClientEngine implements AppHandler {
       throw new STDException("Unable to login, got invalid login name of " + loginName
           + ", invalid login password of " + loginPwd);
     }
+    //This is a Admin engine
+    engine.initialize(AdminLoginScreen.this, true);
+    engine.launch();
 
     AdminUser user = new AdminUser(loginName, loginPwd);
     Request request = new LoginRequest(Event.TASKNAME_LOGIN_ADMIN, user);
@@ -282,3 +299,6 @@ public class ClientEngine implements AppHandler {
     this._launcher.sendBroadcast(intent);
   }
 }
+
+
+

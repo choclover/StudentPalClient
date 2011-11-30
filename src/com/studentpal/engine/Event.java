@@ -89,10 +89,13 @@ public class Event {
    */
   public static final int ERRCODE_NOERROR                   = 0;
   public static final int ERRCODE_TIMEOUT                   = 100;
+  public static final int ERRCODE_USERNAME_NOT_EXIST        = 101;
+  public static final int ERRCODE_PASSWORD_MISMATCH         = 102;
   public static final int ERRCODE_CLIENT_CONN_LOST          = 200;
   public static final int ERRCODE_SERVER_CONN_LOST          = 300;
   public static final int ERRCODE_MSG_FORMAT_ERR            = 400;
   public static final int ERRCODE_RESP_MSG_FORMAT_ERR       = 401;
+
   public static final int ERRCODE_SERVER_INTERNAL_ERR       = 500;
 
   /*
