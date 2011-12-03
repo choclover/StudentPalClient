@@ -60,9 +60,9 @@ public class Event {
   public static final String TASKNAME_SetAppAccessCategory = "SetAppAccessCategory";
   //public static final String TASKNAME_SetAccessCategories  = "SetAccessCategories";
   /* Tasks from Phone */
-  public static final String TASKNAME_LOGIN         = "LOGIN";
-  public static final String TASKNAME_LOGIN_ADMIN   = "LOGIN_ADMIN";
-  public static final String TASKNAME_LOGOUT        = "LOGOUT";
+  public static final String TASKNAME_LOGIN         = "Login";
+  public static final String TASKNAME_LOGIN_ADMIN   = "LoginAdmin";
+  public static final String TASKNAME_LOGOUT        = "Logout";
 
   /*
    * Configuration constants
@@ -89,10 +89,13 @@ public class Event {
    */
   public static final int ERRCODE_NOERROR                   = 0;
   public static final int ERRCODE_TIMEOUT                   = 100;
+  public static final int ERRCODE_USERNAME_NOT_EXIST        = 101;
+  public static final int ERRCODE_PASSWORD_MISMATCH         = 102;
   public static final int ERRCODE_CLIENT_CONN_LOST          = 200;
   public static final int ERRCODE_SERVER_CONN_LOST          = 300;
   public static final int ERRCODE_MSG_FORMAT_ERR            = 400;
   public static final int ERRCODE_RESP_MSG_FORMAT_ERR       = 401;
+
   public static final int ERRCODE_SERVER_INTERNAL_ERR       = 500;
 
   /*
@@ -116,18 +119,23 @@ public class Event {
   public static final String TXT_ACCESS_TYPE_PERMITTED = "access_permitted";
 
   //signaling that a request or response is coming in
+  public static final int SIGNAL_TYPE_UNKNOWN                    = -1;
   public static final int SIGNAL_TYPE_MSG_FROM_SVR               = 101;
   public static final int SIGNAL_TYPE_MSG_TO_SVR                 = 102;
   public static final int SIGNAL_TYPE_START_WATCHING_APP         = 103;
   public static final int SIGNAL_TYPE_STOP_WATCHING_APP          = 104;
-  public static final int SIGNAL_TYPE_OUTSTREAM_READY            = 105;
-  public static final int SIGNAL_TYPE_DEVICE_ADMIN_ENABLED       = 106;
-  public static final int SIGNAL_TYPE_DEVICE_ADMIN_DISABLED      = 107;
-  public static final int SIGNAL_TYPE_REG_FILTERED_PKG           = 108;
-  public static final int SIGNAL_TYPE_UNREG_FILTERED_PKG         = 109;
 
   public static final int SIGNAL_SHOW_ACCESS_DENIED_NOTIFICATION = 111;
   public static final int SIGNAL_ACCESS_RESCHEDULE_DAILY         = 112;
+
+  //------------------------------------------------------------------
+  public static final int SIGNAL_TYPE_NETWORK_FAIL               = 150;
+  public static final int SIGNAL_TYPE_OUTSTREAM_READY            = 151;
+
+  public static final int SIGNAL_TYPE_DEVICE_ADMIN_ENABLED       = 162;
+  public static final int SIGNAL_TYPE_DEVICE_ADMIN_DISABLED      = 163;
+  public static final int SIGNAL_TYPE_REG_FILTERED_PKG           = 164;
+  public static final int SIGNAL_TYPE_UNREG_FILTERED_PKG         = 165;
 
   public static final int SIGNAL_TYPE_START_DAEMONTASK           = 201;
   public static final int SIGNAL_TYPE_STOP_DAEMONTASK            = 202;
@@ -136,6 +144,10 @@ public class Event {
   public static final int SIGNAL_TYPE_DAEMON_WD_REQ              = 204;
   public static final int SIGNAL_TYPE_DAEMON_WD_RESP             = 205;
   public static final int SIGNAL_TYPE_DAEMON_WD_TIMEOUT          = 206;
+
+  //-------------------------------------------------------------------
+  public static final int SIGNAL_TYPE_RESP_LOGIN                 = 300;
+  public static final int SIGNAL_TYPE_RESP_GetAppList            = 301;
 
 
   private static final HashMap<Integer, String> ERRCODE_DESC_MAPPER

@@ -22,7 +22,7 @@ public class MainAppService extends Service {
    */
 //  public static final int CMD_START_WATCHING_APP = 100;
 //  public static final int CMD_STOP_WATCHING_APP  = 101;
-  
+
   public static final boolean forTest = true;
 
   /*
@@ -93,8 +93,11 @@ public class MainAppService extends Service {
     switch (cmd) {
     case SIGNAL_TYPE_START_WATCHING_APP:
       try {
-        engine.initialize(this);
+        //This is a Client engine
+        engine.initialize(this, false);
         engine.launch();
+
+        engine.loginServerFromClient();
 
       } catch (STDException e) {
         Logger.w(TAG, e.toString());

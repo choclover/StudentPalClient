@@ -26,7 +26,7 @@ public class TimeRange {
   //@Deprecated
   private void setStartTime(int hour, int minute) throws STDException {
     if (startTime == null) {
-      startTime = new ScheduledTime(ActivityUtil.getString(R.string.start_time), true);
+      startTime = new ScheduledTime(ResourceManager.RES_STR_START_TIME, true);
     }
     _setTime(startTime, hour, minute);
   }
@@ -34,7 +34,7 @@ public class TimeRange {
   //@Deprecated
   private void setEndTime(int hour, int minute) throws STDException {
     if (endTime == null) {
-      endTime = new ScheduledTime(ActivityUtil.getString(R.string.end_time), false);
+      endTime = new ScheduledTime(ResourceManager.RES_STR_END_TIME, false);
     }
     _setTime(endTime, hour, minute);
   }

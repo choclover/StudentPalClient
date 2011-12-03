@@ -1,5 +1,7 @@
 package com.studentpal.app.handler;
 
+import static com.studentpal.engine.Event.*;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -11,19 +13,18 @@ import java.net.UnknownHostException;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.studentpal.app.ResourceManager;
 import com.studentpal.engine.ClientEngine;
 import com.studentpal.engine.Event;
 import com.studentpal.engine.request.Request;
 import com.studentpal.model.codec.Codec;
 import com.studentpal.model.exception.STDException;
-import com.studentpal.R;
 import com.studentpal.util.Utils;
 import com.studentpal.util.logger.Logger;
 
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-
 
 public class IoHandler implements AppHandler {
 
@@ -34,15 +35,16 @@ public class IoHandler implements AppHandler {
    * Field members
    */
   private static IoHandler instance = null;
+  private static String serverIP = "";
 
   private ClientEngine  engine = null;
   private MessageHandler msgHandler = null;
 
+  //private boolean isLogin = false;  //TODO how to use this flag in client?
+
   private Socket socketConn = null;
   private BufferedInputStream bis = null;
   private BufferedOutputStream bos = null;
-  //private boolean isLogin = false;  //TODO how to use this flag in client?
-  private static String serverIP = "";
 
   private InputConnectionThread inputConnThread  = null;
   private OutputConnectionThread outputConnThread  = null;
@@ -66,22 +68,28 @@ public class IoHandler implements AppHandler {
     this.engine = ClientEngine.getInstance();
     this.msgHandler = this.engine.getMsgHandler();
 
-    Runnable r = new Runnable() {
-      @Override
-      public void run() {
-        init_network();
-      }
-    };
-    new Thread(r).start();
+    if (false) {    //init network synchronously
+      //init_network();
+    } else {    //asynchronously
+      Runnable r = new Runnable() {
+        @Override
+        public void run() {
+          init_network();
+        }
+      };
+      new Thread(r).start();
+    }
   }
 
   @Override
   public void terminate() {
     if (inputConnThread != null) {
       inputConnThread.terminate();
+      inputConnThread = null;
     }
     if (outputConnThread != null) {
       outputConnThread.terminate();
+      outputConnThread = null;
     }
 
     if (bis != null)
@@ -112,12 +120,15 @@ public class IoHandler implements AppHandler {
      */
     // TODO read from config
     String addr = "";
-    addr = "192.168.10.100";
-    //addr = "10.60.4.64";
-    addr = engine.getContext().getString(R.string.target_svr_ip);
+
+    if (! engine.isAdmin()) {
+      addr = engine.getContext().getString(com.studentpal.R.string.target_svr_ip);
+    } else {
+      addr = ResourceManager.target_svr_ip;
+    }
 
     //Read from Launcher Screen
-    if (Utils.isEmptyString(serverIP) == false) {
+    if (Utils.isValidIpv4Address(serverIP)) {
       addr = serverIP;
     }
 
@@ -141,19 +152,22 @@ public class IoHandler implements AppHandler {
   public void sendMsgStr(String msg) {
     try {
       if (outputConnThread != null) {
+        //通过Output Connection线程去发送message
         outputConnThread.sendMsgStr(msg);
       } else {
-        Logger.w(TAG, "IO connection is NULL");
+        Logger.w(TAG, "Output connection is NULL");
       }
     } catch (STDException e) {
       Logger.w(TAG, "SendMsgStr() got error of "+e.getMessage());
     }
   }
 
-  public void handleResponseMessage(JSONObject msgObj) {
-    //TODO
+  public void sendSignalToMainUI(int signalType) {
+    Message signal = msgHandler.obtainMessage(signalType);
+    msgHandler.sendMessage(signal);
   }
 
+  //For test Launcher screen purpose
   public static void setServerIP(String ip) {
     serverIP = ip;
   }
@@ -163,27 +177,19 @@ public class IoHandler implements AppHandler {
   }
 
   private void init_network() {
+    //reset the network
     if (socketConn != null) {
       try { socketConn.close(); }
       catch (IOException e) { e.printStackTrace(); }
       socketConn = null;
     }
 
-    while (socketConn == null) {
-      socketConn = constructSocketConnection();
-      if (socketConn == null) {
-        Logger.w(TAG, "Creating Socket returns NULL");
-        try {
-          Thread.sleep(2000);
-        } catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-      }
+    socketConn = constructSocketConnection();
+    if (socketConn == null) {
+      Logger.w(TAG, "Creating Socket returns NULL!");
+      sendSignalToMainUI(Event.SIGNAL_TYPE_NETWORK_FAIL);
 
-      break;  //FIXME: design a re-connect or retry method
-    }
-
-    if (socketConn != null) {
+    } else {
       try {
         bis = new BufferedInputStream(socketConn.getInputStream());
         bos = new BufferedOutputStream(socketConn.getOutputStream());
@@ -199,9 +205,10 @@ public class IoHandler implements AppHandler {
     }
   }
 
+  @SuppressWarnings("unused")
   private Socket constructSocketConnection() {
     Socket aSock = null;
-    final int RETRY_TIMES = 5;
+    final int RETRY_TIMES = 1;
 
     for (int i=0; i<RETRY_TIMES; i++) {
       try {
@@ -223,7 +230,9 @@ public class IoHandler implements AppHandler {
       if (aSock != null) break;
 
       try {
-        Thread.sleep((i*10+5) * 1000);
+        if (RETRY_TIMES > 1) {
+          Thread.sleep((i*10+5) * 1000);  //休息时间逐渐延长
+        }
       } catch (InterruptedException e) {
         Logger.w(TAG, e.toString());
       }
@@ -232,12 +241,80 @@ public class IoHandler implements AppHandler {
     return aSock;
   }
 
+  /*
+   * Received a "R" type message from server,
+   * then send the incoming request to MessageHandler to handle
+   */
+  public void handleRequestMessage(JSONObject msgObjRoot) throws JSONException {
+    try {
+      String reqPkgName = Request.class.getName();
+      if (reqPkgName.indexOf('.') != -1) {
+        reqPkgName = reqPkgName.substring(0, reqPkgName.lastIndexOf('.')+1);
+      } else {
+        reqPkgName = "";
+      }
+
+      String reqType = msgObjRoot.getString(Event.TAGNAME_CMD_TYPE);
+      String reqClazName = reqPkgName + reqType + "Request";
+      Logger.i(TAG, "Ready to create new instance of:"+reqClazName);
+
+      Request request;
+      request = (Request) Class.forName(reqClazName).newInstance();
+
+      if (request != null) {
+        int msgId = msgObjRoot.getInt(Event.TAGNAME_MSG_ID);
+        request.setRequestSeq(msgId);
+
+        if (msgObjRoot.has(Event.TAGNAME_ARGUMENTS)) {
+          String args = msgObjRoot.getString(Event.TAGNAME_ARGUMENTS);
+          request.setInputArguments(args);
+        }
+
+        //Received a REQUEST message from server,
+        //then send the incoming request to MessageHandler to handle
+        msgHandler.receiveMessageFromServer(request);
+      }
+
+    } catch (InstantiationException ex) {
+      Logger.w(TAG, ex.toString());
+    } catch (IllegalAccessException e) {
+      Logger.w(TAG, e.toString());
+    } catch (ClassNotFoundException e) {
+      Logger.w(TAG, e.toString());
+    }
+  }
+
+  /*
+   * Received a "A" type message from server,
+   * then send the incoming response to MessageHandler to handle
+   */
+  public void handleResponseMessage(JSONObject msgObjRoot) throws JSONException {
+    String respType = msgObjRoot.getString(Event.TAGNAME_CMD_TYPE);
+    int errCode = msgObjRoot.getInt(TAGNAME_ERR_CODE);
+    int evtType = SIGNAL_TYPE_UNKNOWN;
+    Event respEvt = null;
+
+    if (Request.isEqualRequestType(respType, TASKNAME_LOGIN_ADMIN)) {
+      evtType = SIGNAL_TYPE_RESP_LOGIN;
+      respEvt = new Event();
+      respEvt.setData(evtType, errCode, null);
+    }
+
+    if (evtType != SIGNAL_TYPE_UNKNOWN) {
+      Message msg = msgHandler.obtainMessage(evtType, respEvt);
+      msgHandler.sendMessage(msg);
+    }
+  }
+
   //**************************************************************************//
-  //Connection thread
+  /**
+   * Output Connection thread
+   * @author Simon He
+   */
   class OutputConnectionThread extends Thread/*HandlerThread*/ {
     private static final String TAG = "@@ OutputConnectionThread";
     private Handler outputMsgHandler = null;
-    private boolean isReady = false;
+//    private boolean isReady = false;
 
     public OutputConnectionThread() {
       super(TAG);
@@ -252,9 +329,9 @@ public class IoHandler implements AppHandler {
       }
     }
 
-//    public boolean isReady() {
-//      return isReady;
-//    }
+    //public boolean isReady() {
+    //  return isReady;
+    //}
 
     public void run() {
       /*
@@ -276,17 +353,25 @@ public class IoHandler implements AppHandler {
       };
 
       //we can start to login server now since OUTPUT stream is ready
-      Message signal = msgHandler.obtainMessage(Event.SIGNAL_TYPE_OUTSTREAM_READY);
-      msgHandler.sendMessage(signal);
+      sendSignalToMainUI(Event.SIGNAL_TYPE_OUTSTREAM_READY);
 
       Looper.loop();
     }
 
+    public void sendMsgStr(String msgStr) throws STDException {
+      if (this.outputMsgHandler == null) {
+        throw new STDException("Output Msg handler should NOT be null!");
+      }
+      //通过线程内部的Handler去处理message，从而不再占用主UI线程去处理message
+      Message msg = this.outputMsgHandler.obtainMessage(0, msgStr);
+      this.outputMsgHandler.sendMessage(msg);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
     private void sendMsgStr_internal(String msg) throws STDException {
       if (bos == null) {
         throw new STDException("Output stream should NOT be null!");
       }
-
       Logger.i("Ready to send msg:\n"+msg);
 
       try {
@@ -304,32 +389,22 @@ public class IoHandler implements AppHandler {
       }
     }
 
-    ////////////////////////////////////////////////////////////////////////////
-    public void sendMsgStr(String msgStr) throws STDException {
-      if (this.outputMsgHandler == null) {
-        throw new STDException("Output Msg handler should NOT be null!");
-      }
-      Message msg = this.outputMsgHandler.obtainMessage(0, msgStr);
-      this.outputMsgHandler.sendMessage(msg);
-    }
-
   }//class OutputConnectionThread
 
   //**************************************************************************//
+  /**
+   * Input Connection thread
+   * @author Simon He
+   */
   class InputConnectionThread extends Thread {
     private static final String TAG = "@@ InputConnectionThread";
 
     private boolean isStop = false;
-//    private boolean isReady = false;
 
     public void terminate() {
       isStop = true;
       this.interrupt();
     }
-
-//    public boolean isReady() {
-//      return isReady;
-//    }
 
     public void run() {
       try {
@@ -353,33 +428,9 @@ public class IoHandler implements AppHandler {
               JSONObject msgObjRoot = new JSONObject(msgStr);
               String msgType = msgObjRoot.getString(Event.TAGNAME_MSG_TYPE);
 
-              if (msgType.equals(Event.MESSAGE_HEADER_REQ)) {  //This is a incoming request
-                String reqPkgName = Request.class.getName();
-                if (reqPkgName.indexOf('.') != -1) {
-                  reqPkgName = reqPkgName.substring(0, reqPkgName.lastIndexOf('.')+1);
-                } else {
-                  reqPkgName = "";
-                }
-
-                String reqType = msgObjRoot.getString(Event.TAGNAME_CMD_TYPE);
-                String reqClazName = reqPkgName + reqType + "Request";
-                Logger.i(TAG, "Ready to new instance of:"+reqClazName);
-
-                Request request;
-                request = (Request) Class.forName(reqClazName).newInstance();
-
-                if (request != null) {
-                  int msgId = msgObjRoot.getInt(Event.TAGNAME_MSG_ID);
-                  request.setRequestSeq(msgId);
-
-                  if (msgObjRoot.has(Event.TAGNAME_ARGUMENTS)) {
-                    String args = msgObjRoot.getString(Event.TAGNAME_ARGUMENTS);
-                    request.setInputArguments(args);
-                  }
-
-                  // send incoming request to MessageHandler to handle
-                  msgHandler.sendMessageToServer(request);
-                }
+              if (msgType.equals(Event.MESSAGE_HEADER_REQ)) {
+                //This is a incoming request message
+                handleRequestMessage(msgObjRoot);
 
               } else if (msgType.equals(Event.MESSAGE_HEADER_ACK)) {
                 //This is a response message
@@ -393,12 +444,6 @@ public class IoHandler implements AppHandler {
             } catch (JSONException ex) {
               Logger.w(TAG, "JSON paring error for request:\n\t" + msgStr);
               Logger.w(TAG, ex.toString());
-            } catch (InstantiationException ex) {
-              Logger.w(TAG, ex.toString());
-            } catch (IllegalAccessException e) {
-              Logger.w(TAG, e.toString());
-            } catch (ClassNotFoundException e) {
-              Logger.w(TAG, e.toString());
             }
           }
 

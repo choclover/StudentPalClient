@@ -16,9 +16,9 @@ public class AccessDeniedNotification extends Activity {
     super.onCreate(savedInstanceState);
 
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setMessage(ActivityUtil.getString(R.string.operation_forbidden_warning));
+    builder.setMessage(ResourceManager.RES_STR_OPERATION_DENIED);
     builder.setCancelable(false);  //cannot be dismissed by clicking BACK button
-    builder.setPositiveButton(R.string.send_request,
+    builder.setPositiveButton(ResourceManager.RES_STR_SENDREQUEST,
       new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int id) {
           //FIXME
@@ -30,7 +30,7 @@ public class AccessDeniedNotification extends Activity {
           dismiss(dialog, false);
         }
     });
-    builder.setNegativeButton(R.string.cancel,
+    builder.setNegativeButton(ResourceManager.RES_STR_CANCEL,
       new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int id) {
           dismiss(dialog, true);

@@ -26,6 +26,7 @@ import android.widget.Toast;
 
 import com.studentpal.R;
 import com.studentpal.app.ResourceManager;
+import com.studentpal.engine.ClientEngine;
 import com.studentpal.engine.Event;
 import com.studentpal.util.logger.Logger;
 
@@ -42,18 +43,29 @@ public class ActivityUtil {
   private static Resources inner_res = null;
   //private static Activity  instance  = null;
 
-  static {
-    if (inner_res == null) {
-      inner_res = new Activity().getResources();
-    }
-  }
+//  static {
+//    if (inner_res == null) {
+//      inner_res = new Activity().getResources();
+//    }
+//  }
 
   private ActivityUtil() {
   }
 
   //////////////////////////////////////////////////////////////////////////////
   public static String getString(int strResId) {
-    return inner_res.getString(strResId);
+    Context context = ClientEngine.getInstance().getContext();
+    return getString(context, strResId);
+  }
+
+  public static String getString(Context context, int strResId) {
+    String result = null;
+    if (context != null) {
+      result = context.getString(strResId);
+    } else {
+      Logger.w(TAG, "Cannot get string resource for ID of "+strResId);
+    }
+    return result;
   }
 
   /*
@@ -187,26 +199,26 @@ public class ActivityUtil {
 
   public static void showQuitAppDialog(final Activity parent) {
     AlertDialog.Builder builder = new AlertDialog.Builder(parent);
-    builder.setTitle(getString(R.string.exit_app)).setMessage(
-        getString(R.string.exit_app));
-    builder.setPositiveButton(R.string.confirm,
+    builder.setTitle(ResourceManager.RES_STR_QUITAPP).setMessage(
+        ResourceManager.RES_STR_QUITAPP);
+    builder.setPositiveButton(ResourceManager.RES_STR_OK,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int whichButton) {
             parent.finish();
             exitApp();
           }
-        }).setNegativeButton(getString(R.string.cancel), null);
+        }).setNegativeButton(ResourceManager.RES_STR_CANCEL, null);
 
     builder.create().show();
   }
 
-  public static void showConfirmDialog(final Activity parent,
+  public static void showConfirmDialog(final Context parent,
       String title, String msgStr) {
     AlertDialog.Builder builder = new AlertDialog.Builder(parent);
     builder.setTitle(title);
     builder.setMessage(msgStr);
     builder.setCancelable(false);
-    builder.setPositiveButton(R.string.confirm, null);
+    builder.setPositiveButton(ResourceManager.RES_STR_OK, null);
 
     AlertDialog alert = builder.create();
     alert.show();

@@ -23,6 +23,24 @@ public abstract class Request /*extends Message*/ {
 
   protected int req_seq = Event.MSG_ID_INVALID;
 
+  //Global MSG ID which will increase by 1 for each different request instance
+  private static int gMsgId = 0;
+
+  /*
+   * Methods
+   */
+  public static int getNextMsgId() {
+    return ++gMsgId;
+  }
+  public static void resetMsgId() {
+    gMsgId = 0;
+  }
+
+  public static boolean isEqualRequestType(String reqType1, String reqType2) {
+    return reqType1!=null && reqType2!=null && reqType1.equals(reqType2);
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
   public void execute(MessageHandler msgHandler) {
   }
 

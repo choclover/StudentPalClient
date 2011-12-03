@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import com.studentpal.R;
+import com.studentpal.app.ResourceManager;
 import com.studentpal.engine.Event;
 import com.studentpal.model.exception.STDException;
 import com.studentpal.util.logger.Logger;
@@ -18,30 +19,30 @@ import com.studentpal.util.logger.Logger;
  */
 public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
   private static final String TAG = "MyDeviceAdminReceiver";
-  
+
   /*
    * Member fields
    */
   private Activity            context          = null;
   private ComponentName       mDeviceAdminInst = null;
   private DevicePolicyManager mDPM             = null;
-  
+
   /*
    * Methods
    */
   public MyDeviceAdminReceiver() {
   }
-  
+
   public MyDeviceAdminReceiver(Activity context) throws STDException {
     if (context == null) {
       throw new STDException("Context param should NOT be NULL!");
     }
-    
+
     this.context = context;
     this.mDPM = (DevicePolicyManager)context.getSystemService(Context.DEVICE_POLICY_SERVICE);
-    
+
   }
-  
+
   @Override
   public void onEnabled(Context context, Intent intent) {
     Logger.d(TAG, "Device Admin is Enabled!");
@@ -49,7 +50,8 @@ public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
 
   @Override
   public CharSequence onDisableRequested(Context context, Intent intent) {
-    return context.getResources().getString(R.string.device_admin_deactivated_warning);
+    //return context.getResources().getString(R.string.device_admin_deactivated_warning);
+    return ResourceManager.RES_STR_DEVICE_ADMIN_DEACTIVATED_WARNING;
   }
 
   @Override
@@ -77,7 +79,7 @@ public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
     if (mDeviceAdminInst == null) {
       mDeviceAdminInst = new ComponentName(context, MyDeviceAdminReceiver.class);
     }
-    
+
     Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
     intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, mDeviceAdminInst);
 //    intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
@@ -92,7 +94,7 @@ public class MyDeviceAdminReceiver extends DeviceAdminReceiver {
       Logger.w(TAG, "Device Admin instance should NOT be NULL!");
     }
   }
-  
+
   // //////////////////////////////////////////////////////////////////////////
-  
+
 }
