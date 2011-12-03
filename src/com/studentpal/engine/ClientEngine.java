@@ -60,6 +60,12 @@ public class ClientEngine implements AppHandler {
   private DaemonHandler       daemonHandler     = null;
   private DBaseManager        dbaseManager      = null;
 
+  //Global MSG ID which will increase by 1 for each different request instance
+  private static int gMsgId = 0;
+
+  /*
+   * Methods
+   */
   private ClientEngine() {
   }
 
@@ -78,8 +84,12 @@ public class ClientEngine implements AppHandler {
     }
 
     this._isAdmin = isAdmin;
+    ClientEngine.gMsgId = 0;
 
+    //Create Activity Manager
     this._activityManager = (ActivityManager)this._launcher.getSystemService(Context.ACTIVITY_SERVICE);
+    //Create Telephony Manager
+    this._teleManager = (TelephonyManager)this._launcher.getSystemService(Context.TELEPHONY_SERVICE);
 
     //Register System State Broadcast receiver
     if (! _isAdmin) {
@@ -90,9 +100,6 @@ public class ClientEngine implements AppHandler {
       this._sysStateReceiver = new SystemStateReceiver();
       this._launcher.registerReceiver(_sysStateReceiver, intentFilter);
     }
-
-    //Create Telephony Manager
-    this._teleManager = (TelephonyManager)this._launcher.getSystemService(Context.TELEPHONY_SERVICE);
 
     /**
      * App Handlers
@@ -198,6 +205,12 @@ public class ClientEngine implements AppHandler {
   }
 
   // Utility Methods ////////////////////////////////////////////////////////////
+  public static int getNextMsgId() {
+    return ++gMsgId;
+  }
+  public static void resetMsgId() {
+    gMsgId = 0;
+  }
 
   public String getPhoneNum() {
     String result = "";

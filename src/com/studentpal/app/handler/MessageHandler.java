@@ -6,6 +6,11 @@ import static com.studentpal.engine.Event.SIGNAL_TYPE_MSG_FROM_SVR;
 import static com.studentpal.engine.Event.SIGNAL_TYPE_MSG_TO_SVR;
 import static com.studentpal.engine.Event.SIGNAL_TYPE_NETWORK_FAIL;
 import static com.studentpal.engine.Event.SIGNAL_TYPE_OUTSTREAM_READY;
+import static com.studentpal.engine.Event.SIGNAL_TYPE_RESP_LOGIN;
+import static com.studentpal.engine.Event.SIGNAL_TYPE_UNKNOWN;
+import static com.studentpal.engine.Event.TAGNAME_ERR_CODE;
+import static com.studentpal.engine.Event.TASKNAME_LOGIN;
+import static com.studentpal.engine.Event.TASKNAME_LOGIN_ADMIN;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -13,6 +18,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.content.Context;
 import android.os.Message;
@@ -130,9 +138,28 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     this.sendMessage(msg);
   }
 
-  public void receiveMessageFromServer(Request req) {
-    Message msg = this.obtainMessage(SIGNAL_TYPE_MSG_FROM_SVR, req);
-    this.sendMessage(msg);
+  public void receiveMessageFromServer(String msgStr) {
+    try {
+      JSONObject msgObjRoot = new JSONObject(msgStr);
+      String msgType = msgObjRoot.getString(Event.TAGNAME_MSG_TYPE);
+
+      if (msgType.equals(Event.MESSAGE_HEADER_REQ)) {
+        // This is a incoming request message
+        handleRequestMessage(msgObjRoot);
+
+      } else if (msgType.equals(Event.MESSAGE_HEADER_ACK)) {
+        // This is a response message
+        handleResponseMessage(msgObjRoot);
+
+      } else {
+        Logger.i(TAG, "Unsupported Incoming MESSAGE type(" + msgType
+            + ") in this version.");
+      }
+
+    } catch (JSONException ex) {
+      Logger.w(TAG, "JSON paring error for request:\n\t" + msgStr);
+      Logger.w(TAG, ex.toString());
+    }
   }
 
   @Override
@@ -206,6 +233,78 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
   private void initialize() {
     if (eventsListenerMap == null) {
       eventsListenerMap = new HashMap<Integer, Set<EventListener>>();
+    }
+  }
+
+  public void receiveMessageFromServer(Request req) {
+    Message msg = this.obtainMessage(SIGNAL_TYPE_MSG_FROM_SVR, req);
+    this.sendMessage(msg);
+  }
+
+  /*
+   * Received a "R" type message from server,
+   * then send the incoming request to MessageHandler to handle
+   */
+  private void handleRequestMessage(JSONObject msgObjRoot) throws JSONException {
+    try {
+      String reqPkgName = Request.class.getName();
+      if (reqPkgName.indexOf('.') != -1) {
+        reqPkgName = reqPkgName.substring(0, reqPkgName.lastIndexOf('.')+1);
+      } else {
+        reqPkgName = "";
+      }
+
+      String reqType = msgObjRoot.getString(Event.TAGNAME_CMD_TYPE);
+      String reqClazName = reqPkgName + reqType + "Request";
+      Logger.i(TAG, "Ready to create new instance of:"+reqClazName);
+
+      Request request;
+      request = (Request) Class.forName(reqClazName).newInstance();
+
+      if (request != null) {
+        int msgId = msgObjRoot.getInt(Event.TAGNAME_MSG_ID);
+        request.setRequestSeq(msgId);
+
+        if (msgObjRoot.has(Event.TAGNAME_ARGUMENTS)) {
+          String args = msgObjRoot.getString(Event.TAGNAME_ARGUMENTS);
+          request.setInputArguments(args);
+        }
+
+        //Received a REQUEST message from server,
+        //then send the incoming request to MessageHandler to handle
+        receiveMessageFromServer(request);
+      }
+
+    } catch (InstantiationException ex) {
+      Logger.w(TAG, ex.toString());
+    } catch (IllegalAccessException e) {
+      Logger.w(TAG, e.toString());
+    } catch (ClassNotFoundException e) {
+      Logger.w(TAG, e.toString());
+    }
+  }
+
+  /*
+   * Received a "A" type message from server,
+   * then send the incoming response to MessageHandler to handle
+   */
+  private void handleResponseMessage(JSONObject msgObjRoot) throws JSONException {
+    String respType = msgObjRoot.getString(Event.TAGNAME_CMD_TYPE);
+    int errCode = msgObjRoot.getInt(TAGNAME_ERR_CODE);
+    int evtType = SIGNAL_TYPE_UNKNOWN;
+    Event respEvt = null;
+
+    if (Request.isEqualRequestType(respType, TASKNAME_LOGIN_ADMIN)) {
+      evtType = SIGNAL_TYPE_RESP_LOGIN;
+      respEvt = new Event();
+      respEvt.setData(evtType, errCode, null);
+    } else if (Request.isEqualRequestType(respType, TASKNAME_LOGIN)) {
+      //TODO
+    }
+
+    if (evtType != SIGNAL_TYPE_UNKNOWN) {
+      Message msg = this.obtainMessage(evtType, respEvt);
+      this.sendMessage(msg);
     }
   }
 

@@ -1,35 +1,35 @@
 package com.studentpal.app.handler;
 
-import static com.studentpal.engine.Event.*;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import com.studentpal.app.ResourceManager;
-import com.studentpal.engine.ClientEngine;
-import com.studentpal.engine.Event;
-import com.studentpal.engine.request.Request;
-import com.studentpal.model.codec.Codec;
-import com.studentpal.model.exception.STDException;
-import com.studentpal.util.Utils;
-import com.studentpal.util.logger.Logger;
+import java.nio.channels.SocketChannel;
 
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
-public class IoHandler implements AppHandler {
+import com.studentpal.app.ResourceManager;
+import com.studentpal.engine.ClientEngine;
+import com.studentpal.engine.Event;
+import com.studentpal.model.codec.Codec;
+import com.studentpal.model.exception.STDException;
+import com.studentpal.util.Utils;
+import com.studentpal.util.logger.Logger;
 
+public class IoHandler implements AppHandler {
   private static final String TAG = "IoHandler";
+
+  /*
+   * Constants
+   */
   private static final int SLEEP_TIME = 100;  //mill-seconds
+  private static final String IO_CHARS_ENCODING = "UTF-8";
 
   /*
    * Field members
@@ -43,8 +43,11 @@ public class IoHandler implements AppHandler {
   //private boolean isLogin = false;  //TODO how to use this flag in client?
 
   private Socket socketConn = null;
+  //private SocketChannel socketConn = null;
+
   private BufferedInputStream bis = null;
   private BufferedOutputStream bos = null;
+  private Thread initNetworkThread = null;
 
   private InputConnectionThread inputConnThread  = null;
   private OutputConnectionThread outputConnThread  = null;
@@ -77,12 +80,15 @@ public class IoHandler implements AppHandler {
           init_network();
         }
       };
-      new Thread(r).start();
+      initNetworkThread = new Thread(r);
+      initNetworkThread.start();
     }
   }
 
   @Override
   public void terminate() {
+    Logger.v(TAG, "enter terminate()!");
+
     if (inputConnThread != null) {
       inputConnThread.terminate();
       inputConnThread = null;
@@ -112,41 +118,10 @@ public class IoHandler implements AppHandler {
       } catch (IOException e) {
         Logger.w(TAG, e.toString());
       }
-  }
 
-  public String getRemoteSvrIP() {
-    /*
-     * Do NOT use localhost/127.0.0.1 which is the phone itself
-     */
-    // TODO read from config
-    String addr = "";
-
-    if (! engine.isAdmin()) {
-      addr = engine.getContext().getString(com.studentpal.R.string.target_svr_ip);
-    } else {
-      addr = ResourceManager.target_svr_ip;
-    }
-
-    //Read from Launcher Screen
-    if (Utils.isValidIpv4Address(serverIP)) {
-      addr = serverIP;
-    }
-
-    return addr;
-  }
-
-  public String getRemoteSvrDomainName() {
-    // TODO read from config
-    String addr = "coeustec.gicp.net";
-    return addr;
-  }
-
-  public int getRemoteSvrPort() {
-    return 9177;  //9123;
-  }
-
-  public String getEncoding() {
-    return "UTF-8";
+    if (initNetworkThread != null)
+      initNetworkThread.interrupt();
+    initNetworkThread = null;
   }
 
   public void sendMsgStr(String msg) {
@@ -185,7 +160,7 @@ public class IoHandler implements AppHandler {
     }
 
     socketConn = constructSocketConnection();
-    if (socketConn == null) {
+    if (socketConn == null || false==socketConn.isConnected()) {
       Logger.w(TAG, "Creating Socket returns NULL!");
       sendSignalToMainUI(Event.SIGNAL_TYPE_NETWORK_FAIL);
 
@@ -217,7 +192,10 @@ public class IoHandler implements AppHandler {
         int svrPort = getRemoteSvrPort();
 
         Logger.d(TAG, "Connecting to " + svrAddr +":"+ svrPort);
-        aSock = new Socket(InetAddress.getByName(svrAddr), svrPort);
+        aSock = new Socket();
+        InetSocketAddress isa = new InetSocketAddress(
+            InetAddress.getByName(svrAddr), svrPort);
+        aSock.connect(isa, getSocketTimeout());
         aSock.setKeepAlive(true);
         Logger.d(TAG, "Connected to "+aSock.getInetAddress().toString());
 
@@ -241,69 +219,68 @@ public class IoHandler implements AppHandler {
     return aSock;
   }
 
-  /*
-   * Received a "R" type message from server,
-   * then send the incoming request to MessageHandler to handle
-   */
-  public void handleRequestMessage(JSONObject msgObjRoot) throws JSONException {
+  private SocketChannel constructSocketChannel() {
+    SocketChannel channel = null;
+
     try {
-      String reqPkgName = Request.class.getName();
-      if (reqPkgName.indexOf('.') != -1) {
-        reqPkgName = reqPkgName.substring(0, reqPkgName.lastIndexOf('.')+1);
-      } else {
-        reqPkgName = "";
-      }
+      channel = SocketChannel.open();
 
-      String reqType = msgObjRoot.getString(Event.TAGNAME_CMD_TYPE);
-      String reqClazName = reqPkgName + reqType + "Request";
-      Logger.i(TAG, "Ready to create new instance of:"+reqClazName);
+      String svrAddr = getRemoteSvrDomainName();
+      svrAddr = getRemoteSvrIP();
+      int svrPort = getRemoteSvrPort();
 
-      Request request;
-      request = (Request) Class.forName(reqClazName).newInstance();
+      InetSocketAddress isa = new InetSocketAddress(svrAddr, svrPort);
+      channel.connect(isa);
+      channel.configureBlocking(false);
 
-      if (request != null) {
-        int msgId = msgObjRoot.getInt(Event.TAGNAME_MSG_ID);
-        request.setRequestSeq(msgId);
-
-        if (msgObjRoot.has(Event.TAGNAME_ARGUMENTS)) {
-          String args = msgObjRoot.getString(Event.TAGNAME_ARGUMENTS);
-          request.setInputArguments(args);
-        }
-
-        //Received a REQUEST message from server,
-        //then send the incoming request to MessageHandler to handle
-        msgHandler.receiveMessageFromServer(request);
-      }
-
-    } catch (InstantiationException ex) {
-      Logger.w(TAG, ex.toString());
-    } catch (IllegalAccessException e) {
+    } catch (UnknownHostException e) {
       Logger.w(TAG, e.toString());
-    } catch (ClassNotFoundException e) {
+    } catch (IOException e) {
       Logger.w(TAG, e.toString());
     }
+
+    return channel;
   }
 
-  /*
-   * Received a "A" type message from server,
-   * then send the incoming response to MessageHandler to handle
-   */
-  public void handleResponseMessage(JSONObject msgObjRoot) throws JSONException {
-    String respType = msgObjRoot.getString(Event.TAGNAME_CMD_TYPE);
-    int errCode = msgObjRoot.getInt(TAGNAME_ERR_CODE);
-    int evtType = SIGNAL_TYPE_UNKNOWN;
-    Event respEvt = null;
+  private String getRemoteSvrIP() {
+    /*
+     * Do NOT use localhost/127.0.0.1 which is the phone itself
+     */
+    // TODO read from config
+    String addr = "";
 
-    if (Request.isEqualRequestType(respType, TASKNAME_LOGIN_ADMIN)) {
-      evtType = SIGNAL_TYPE_RESP_LOGIN;
-      respEvt = new Event();
-      respEvt.setData(evtType, errCode, null);
+    if ( engine.isAdmin()) {
+      addr = ResourceManager.target_svr_ip;
+    } else {
+      addr = ResourceManager.target_svr_ip;
+      //addr = engine.getContext().getString(com.studentpal.R.string.target_svr_ip);
+
+      //Read from Launcher Screen
+      if (Utils.isValidIpv4Address(serverIP)) {
+        addr = serverIP;
+      }
     }
 
-    if (evtType != SIGNAL_TYPE_UNKNOWN) {
-      Message msg = msgHandler.obtainMessage(evtType, respEvt);
-      msgHandler.sendMessage(msg);
-    }
+    return addr;
+  }
+
+  private String getRemoteSvrDomainName() {
+    // TODO read from config
+    String addr = "coeustec.gicp.net";
+    return addr;
+  }
+
+  private int getRemoteSvrPort() {
+    return 9177;  //9123;
+  }
+
+  private String getEncoding() {
+    return IO_CHARS_ENCODING;
+  }
+
+  public int getSocketTimeout() {
+    //TODO read from config
+    return 3*1000;
   }
 
   //**************************************************************************//
@@ -424,27 +401,7 @@ public class IoHandler implements AppHandler {
               continue;
             }
 
-            try {
-              JSONObject msgObjRoot = new JSONObject(msgStr);
-              String msgType = msgObjRoot.getString(Event.TAGNAME_MSG_TYPE);
-
-              if (msgType.equals(Event.MESSAGE_HEADER_REQ)) {
-                //This is a incoming request message
-                handleRequestMessage(msgObjRoot);
-
-              } else if (msgType.equals(Event.MESSAGE_HEADER_ACK)) {
-                //This is a response message
-                handleResponseMessage(msgObjRoot);
-
-              } else {
-                Logger.i(TAG, "Unsupported Incoming MESSAGE type(" + msgType
-                    + ") in this version.");
-              }
-
-            } catch (JSONException ex) {
-              Logger.w(TAG, "JSON paring error for request:\n\t" + msgStr);
-              Logger.w(TAG, ex.toString());
-            }
+            msgHandler.receiveMessageFromServer(msgStr);
           }
 
           Thread.sleep(SLEEP_TIME);

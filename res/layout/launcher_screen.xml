@@ -22,7 +22,7 @@
             android:layout_alignParentRight="true"
             android:layout_alignParentTop="true"
             android:layout_marginRight="18dp"
-            android:text="@string/target_svr_ip" >
+            android:text="@string/target_svr_ip_default" >
         </EditText>
 
         <TextView

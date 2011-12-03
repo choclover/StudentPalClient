@@ -16,19 +16,19 @@ public class ResourceManager {
   public static final String RES_STR_WARNING = "\u8b66\u544a";  //警告
   public static final String RES_STR_ERROR = "\u9519\u8bef";  //错误
   public static final String RES_STR_FAIL = "\u5931\u8d25";  //失败
-  public static final String RES_STR_TIMEOUT = "";  //超时
-
+  public static final String RES_STR_TIMEOUT = "\u8d85\u65f6";  //超时
 
   public static final String RES_STR_LOGIN = "\u767b\u5f55";  //登录
   public static final String RES_STR_LOGIN_NAME = "\u767b\u5f55\u540d\u79f0";  //登录名称
   public static final String RES_STR_LOGIN_PWD  = "\u767b\u5f55\u5bc6\u7801";  //登录密码
-  public static final String RES_STR_TIME = "\u65f6\u95f4"; // 时间
-  public static final String RES_STR_START_TIME = "\u5f00\u59cb" + RES_STR_TIME; // 开始时间
-  public static final String RES_STR_END_TIME = "\u7ed3\u675f" + RES_STR_TIME; // 结束时间
-  public static final String RES_STR_SENDREQUEST = "\u53d1\u9001\u8bf7\u6c42"; // 发送请求
+  public static final String RES_STR_TIME = "\u65f6\u95f4";  // 时间
+  public static final String RES_STR_START_TIME = "\u5f00\u59cb" + RES_STR_TIME;  // 开始时间
+  public static final String RES_STR_END_TIME = "\u7ed3\u675f" + RES_STR_TIME;  // 结束时间
+  public static final String RES_STR_SENDREQUEST = "\u53d1\u9001\u8bf7\u6c42";  // 发送请求
 
   public static final String RES_STR_NETWORK_ERROR = "\u7f51\u7edc\u9519\u8bef";  //网络错误
   public static final String RES_STR_QUITAPP = "\u9000\u51fa\u7a0b\u5e8f\uff1f";  //退出程序？
+  public static final String RES_STR_TRYAGAIN = "\u8bf7\u91cd\u8bd5\uff01";  //请重试！
 
   public static final String RES_STR_OPERATION_DENIED =  // 很抱歉，您的操作被管理员所禁止！
       "\u5f88\u62b1\u6b49\uff0c\u60a8\u7684\u64cd\u4f5c\u88ab\u7ba1\u7406\u5458\u6240\u7981\u6b62\uff01";

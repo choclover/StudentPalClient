@@ -3,12 +3,12 @@ package com.studentpal.engine.request;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.studentpal.engine.ClientEngine;
 import com.studentpal.engine.Event;
 import com.studentpal.model.user.AdminUser;
 import com.studentpal.model.user.ClientUser;
 import com.studentpal.model.user.User;
 import com.studentpal.util.logger.Logger;
-
 
 public class LoginRequest extends Request {
   private Object _user;
@@ -37,7 +37,7 @@ public class LoginRequest extends Request {
       JSONObject reqObj = new JSONObject();
       reqObj.put(Event.TAGNAME_MSG_TYPE, Event.MESSAGE_HEADER_REQ);
       reqObj.put(Event.TAGNAME_CMD_TYPE, getName());
-      reqObj.put(Event.TAGNAME_MSG_ID, Request.getNextMsgId());
+      reqObj.put(Event.TAGNAME_MSG_ID, ClientEngine.getNextMsgId());
       reqObj.put(Event.TAGNAME_ARGUMENTS, argsObj);
 
       setOutputContent(reqObj.toString());
