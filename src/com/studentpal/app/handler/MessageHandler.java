@@ -144,11 +144,11 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
       String msgType = msgObjRoot.getString(Event.TAGNAME_MSG_TYPE);
 
       if (msgType.equals(Event.MESSAGE_HEADER_REQ)) {
-        // This is a incoming request message
+        // This is an incoming request message
         handleRequestMessage(msgObjRoot);
 
       } else if (msgType.equals(Event.MESSAGE_HEADER_ACK)) {
-        // This is a response message
+        // This is a (incoming) response message
         handleResponseMessage(msgObjRoot);
 
       } else {
@@ -247,13 +247,7 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
    */
   private void handleRequestMessage(JSONObject msgObjRoot) throws JSONException {
     try {
-      String reqPkgName = Request.class.getName();
-      if (reqPkgName.indexOf('.') != -1) {
-        reqPkgName = reqPkgName.substring(0, reqPkgName.lastIndexOf('.')+1);
-      } else {
-        reqPkgName = "";
-      }
-
+      String reqPkgName = Utils.getPackageName(Request.class);
       String reqType = msgObjRoot.getString(Event.TAGNAME_CMD_TYPE);
       String reqClazName = reqPkgName + reqType + "Request";
       Logger.i(TAG, "Ready to create new instance of:"+reqClazName);

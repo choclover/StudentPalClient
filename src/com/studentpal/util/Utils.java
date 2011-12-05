@@ -54,4 +54,15 @@ public class Utils {
     }
   }
 
+  public static String getPackageName(Class claz) {
+    String pkgName = claz.getName();
+    if (pkgName.indexOf('.') != -1) {
+      pkgName = pkgName.substring(0, pkgName.lastIndexOf('.')+1);
+    } else {
+      pkgName = "";
+    }
+
+    return pkgName;
+  }
+
 }
