@@ -24,12 +24,14 @@ import org.json.JSONObject;
 
 import android.content.Context;
 import android.os.Message;
+import android.util.Log;
 
 import com.studentpal.R;
 import com.studentpal.app.listener.EventListener;
 import com.studentpal.engine.ClientEngine;
 import com.studentpal.engine.Event;
 import com.studentpal.engine.request.Request;
+import com.studentpal.model.exception.STDException;
 import com.studentpal.util.ActivityUtil;
 import com.studentpal.util.Utils;
 import com.studentpal.util.logger.Logger;
@@ -109,7 +111,7 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     eventsListenerMap.put(evtType, evtListenerSet);
   }
 
-  public void reomveEventListener(int evtType, EventListener listener) {
+  public void removeEventListener(int evtType, EventListener listener) {
     if (evtType<=0 || listener==null) {
       Logger.w(TAG, "Invalid param with evtType of '" +evtType+
           "' or listener of " + listener);
@@ -208,7 +210,16 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
 
     case SIGNAL_TYPE_OUTSTREAM_READY:
       // IO output stream is ready, so start to login to remote server
-      // Move loginServer to Main UI Screen
+      // Move loginServer to Main Admin UI Screen
+      if (engine.isAdmin() == false) {
+        try {
+          engine.loginServerFromClient();
+        } catch (STDException e) {
+          Log.w(TAG, e.toString());
+        }
+      }
+      break;
+
     case SIGNAL_TYPE_NETWORK_FAIL:
       // show network error dialog
     default:

@@ -4,8 +4,8 @@
     <string name="launcher_name">Launcher</string>
     <string name="device_admin_label">学伴成长</string>
 
-    <string name="target_svr_ip_default">192.168.11.252</string>    
-    <!-- string name="target_svr_ip1">10.60.4.83</string>
+    <string name="target_svr_ip_default">10.60.4.69</string>
+    <!-- string name="target_svr_ip_default">192.168.11.252</string>    
     <string name="target_svr_ip2">192.168.10.101</string> -->
     
 </resources>

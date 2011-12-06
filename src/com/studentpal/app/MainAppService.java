@@ -20,9 +20,6 @@ public class MainAppService extends Service {
   /*
    * Constants
    */
-//  public static final int CMD_START_WATCHING_APP = 100;
-//  public static final int CMD_STOP_WATCHING_APP  = 101;
-
   public static final boolean forTest = true;
 
   /*
@@ -81,11 +78,11 @@ public class MainAppService extends Service {
     return null;
   }
 
-//  @Override
-//  public boolean onUnbind(Intent intent) {
-//    Logger.d(TAG, "onUnbind...");
-//    return super.onUnbind(intent);
-//  }
+  @Override
+  public boolean onUnbind(Intent intent) {
+    Logger.d(TAG, "onUnbind...");
+    return super.onUnbind(intent);
+  }
 
   //////////////////////////////////////////////////////////////////////////////
   private void handleCommand(Intent intent) {
@@ -97,7 +94,8 @@ public class MainAppService extends Service {
         engine.initialize(this, false);
         engine.launch();
 
-        engine.loginServerFromClient();
+        //Moved to MessageHandler.handleMessage()
+        //engine.loginServerFromClient();
 
       } catch (STDException e) {
         Logger.w(TAG, e.toString());

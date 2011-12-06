@@ -22,7 +22,7 @@ public class Event {
   public static final String TAGNAME_PHONE_IMSI      = "phone_imsi";
   public static final String TAGNAME_PHONE_IMEI      = "phone_imei";
   public static final String TAGNAME_LOGIN_NAME      = "login_name";
-  public static final String TAGNAME_LOGIN_PASSWD       = "login_passwd";
+  public static final String TAGNAME_LOGIN_PASSWD    = "login_passwd";
   public static final String TAGNAME_APPLICATIONS    = "applications";
   public static final String TAGNAME_APP             = "application";
   public static final String TAGNAME_APP_NAME        = "app_name";
@@ -45,7 +45,7 @@ public class Event {
   public static final String TAGNAME_RULE_REPEAT_ENDTIME    = "end_time";
 
   /*
-   * Extras contstants
+   * Extras constants
    */
   public static final String EXTRANAME_COMMAND_TYPE = "command_type";
   public static final String EXTRANAME_FILTERED_PKG = "filtered_pkgname";
@@ -72,9 +72,9 @@ public class Event {
   /*
    * Intent action / Activity name constants
    */
-  //launch the deamon service
+  //launch the daemon service
   public static final String ACTION_DAEMON_SVC          = "spaldaemon.intent.action.daemonsvc";
-  //launch the deamon activity screen, must be the same as value in the Daemon application's Manifest
+  //launch the daemon activity screen, must be the same as value in the Daemon application's Manifest
   public static final String ACTION_DAEMON_LAUNCHER_SCR = "spaldaemon.intent.action.launcherscr";
 
   public static final String ACTION_MAINSVC_INFO_UPDATED    = "studentpal.action.mainappsvc.updated";
@@ -91,6 +91,8 @@ public class Event {
   public static final int ERRCODE_TIMEOUT                   = 100;
   public static final int ERRCODE_USERNAME_NOT_EXIST        = 101;
   public static final int ERRCODE_PASSWORD_MISMATCH         = 102;
+  public static final int ERRCODE_TARGET_NOT_EXIST          = 103;
+
   public static final int ERRCODE_CLIENT_CONN_LOST          = 200;
   public static final int ERRCODE_SERVER_CONN_LOST          = 300;
   public static final int ERRCODE_MSG_FORMAT_ERR            = 400;
