@@ -18,6 +18,7 @@ public class Event {
   public static final String TAGNAME_ARGUMENTS       = "args";
   //public static final String TAGNAME_BUNDLE_PARAM    = "bundle_param";
 
+  public static final String TAGNAME_VERSION         = "version";
   public static final String TAGNAME_PHONE_NUM       = "phone_no";
   public static final String TAGNAME_PHONE_IMSI      = "phone_imsi";
   public static final String TAGNAME_PHONE_IMEI      = "phone_imei";
