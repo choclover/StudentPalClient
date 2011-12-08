@@ -1,5 +1,8 @@
 package com.studentpal.util;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Formatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,7 +57,7 @@ public class Utils {
     }
   }
 
-  public static String getPackageName(Class claz) {
+  public static String getPackageName(Class<?> claz) {
     String pkgName = claz.getName();
     if (pkgName.indexOf('.') != -1) {
       pkgName = pkgName.substring(0, pkgName.lastIndexOf('.')+1);
@@ -63,6 +66,27 @@ public class Utils {
     }
 
     return pkgName;
+  }
+
+  public static String toMd5(byte[] bytes) {
+    try {
+      MessageDigest algorithm = MessageDigest.getInstance("MD5");
+      algorithm.reset();
+      algorithm.update(bytes);
+      return toHexString(algorithm.digest(), "");
+    } catch (NoSuchAlgorithmException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  ////////////////////////////////////////////////////////////////////////////
+  private static String toHexString(byte[] bytes, String separator) {
+    StringBuilder hexString = new StringBuilder();
+    for (byte b : bytes) {
+      hexString.append(String.format("%02x", 0xFF & b))
+               .append(separator);
+    }
+    return hexString.toString();
   }
 
 }

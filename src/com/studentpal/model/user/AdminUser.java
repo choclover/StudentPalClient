@@ -1,6 +1,7 @@
 package com.studentpal.model.user;
 
 import com.studentpal.model.user.User;
+import com.studentpal.util.Utils;
 
 public class AdminUser extends User {
   private String loginName;
@@ -17,6 +18,10 @@ public class AdminUser extends User {
 
   public String getLoginPwd() {
     return loginPwd;
+  }
+
+  public String getEncryptedPwd() {
+    return loginPwd==null ? null : Utils.toMd5(loginPwd.getBytes());
   }
 
   @Override
