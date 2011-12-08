@@ -31,11 +31,10 @@ public class LoginRequest extends Request {
         argsObj.put(Event.TAGNAME_PHONE_IMSI, ((ClientUser)_user).getPhoneImsi());
       } else if (_user instanceof AdminUser) {
         argsObj.put(Event.TAGNAME_LOGIN_NAME, ((AdminUser) _user).getLoginName());
-        if (true) {//FIXME
-          argsObj.put(Event.TAGNAME_LOGIN_PASSWD, ((AdminUser) _user).getLoginPwd());
-        } else {
-          argsObj.put(Event.TAGNAME_LOGIN_PASSWD, ((AdminUser) _user).getEncryptedPwd());
-        }
+
+        String passwd = ((AdminUser) _user).getLoginPwd();
+        //passwd = ((AdminUser) _user).getEncryptedPwd();  //FIXME
+        argsObj.put(Event.TAGNAME_LOGIN_PASSWD, passwd);
       }
 
       JSONObject reqObj = new JSONObject();

@@ -15,16 +15,16 @@ import com.studentpal.util.logger.Logger;
 public class GetAppListRequest extends Request {
 
   public String getName() {
-    return Event.TASKNAME_RefreshAppList;
+    return Event.TASKNAME_GetAppList;
   }
-  
+
   public void execute() {
     try {
       JSONObject respObj = super.generateGenericReplyHeader(getName());
-      
+
       try {
         List<ClientAppInfo> appList = ClientEngine.getInstance().getAppList();
-        
+
         JSONArray appAry = new JSONArray();
         if (appList != null && appList.size() > 0) {
           for (ClientAppInfo appInfo : appList) {
@@ -33,15 +33,15 @@ public class GetAppListRequest extends Request {
             //app.put(Event.TAGNAME_APP_CLASSNAME, appInfo.getAppClassname());
             app.put(Event.TAGNAME_APP_PKGNAME, appInfo.getAppPkgname());
             app.put(Event.TAGNAME_ACCESS_CATEGORY, 1);  //FIXME
-            
+
             appAry.put(app);
           }
         }
-  
+
         JSONObject resultObj = new JSONObject();
         resultObj.put(Event.TAGNAME_APPLICATIONS, appAry);
         respObj.put(Event.TAGNAME_RESULT, resultObj);
-        
+
         respObj.put(Event.TAGNAME_ERR_CODE, Event.ERRCODE_NOERROR);
 
       } catch (Exception ex) {
@@ -51,7 +51,7 @@ public class GetAppListRequest extends Request {
       } finally {
         if (respObj != null) {
           setOutputContent(respObj.toString());
-        }        
+        }
       }
     } catch (JSONException ex) {
       Logger.w(getName(), "In execute() got an error:" + ex.toString());

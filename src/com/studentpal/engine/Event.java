@@ -57,6 +57,7 @@ public class Event {
    * TASK constants
    */
   public static final String TASKNAME_Generic               = "Generic";
+  public static final String TASKNAME_GetAppList            = "GetAppList";
   public static final String TASKNAME_RefreshAppList        = "RefreshAppList";
   public static final String TASKNAME_SetAppAccessCategory  = "SetAppAccessCategory";
   //public static final String TASKNAME_SetAccessCategories  = "SetAccessCategories";
