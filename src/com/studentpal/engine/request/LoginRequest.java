@@ -25,6 +25,8 @@ public class LoginRequest extends Request {
 
   public void execute() {
     try {
+      super.setRequestSeq(ClientEngine.getNextMsgId());
+
       JSONObject argsObj = new JSONObject();
       if (_user instanceof ClientUser) {
         argsObj.put(Event.TAGNAME_PHONE_NUM, ((ClientUser)_user).getPhoneNum());
@@ -37,12 +39,7 @@ public class LoginRequest extends Request {
         argsObj.put(Event.TAGNAME_LOGIN_PASSWD, passwd);
       }
 
-      JSONObject reqObj = new JSONObject();
-      reqObj.put(Event.TAGNAME_MSG_TYPE, Event.MESSAGE_HEADER_REQ);
-      reqObj.put(Event.TAGNAME_CMD_TYPE, getName());
-      reqObj.put(Event.TAGNAME_MSG_ID, ClientEngine.getNextMsgId());
-      reqObj.put(Event.TAGNAME_ARGUMENTS, argsObj);
-
+      JSONObject reqObj = super.generateGenericRequestHeader(getName(), argsObj);
       setOutputContent(reqObj.toString());
 
     } catch (JSONException ex) {

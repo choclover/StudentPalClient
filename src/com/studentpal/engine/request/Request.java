@@ -4,6 +4,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.studentpal.app.handler.MessageHandler;
+import com.studentpal.engine.ClientEngine;
 import com.studentpal.engine.Event;
 
 
@@ -31,8 +32,8 @@ public abstract class Request /*extends Message*/ {
   }
 
   /////////////////////////////////////////////////////////////////////////////
-  public void execute(MessageHandler msgHandler) {
-  }
+  // public void execute(MessageHandler msgHandler) {
+  // }
 
   public abstract void execute();
 
@@ -74,8 +75,19 @@ public abstract class Request /*extends Message*/ {
     inputArguments = args;
   }
 
+  public JSONObject generateGenericRequestHeader(String cmd_type, JSONObject argsObj)
+      throws JSONException {
+    JSONObject reqObj = new JSONObject();
+    reqObj.put(Event.TAGNAME_MSG_TYPE, Event.MESSAGE_HEADER_REQ);
+    reqObj.put(Event.TAGNAME_CMD_TYPE, cmd_type);
+    reqObj.put(Event.TAGNAME_MSG_ID, req_seq);
+    reqObj.put(Event.TAGNAME_ARGUMENTS, argsObj);
+
+    return reqObj;
+  }
+
   public JSONObject generateGenericReplyHeader(String cmd_type)
-    throws JSONException {
+      throws JSONException {
     JSONObject header = new JSONObject();
     header.put(Event.TAGNAME_MSG_TYPE, Event.MESSAGE_HEADER_ACK);
     header.put(Event.TAGNAME_MSG_ID, req_seq);

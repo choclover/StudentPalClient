@@ -13,18 +13,35 @@ import com.studentpal.util.logger.Logger;
 
 
 public class RefreshAppListRequest extends Request {
+  private String targetPhoneNo;
+
+  /*
+   * Methods
+   */
+  public RefreshAppListRequest(String targetPhoneNum) {
+    this.targetPhoneNo = targetPhoneNum;
+  }
 
   public String getName() {
     return Event.TASKNAME_RefreshAppList;
   }
-  
+
   public void execute() {
+    if (ClientEngine.getInstance().isAdmin()) {
+      executeAdminRequest();
+    } else {
+      executeClientRequest();
+    }
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  private void executeClientRequest() {
     try {
       JSONObject respObj = super.generateGenericReplyHeader(getName());
-      
+
       try {
         List<ClientAppInfo> appList = ClientEngine.getInstance().getAppList();
-        
+
         JSONArray appAry = new JSONArray();
         if (appList != null && appList.size() > 0) {
           for (ClientAppInfo appInfo : appList) {
@@ -33,15 +50,15 @@ public class RefreshAppListRequest extends Request {
             //app.put(Event.TAGNAME_APP_CLASSNAME, appInfo.getAppClassname());
             app.put(Event.TAGNAME_APP_PKGNAME, appInfo.getAppPkgname());
             app.put(Event.TAGNAME_ACCESS_CATEGORY, 1);  //FIXME
-            
+
             appAry.put(app);
           }
         }
-  
+
         JSONObject resultObj = new JSONObject();
         resultObj.put(Event.TAGNAME_APPLICATIONS, appAry);
         respObj.put(Event.TAGNAME_RESULT, resultObj);
-        
+
         respObj.put(Event.TAGNAME_ERR_CODE, Event.ERRCODE_NOERROR);
 
       } catch (Exception ex) {
@@ -51,8 +68,23 @@ public class RefreshAppListRequest extends Request {
       } finally {
         if (respObj != null) {
           setOutputContent(respObj.toString());
-        }        
+        }
       }
+    } catch (JSONException ex) {
+      Logger.w(getName(), "In execute() got an error:" + ex.toString());
+    }
+  }
+
+  private void executeAdminRequest() {
+    try {
+      super.setRequestSeq(ClientEngine.getNextMsgId());
+
+      JSONObject argsObj = new JSONObject();
+      argsObj.put(Event.TAGNAME_PHONE_NUM, targetPhoneNo);
+
+      JSONObject reqObj = super.generateGenericRequestHeader(getName(), argsObj);
+      setOutputContent(reqObj.toString());
+
     } catch (JSONException ex) {
       Logger.w(getName(), "In execute() got an error:" + ex.toString());
     }

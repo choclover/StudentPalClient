@@ -94,6 +94,7 @@ public class Event {
   public static final int ERRCODE_USERNAME_NOT_EXIST        = 101;
   public static final int ERRCODE_PASSWORD_MISMATCH         = 102;
   public static final int ERRCODE_TARGET_NOT_EXIST          = 103;
+  public static final int ERRCODE_DATA_NEWER_THAN_DB        = 104;
 
   public static final int ERRCODE_CLIENT_CONN_LOST          = 200;
   public static final int ERRCODE_SERVER_CONN_LOST          = 300;
