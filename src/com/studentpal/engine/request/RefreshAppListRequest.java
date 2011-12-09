@@ -27,7 +27,7 @@ public class RefreshAppListRequest extends Request {
   }
 
   public void execute() {
-    if (ClientEngine.getInstance().isAdmin()) {
+    if (super.isAdminReq) {
       executeAdminRequest();
     } else {
       executeClientRequest();

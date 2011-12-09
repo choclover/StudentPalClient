@@ -23,6 +23,7 @@ public abstract class Request /*extends Message*/ {
   protected String outputContentStr = null;
 
   protected int req_seq = Event.MSG_ID_INVALID;
+  protected boolean isAdminReq = false;
 
   /*
    * Methods
@@ -99,4 +100,9 @@ public abstract class Request /*extends Message*/ {
   public void setRequestSeq(int seq) {
     this.req_seq = seq;
   }
+
+  public void setIsAdminReq(boolean isAdminReq) {
+    this.isAdminReq = isAdminReq;
+  }
+
 }
