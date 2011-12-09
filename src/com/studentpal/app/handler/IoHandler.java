@@ -29,7 +29,7 @@ public class IoHandler implements AppHandler {
    * Constants
    */
   private static final int SLEEP_TIME = 100;  //mill-seconds
-  private static final String IO_CHARS_ENCODING = "UTF-8";
+  private static final String CHARSET_NAME = "UTF-8";
 
   /*
    * Field members
@@ -37,7 +37,7 @@ public class IoHandler implements AppHandler {
   private static IoHandler instance = null;
   private static String serverIP = "";
 
-  private ClientEngine  engine = null;
+  private ClientEngine  engine      = null;
   private MessageHandler msgHandler = null;
 
   //private boolean isLogin = false;  //TODO how to use this flag in client?
@@ -45,7 +45,7 @@ public class IoHandler implements AppHandler {
   private Socket socketConn = null;
   //private SocketChannel socketConn = null;
 
-  private BufferedInputStream bis = null;
+  private BufferedInputStream bis  = null;
   private BufferedOutputStream bos = null;
   private Thread initNetworkThread = null;
 
@@ -275,7 +275,7 @@ public class IoHandler implements AppHandler {
   }
 
   private String getEncoding() {
-    return IO_CHARS_ENCODING;
+    return CHARSET_NAME;
   }
 
   public int getSocketTimeout() {

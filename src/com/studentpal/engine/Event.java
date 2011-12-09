@@ -29,6 +29,7 @@ public class Event {
   public static final String TAGNAME_APP_NAME        = "app_name";
   public static final String TAGNAME_APP_CLASSNAME   = "app_classname";
   public static final String TAGNAME_APP_PKGNAME     = "app_pkgname";
+  public static final String TAGNAME_APP_COMNAME     = "app_companyname";
 
   public static final String TAGNAME_ACCESS_CATEGORIES = "access_categories";
   public static final String TAGNAME_ACCESS_CATEGORY   = "access_cate";
