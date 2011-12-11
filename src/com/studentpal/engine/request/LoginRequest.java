@@ -47,8 +47,4 @@ public class LoginRequest extends Request {
     }
   }
 
-  public boolean isOutputContentReady() {
-    return true;
-  }
-
 }

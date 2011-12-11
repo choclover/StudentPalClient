@@ -4,6 +4,10 @@ import java.util.HashMap;
 
 public class Event {
   private static final String TAG = "Engine.Event";
+  /*
+   * Constants
+   */
+  public static final String APP_PKGNAME_DELIMETER = "|";
 
   public static final String MESSAGE_HEADER_ACK      = "A";
   public static final String MESSAGE_HEADER_REQ      = "R";
@@ -19,11 +23,16 @@ public class Event {
   //public static final String TAGNAME_BUNDLE_PARAM    = "bundle_param";
 
   public static final String TAGNAME_VERSION         = "version";
+  public static final String TAGNAME_APPSLIST_VER    = "applist_ver";
   public static final String TAGNAME_PHONE_NUM       = "phone_no";
   public static final String TAGNAME_PHONE_IMSI      = "phone_imsi";
   public static final String TAGNAME_PHONE_IMEI      = "phone_imei";
   public static final String TAGNAME_LOGIN_NAME      = "login_name";
   public static final String TAGNAME_LOGIN_PASSWD    = "login_passwd";
+  public static final String TAGNAME_NICKNAME        = "nickname";
+
+  public static final String TAGNAME_DEVICES         = "devices";
+  //public static final String TAGNAME_DEVICE          = "device";
   public static final String TAGNAME_APPLICATIONS    = "applications";
   public static final String TAGNAME_APP             = "application";
   public static final String TAGNAME_APP_NAME        = "app_name";

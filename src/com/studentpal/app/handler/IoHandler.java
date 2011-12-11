@@ -28,7 +28,7 @@ public class IoHandler implements AppHandler {
   /*
    * Constants
    */
-  private static final int SLEEP_TIME = 100;  //mill-seconds
+  private static final int SLEEP_TIME = 250;  //mill-seconds
   private static final String CHARSET_NAME = "UTF-8";
 
   /*
@@ -71,9 +71,7 @@ public class IoHandler implements AppHandler {
     this.engine = ClientEngine.getInstance();
     this.msgHandler = this.engine.getMsgHandler();
 
-    if (false) {    //init network synchronously
-      //init_network();
-    } else {    //asynchronously
+    if (true) { // init network asynchronously
       Runnable r = new Runnable() {
         @Override
         public void run() {
@@ -82,6 +80,9 @@ public class IoHandler implements AppHandler {
       };
       initNetworkThread = new Thread(r);
       initNetworkThread.start();
+
+    } else {// init network synchronously
+      // init_network();
     }
   }
 
@@ -391,17 +392,36 @@ public class IoHandler implements AppHandler {
         byte[] buffer = null;
 
         while (!isStop) {
-          if (bis.available() > 0) {
-            buffer = new byte[bis.available()];
-            bis.read(buffer);
+          int markLimit = bis.available();
+          if (markLimit > 0) {
+            byte[] msgLenBytes = new byte[Codec.MSG_LENGTH_HEADER_SIZE];
+            bis.read(msgLenBytes);   // 读取前4字节
 
+            int msgLen = Utils.byteArrayToInt(msgLenBytes);
+            int markPos = 0;
+            buffer = new byte[msgLen];
+            while (msgLen > 0) {
+              markPos = bis.read(buffer, markPos, msgLen);
+              msgLen -= markPos;
+            }
+
+            // All data is available now
             String msgStr = new String(buffer, getEncoding());
-            Logger.i(TAG, "AndrClient Got a message:\n" + msgStr);
+            if (msgStr.length() > 512) {
+              Logger.i(TAG, "AndrClient Got a too long message to print\n");
+            } else {
+              Logger.i(TAG, "AndrClient Got a message:\n" + msgStr);
+            }
             if (Utils.isEmptyString(msgStr)) {
               continue;
             }
 
             msgHandler.receiveMessageFromServer(msgStr);
+
+            // 如果读取内容后还粘了包，就让发送方再传送 一次数据，进行下一次解析
+            if (bis.available() > 0) {
+              continue;
+            }
           }
 
           Thread.sleep(SLEEP_TIME);

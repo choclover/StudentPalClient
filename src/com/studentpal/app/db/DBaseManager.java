@@ -10,6 +10,8 @@ import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_ENDTIME;
 import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_STARTTIME;
 import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_TYPE;
 import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_VALUE;
+import static com.studentpal.engine.Event.TAGNAME_PHONE_NUM;
+import static com.studentpal.engine.Event.TAGNAME_PHONE_IMSI;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -19,18 +21,18 @@ import java.util.StringTokenizer;
 
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
-import android.os.Environment;
 
 import com.studentpal.engine.ClientEngine;
+import com.studentpal.engine.Event;
 import com.studentpal.model.AccessCategory;
 import com.studentpal.model.ClientAppInfo;
 import com.studentpal.model.exception.STDException;
 import com.studentpal.model.rules.AccessRule;
 import com.studentpal.model.rules.Recurrence;
 import com.studentpal.model.rules.TimeRange;
+import com.studentpal.util.Utils;
 import com.studentpal.util.logger.Logger;
 
 public class DBaseManager /*implements AppHandler*/ {
@@ -39,20 +41,31 @@ public class DBaseManager /*implements AppHandler*/ {
    */
   private static final String TAG = "@@ DBaseManager";
 //  private static final String DATABASE_ROOT = "/mnt/sdcard/studentpal/db/";
-  private static final String DATABASE_NAME = "studentpal.db";
-  
-  private static final String  TABLE_NAME_ACCESS_CATEGORIES  = "access_categories";
-  private static final String  TABLE_NAME_ACCESS_RULES       = "access_rules";
-  private static final String  TABLE_NAME_ACCESS_MANAGEDAPPS = "access_managedapps";
-  
-  private static final String  TIME_LIST_DELIMETER = ";";
-  
+  private static final String DATABASE_HEADER_NAME = "studentpal";
+  private static final String DATABASE_NAME        = DATABASE_HEADER_NAME + ".db";
+  private static final String DATABASE_NAME_ADMIN  = DATABASE_HEADER_NAME + "_admin.db";
+
+  private static final String TABLE_NAME_ACCESS_CATEGORIES  = "access_categories";
+  private static final String TABLE_NAME_ACCESS_RULES       = "access_rules";
+  private static final String TABLE_NAME_MANAGED_APPS       = "managed_applications";
+  private static final String TABLE_NAME_MANAGED_DEVICE     = "managed_device";
+
+  private static final String COL_NAME_APPSLIST             = "installedApps";
+  private static final String COL_NAME_APPSLIST_VERSION     = "installedAppsListVer";
+  //private static final String COL_NAME_APPSLIST_NAME        = "apps_list_version";
+
+  private static final String TIME_LIST_DELIMETER = ";";
+
   /*
    * Member fields
    */
   private static DBaseManager dataManager;
+
+  private ClientEngine  engine = null;
   private SQLiteDatabase mDb;
   private File mDbFile;
+
+  private boolean isAdmin = false;
 
   /*
    * 获取实例，应当在欢迎界面之后建立实例
@@ -72,25 +85,28 @@ public class DBaseManager /*implements AppHandler*/ {
   public void saveAccessCategoriesToDB(List<AccessCategory> catesList) {
     if (catesList==null || catesList.size()==0) return;
     Logger.i(TAG, "enter saveAccessCategoriesToDB()!");
-    
+
     try {
       mDb = openDB();
-      
+
       //clear old records first
       //String sqlStr = "DELETE FROM " + ACCESS_CATEGORY_TABLE_NAME;
       //mDb.execSQL(sqlStr);
       long res = -1;
       res = mDb.delete(TABLE_NAME_ACCESS_CATEGORIES, "1", null);
       res = mDb.delete(TABLE_NAME_ACCESS_RULES, "1", null);
-      res = mDb.delete(TABLE_NAME_ACCESS_MANAGEDAPPS, "1", null);
-      
+      if (! isAdmin) {
+        //对于管理端，不能将所有的受控程序记录首先删除
+        res = mDb.delete(TABLE_NAME_MANAGED_APPS, "1", null);
+      }
+
       ContentValues cv;
       for (AccessCategory aCate : catesList) {
         cv = new ContentValues();
         cv.put(TAGNAME_ACCESS_CATE_ID,    aCate.get_id());
         cv.put(TAGNAME_ACCESS_CATE_NAME,  aCate.get_name());
         res = mDb.insert(TABLE_NAME_ACCESS_CATEGORIES, null, cv);
-        
+
         //Insert access rules records
         List<AccessRule> cateRules = aCate.getAccessRules();
         if (cateRules!=null && cateRules.size()>0) {
@@ -99,7 +115,7 @@ public class DBaseManager /*implements AppHandler*/ {
             cv.put(TAGNAME_RULE_AUTH_TYPE, rule.getAccessType());
             cv.put(TAGNAME_RULE_REPEAT_TYPE, rule.getRecurType());
             cv.put(TAGNAME_RULE_REPEAT_VALUE, rule.getRecurrence().toString());
-            
+
             String startTimeStr = "";
             String endTimeStr = "";
             for (TimeRange tr : rule.getTimeRangeList()) {
@@ -109,11 +125,11 @@ public class DBaseManager /*implements AppHandler*/ {
             cv.put(TAGNAME_RULE_REPEAT_STARTTIME, startTimeStr);
             cv.put(TAGNAME_RULE_REPEAT_ENDTIME, endTimeStr);
             cv.put(TAGNAME_ACCESS_CATE_ID, aCate.get_id());
-            
+
             res = mDb.insert(TABLE_NAME_ACCESS_RULES, null, cv);
           }
         }
-        
+
         //Insert access managed apps records
         Set<ClientAppInfo> managedApps = aCate.getManagedApps().keySet();
         if (managedApps!=null && managedApps.size()>0) {
@@ -123,41 +139,45 @@ public class DBaseManager /*implements AppHandler*/ {
             cv.put(TAGNAME_APP_PKGNAME,   appInfo.getAppPkgname());
             cv.put(TAGNAME_APP_CLASSNAME, appInfo.getAppClassname());
             cv.put(TAGNAME_ACCESS_CATE_ID, aCate.get_id());
-    
-            res = mDb.insert(TABLE_NAME_ACCESS_MANAGEDAPPS, null, cv);
+
+            res = mDb.update(TABLE_NAME_MANAGED_APPS, cv,
+                "TAGNAME_APP_PKGNAME = "+appInfo.getAppPkgname(), null);
+            if (res <= 0) {
+              res = mDb.insert(TABLE_NAME_MANAGED_APPS, null, cv);
+            }
           }
         }
-      } 
-      
+      }
+
     } catch (SQLiteException ex) {
       Logger.w(TAG, ex.toString());
-      rebuildTables(mDb);
+      //rebuildTables(mDb);
     } finally {
       mDb.close();
     }
   }
-  
+
   public List<AccessCategory> loadAccessCategoriesFromDB() throws STDException {
     List<AccessCategory> catesList = new ArrayList<AccessCategory>();
     Logger.i(TAG, "enter loadAccessCategoriesFromDB()!");
-    
+
     try {
       mDb = openDB();
-  
+
       Cursor curCate = mDb.query(TABLE_NAME_ACCESS_CATEGORIES, null, null, null, null, null, null);
       while (curCate.moveToNext()) {
         AccessCategory aCate = new AccessCategory();
-        
+
         int startIdx = 0;
         int cate_id = curCate.getInt(startIdx++);  //0
         aCate.set_id(cate_id);
         aCate.set_name(curCate.getString(startIdx++));  //1
-  
+
         Cursor curRule = mDb.query(TABLE_NAME_ACCESS_RULES, null,
             TAGNAME_ACCESS_CATE_ID + "=" + aCate.get_id(), null, null, null, null);
         while (curRule.moveToNext()) {
           AccessRule aRule = new AccessRule();
-          
+
           startIdx = 1;
           aRule.setAccessType(curRule.getInt(startIdx++));  //1
           Recurrence recur = Recurrence.getInstance(curRule.getInt(startIdx++));  //2
@@ -168,7 +188,7 @@ public class DBaseManager /*implements AppHandler*/ {
             recur.setRecurValue(curRule.getInt(startIdx++));  //3
           }
           aRule.setRecurrence(recur);
-          
+
           String timeStr = curRule.getString(startIdx++);
           StringTokenizer startTokens = new StringTokenizer(timeStr,  //4
               TIME_LIST_DELIMETER);
@@ -177,22 +197,22 @@ public class DBaseManager /*implements AppHandler*/ {
               TIME_LIST_DELIMETER);
           while (startTokens.hasMoreTokens()) {
             TimeRange tr = new TimeRange();
-            
+
             timeStr = startTokens.nextToken();
             tr.setTime(TimeRange.TIME_TYPE_START, timeStr);
-            
+
             timeStr = endTokens.nextToken();
             tr.setTime(TimeRange.TIME_TYPE_END, timeStr);
-            
+
             aRule.addTimeRange(tr);
           }//for time_ranges
-          
+
           aCate.addAccessRule(aRule);
-          
+
         }//while curRule
         curRule.close();
-        
-        Cursor curApp = mDb.query(TABLE_NAME_ACCESS_MANAGEDAPPS, null,
+
+        Cursor curApp = mDb.query(TABLE_NAME_MANAGED_APPS, null,
             TAGNAME_ACCESS_CATE_ID + "=" + aCate.get_id(), null, null, null, null);
         while (curApp.moveToNext()) {
           startIdx = 1;
@@ -201,29 +221,102 @@ public class DBaseManager /*implements AppHandler*/ {
           String className = curApp.getString(startIdx++);  //3
           ClientAppInfo appInfo = new ClientAppInfo(appName, pkgName, className);
           aCate.addManagedApp(appInfo);
-          
+
         }//while curApp
         curApp.close();
-        
+
         catesList.add(aCate);
-        
+
       }//while curCate
       curCate.close();
-      
+
     } catch (SQLiteException ex) {
       Logger.w(TAG, ex.toString());
-      rebuildTables(mDb);
+      //rebuildTables(mDb);
     } finally {
       mDb.close();
     }
-    
+
     return catesList;
   }
-  
+
+  public void saveAppsListToDB(Set<ClientAppInfo> appsListSet) {
+    if (appsListSet==null || appsListSet.size()==0) return;
+    Logger.i(TAG, "enter saveAppsListToDB()!");
+
+    try {
+      mDb = openDB();
+      long res = -1;
+
+      ContentValues cv;
+      for (ClientAppInfo appInfo : appsListSet) {
+        cv = new ContentValues();
+        cv.put(TAGNAME_APP_NAME,      appInfo.getAppName());
+        cv.put(TAGNAME_APP_PKGNAME,   appInfo.getAppPkgname());
+        cv.put(TAGNAME_APP_CLASSNAME, appInfo.getAppClassname());
+
+        res = mDb.update(TABLE_NAME_MANAGED_APPS, cv,
+            "TAGNAME_APP_PKGNAME = "+appInfo.getAppPkgname(), null);
+        if (res <= 0) {
+          res = mDb.insert(TABLE_NAME_MANAGED_APPS, null, cv);
+        }
+      }
+
+    } catch (SQLiteException ex) {
+      Logger.w(TAG, ex.toString());
+      //rebuildTables(mDb);
+    } finally {
+      mDb.close();
+    }
+  }
+
+  public int getAppsListVersion(String phone_no) {
+    Logger.i(TAG, "enter loadAccessCategoriesFromDB()!");
+
+    int appListVer = 0;
+    try {
+      mDb = openDB();
+      Cursor curDevice = mDb.query(TABLE_NAME_MANAGED_DEVICE,
+          new String[] {COL_NAME_APPSLIST_VERSION},
+          TAGNAME_PHONE_NUM + "=" + phone_no,
+          null, null, null, null);
+
+      String appListStr = "";
+      if (curDevice.moveToNext()) {
+        //col 3 is COL_NAME_APPSLIST_VERSION
+        int startIdx = 3;
+        appListVer = Integer.valueOf(curDevice.getString(startIdx++)).intValue();
+
+        //检查每个受控的Application记录都存在于表中，否则重新获取记录列表，即返回版本号为0
+        appListStr = curDevice.getString(startIdx++);
+        if (Utils.isEmptyString(appListStr)) {
+          String[] pkgNameAry = appListStr.split("\\"+Event.APP_PKGNAME_DELIMETER);
+          if (pkgNameAry!=null && pkgNameAry.length>0) {
+            for (String pkgName : pkgNameAry) {
+              Cursor curApp = mDb.query(TABLE_NAME_MANAGED_APPS,
+                  null, TAGNAME_APP_PKGNAME + "=" + pkgName, null, null, null, null);
+              if (! curApp.moveToNext()) {
+                appListVer = 0;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+    } catch (SQLiteException ex) {
+      Logger.w(TAG, ex.toString());
+    } finally {
+      mDb.close();
+    }
+
+    return appListVer;
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   private String getDatabaseRoot() {
     String result = "";
-    
+
 //    int apiVer = android.os.Build.VERSION.SDK_INT;
 //    if (apiVer <= android.os.Build.VERSION_CODES.ECLAIR_MR1) {
 //      // for API 2.1 and earlier version
@@ -233,50 +326,58 @@ public class DBaseManager /*implements AppHandler*/ {
 //      result = "/mnt/sdcard/studentpal/db/";
 //    }
 //    result = Environment.getDataDirectory().toString();
-  
+
     result = getDbFilePath().getParent();
-    
+
     return result;
   }
-  
+
   private void initialize() {
+    engine = ClientEngine.getInstance();
+    isAdmin = engine.isAdmin();
+
     mDbFile = getDbFilePath();
     File dbFolder = mDbFile.getParentFile();
     if (!dbFolder.exists()) {
       dbFolder.mkdirs();
     }
-    
+
     mDb = openDB();
     if (mDb != null) {
       createTables(mDb);
       mDb.close();
     }
   }
-  
+
   private File getDbFilePath() {
     File result = null;
-    result = ClientEngine.getInstance().getContext().
-                    getApplicationContext().getDatabasePath(DATABASE_NAME);
-    
+    ClientEngine engine = ClientEngine.getInstance();
+    if (isAdmin == true) {
+      result = engine.getContext().getApplicationContext()
+          .getDatabasePath(DATABASE_NAME_ADMIN);
+    } else {
+      result = engine.getContext().getApplicationContext()
+          .getDatabasePath(DATABASE_NAME);
+    }
+
     return result;
   }
-  
+
   /*
    * 打开数据库
    */
   private synchronized SQLiteDatabase openDB() {
     SQLiteDatabase db = null;
-    
+
     try {
       db = SQLiteDatabase.openDatabase(this.mDbFile.getAbsolutePath(),
           null, SQLiteDatabase.OPEN_READWRITE + SQLiteDatabase.CREATE_IF_NECESSARY);
-
     } catch (SQLiteException e) {
       Logger.w(TAG, e.toString());
     }
     return db;
   }
-  
+
   /*
    * 创建数据表
    */
@@ -285,14 +386,14 @@ public class DBaseManager /*implements AppHandler*/ {
       Logger.w(TAG, "DBASE is NULL or NOT open!");
       return;
     }
-    
+
     final String create_catory_table_sql = new StringBuffer().append(
       "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_ACCESS_CATEGORIES).append(
       "( " +TAGNAME_ACCESS_CATE_ID+   " INTEGER PRIMARY KEY ").append(
       ", " +TAGNAME_ACCESS_CATE_NAME+ " TEXT").append(
       ");").toString();
     dbase.execSQL(create_catory_table_sql);
-    
+
     final String create_rules_table_sql = new StringBuffer().append(
       "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_ACCESS_RULES).append(
       "(  _id INTEGER PRIMARY KEY AUTOINCREMENT ").append(
@@ -305,9 +406,9 @@ public class DBaseManager /*implements AppHandler*/ {
       ", FOREIGN KEY(" +TAGNAME_ACCESS_CATE_ID+ ") REFERENCES " +TABLE_NAME_ACCESS_CATEGORIES+ "(" +TAGNAME_ACCESS_CATE_ID+ ")").append(
       ");").toString();
     dbase.execSQL(create_rules_table_sql);
-    
+
     final String create_applications_table_sql = new StringBuffer().append(
-        "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_ACCESS_MANAGEDAPPS).append(
+        "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_MANAGED_APPS).append(
         "( _id INTEGER PRIMARY KEY AUTOINCREMENT ").append(
         ", " +TAGNAME_APP_NAME+       " TEXT").append(
         ", " +TAGNAME_APP_PKGNAME+    " TEXT").append(
@@ -316,24 +417,40 @@ public class DBaseManager /*implements AppHandler*/ {
         ", FOREIGN KEY(" +TAGNAME_ACCESS_CATE_ID+ ") REFERENCES " +TABLE_NAME_ACCESS_CATEGORIES+ "(" +TAGNAME_ACCESS_CATE_ID+ ")").append(
         ");").toString();
     dbase.execSQL(create_applications_table_sql);
+
+    if (isAdmin) {
+      final String create_managed_device_table_sql = new StringBuffer().append(
+          "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_MANAGED_DEVICE).append(
+          "( _id INTEGER PRIMARY KEY AUTOINCREMENT ").append(
+          ", " +TAGNAME_PHONE_NUM+       " TEXT").append(
+          ", " +TAGNAME_PHONE_IMSI+      " TEXT").append(
+          ", " +COL_NAME_APPSLIST_VERSION+  " INTEGER DEFAULT 0").append(
+          ", " +COL_NAME_APPSLIST+       " TEXT").append(
+          ");").toString();
+      dbase.execSQL(create_managed_device_table_sql);
+    }
+
   }
-  
+
   private void rebuildTables(SQLiteDatabase dbase) {
     if (dbase == null || dbase.isOpen()==false) {
       Logger.w(TAG, "DBASE is NULL or NOT open!");
       return;
     }
-    
-    String[] table_name_ary = {
-        TABLE_NAME_ACCESS_CATEGORIES, 
-        TABLE_NAME_ACCESS_RULES, 
-        TABLE_NAME_ACCESS_MANAGEDAPPS,
-    };
-    for (int i=0; i<table_name_ary.length; i++) {
-      String drop_table_sql = "DROP TABLE " +table_name_ary[i]+ " ;";
+
+    List <String> table_name_ary = new ArrayList<String>();
+    table_name_ary.add(TABLE_NAME_ACCESS_CATEGORIES);
+    table_name_ary.add(TABLE_NAME_ACCESS_RULES);
+    table_name_ary.add(TABLE_NAME_MANAGED_APPS);
+    if (isAdmin) {
+      table_name_ary.add(TABLE_NAME_MANAGED_DEVICE);
+    }
+
+    for (int i=0; i<table_name_ary.size(); i++) {
+      String drop_table_sql = "DROP TABLE " +table_name_ary.get(i)+ " ;";
       dbase.execSQL(drop_table_sql);
     }
-    
+
     createTables(dbase);
   }
 }
