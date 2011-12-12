@@ -240,32 +240,39 @@ public class DBaseManager /*implements AppHandler*/ {
     return catesList;
   }
 
-  public void saveAppsListToDB(Set<ClientAppInfo> appsListSet) {
+  public void saveManagedAppsToDB(Set<ClientAppInfo> appsListSet) {
     if (appsListSet==null || appsListSet.size()==0) return;
-    Logger.i(TAG, "enter saveAppsListToDB()!");
+    Logger.i(TAG, "enter saveManagedAppsToDB()!");
 
     try {
       mDb = openDB();
       long res = -1;
 
       ContentValues cv;
+      String appVal;
       for (ClientAppInfo appInfo : appsListSet) {
         cv = new ContentValues();
-        cv.put(TAGNAME_APP_NAME,      appInfo.getAppName());
-        cv.put(TAGNAME_APP_PKGNAME,   appInfo.getAppPkgname());
-        cv.put(TAGNAME_APP_CLASSNAME, appInfo.getAppClassname());
+        appVal = appInfo.getAppName();
+        cv.put(TAGNAME_APP_NAME,      appVal);
+        appVal = appInfo.getAppPkgname();
+        cv.put(TAGNAME_APP_PKGNAME,   appVal);
+        appVal = appInfo.getAppClassname();
+        if (! Utils.isEmptyString(appVal)) {
+          cv.put(TAGNAME_APP_CLASSNAME, appVal);
+        }
 
         Cursor curApps = mDb.query(TABLE_NAME_MANAGED_APPS,
             null,
-            TAGNAME_APP_PKGNAME + "=" + appInfo.getAppPkgname(),
+            TAGNAME_APP_PKGNAME +"='"+ appInfo.getAppPkgname() +"'",
             null, null, null, null);
         if (curApps.moveToNext()) {
           //record already exited
           res = mDb.update(TABLE_NAME_MANAGED_APPS, cv,
-              "TAGNAME_APP_PKGNAME = "+appInfo.getAppPkgname(), null);
+              TAGNAME_APP_PKGNAME +"='"+ appInfo.getAppPkgname() +"'", null);
         } else {
           res = mDb.insert(TABLE_NAME_MANAGED_APPS, null, cv);
         }
+        curApps.close();
       }
 
     } catch (SQLiteException ex) {
@@ -276,6 +283,10 @@ public class DBaseManager /*implements AppHandler*/ {
     }
   }
 
+  public void saveManagedDevToDB(String phone_no) {
+    Logger.i(TAG, "enter saveManagedDevToDB()!");
+  }
+
   public int getAppsListVersion(String phone_no) {
     Logger.i(TAG, "enter loadAccessCategoriesFromDB()!");
 
@@ -283,8 +294,8 @@ public class DBaseManager /*implements AppHandler*/ {
     try {
       mDb = openDB();
       Cursor curDevice = mDb.query(TABLE_NAME_MANAGED_DEVICE,
-          new String[] {COL_NAME_APPSLIST_VERSION},
-          TAGNAME_PHONE_NUM + "=" + phone_no,
+          null/*new String[] {COL_NAME_APPSLIST_VERSION}*/,
+          TAGNAME_PHONE_NUM +"='"+ phone_no +"'",
           null, null, null, null);
 
       String appListStr = "";
@@ -300,7 +311,7 @@ public class DBaseManager /*implements AppHandler*/ {
           if (pkgNameAry!=null && pkgNameAry.length>0) {
             for (String pkgName : pkgNameAry) {
               Cursor curApp = mDb.query(TABLE_NAME_MANAGED_APPS,
-                  null, TAGNAME_APP_PKGNAME + "=" + pkgName, null, null, null, null);
+                  null, TAGNAME_APP_PKGNAME +"='"+ pkgName +"'", null, null, null, null);
               //当某个Application记录不存在于表中
               if (! curApp.moveToNext()) {
                 appListVer = 0;
