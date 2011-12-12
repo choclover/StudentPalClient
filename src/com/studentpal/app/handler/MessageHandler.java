@@ -8,9 +8,7 @@ import static com.studentpal.engine.Event.SIGNAL_TYPE_NETWORK_FAIL;
 import static com.studentpal.engine.Event.SIGNAL_TYPE_OUTSTREAM_READY;
 import static com.studentpal.engine.Event.SIGNAL_TYPE_RESP_LOGIN;
 import static com.studentpal.engine.Event.SIGNAL_TYPE_UNKNOWN;
-import static com.studentpal.engine.Event.TAGNAME_ERR_CODE;
-import static com.studentpal.engine.Event.TASKNAME_LOGIN;
-import static com.studentpal.engine.Event.TASKNAME_LOGIN_ADMIN;
+import static com.studentpal.engine.Event.*;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -297,16 +295,26 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     String respType = msgObjRoot.getString(Event.TAGNAME_CMD_TYPE);
     int errCode = msgObjRoot.getInt(TAGNAME_ERR_CODE);
     int evtType = SIGNAL_TYPE_UNKNOWN;
+    Object resultObj = null;
+    if (msgObjRoot.has(TAGNAME_RESULT)) {
+      resultObj = msgObjRoot.getJSONObject(TAGNAME_RESULT);
+    }
+
     Event respEvt = null;
 
     if (Request.isEqualRequestType(respType, TASKNAME_LOGIN_ADMIN)) {
       evtType = SIGNAL_TYPE_RESP_LOGIN;
       respEvt = new Event();
-      respEvt.setData(evtType, errCode, null);
+      respEvt.setData(evtType, errCode, resultObj);
     } else if (Request.isEqualRequestType(respType, TASKNAME_LOGIN)) {
-      //TODO
+      //Do nothing
+    } else if (Request.isEqualRequestType(respType, TASKNAME_GetAppList)) {
+      evtType = SIGNAL_TYPE_RESP_GetAppList;
+      respEvt = new Event();
+      respEvt.setData(evtType, errCode, resultObj);
     }
 
+    //Dispatch ACK event to corresponding screen to handle
     if (evtType != SIGNAL_TYPE_UNKNOWN) {
       Message msg = this.obtainMessage(evtType, respEvt);
       this.sendMessage(msg);

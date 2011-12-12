@@ -41,9 +41,9 @@ public class DBaseManager /*implements AppHandler*/ {
    */
   private static final String TAG = "@@ DBaseManager";
 //  private static final String DATABASE_ROOT = "/mnt/sdcard/studentpal/db/";
-  private static final String DATABASE_HEADER_NAME = "studentpal";
-  private static final String DATABASE_NAME        = DATABASE_HEADER_NAME + ".db";
-  private static final String DATABASE_NAME_ADMIN  = DATABASE_HEADER_NAME + "_admin.db";
+  private static final String DATABASE_NAME         = "studentpal";
+  private static final String DATABASE_FNAME        = DATABASE_NAME + ".db";
+  private static final String DATABASE_FNAME_ADMIN  = DATABASE_NAME + "_admin.db";
 
   private static final String TABLE_NAME_ACCESS_CATEGORIES  = "access_categories";
   private static final String TABLE_NAME_ACCESS_RULES       = "access_rules";
@@ -255,9 +255,15 @@ public class DBaseManager /*implements AppHandler*/ {
         cv.put(TAGNAME_APP_PKGNAME,   appInfo.getAppPkgname());
         cv.put(TAGNAME_APP_CLASSNAME, appInfo.getAppClassname());
 
-        res = mDb.update(TABLE_NAME_MANAGED_APPS, cv,
-            "TAGNAME_APP_PKGNAME = "+appInfo.getAppPkgname(), null);
-        if (res <= 0) {
+        Cursor curApps = mDb.query(TABLE_NAME_MANAGED_APPS,
+            null,
+            TAGNAME_APP_PKGNAME + "=" + appInfo.getAppPkgname(),
+            null, null, null, null);
+        if (curApps.moveToNext()) {
+          //record already exited
+          res = mDb.update(TABLE_NAME_MANAGED_APPS, cv,
+              "TAGNAME_APP_PKGNAME = "+appInfo.getAppPkgname(), null);
+        } else {
           res = mDb.insert(TABLE_NAME_MANAGED_APPS, null, cv);
         }
       }
@@ -295,14 +301,18 @@ public class DBaseManager /*implements AppHandler*/ {
             for (String pkgName : pkgNameAry) {
               Cursor curApp = mDb.query(TABLE_NAME_MANAGED_APPS,
                   null, TAGNAME_APP_PKGNAME + "=" + pkgName, null, null, null, null);
+              //当某个Application记录不存在于表中
               if (! curApp.moveToNext()) {
                 appListVer = 0;
+                curApp.close();
                 break;
               }
+              curApp.close();
             }
           }
         }
       }
+      curDevice.close();
 
     } catch (SQLiteException ex) {
       Logger.w(TAG, ex.toString());
@@ -354,10 +364,10 @@ public class DBaseManager /*implements AppHandler*/ {
     ClientEngine engine = ClientEngine.getInstance();
     if (isAdmin == true) {
       result = engine.getContext().getApplicationContext()
-          .getDatabasePath(DATABASE_NAME_ADMIN);
+          .getDatabasePath(DATABASE_FNAME_ADMIN);
     } else {
       result = engine.getContext().getApplicationContext()
-          .getDatabasePath(DATABASE_NAME);
+          .getDatabasePath(DATABASE_FNAME);
     }
 
     return result;
