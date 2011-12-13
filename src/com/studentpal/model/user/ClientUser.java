@@ -6,7 +6,12 @@ public class ClientUser extends User {
   private String phoneNum;
   private String phoneImsi;
   private String phoneImei;
+  private String installedApps;
+  private int installedAppsListVer;
 
+  /*
+   * Methods
+   */
   public ClientUser(String phoneNum, String phoneImsi) {
     this(phoneNum, phoneImsi, null);
   }
@@ -27,6 +32,22 @@ public class ClientUser extends User {
 
   public String getPhoneImei() {
     return phoneImei;
+  }
+
+  public String getInstalledApps() {
+    return installedApps;
+  }
+
+  public void setInstalledApps(String installedApps) {
+    this.installedApps = installedApps;
+  }
+
+  public int getInstalledAppsListVer() {
+    return installedAppsListVer;
+  }
+
+  public void setInstalledAppsListVer(int installedAppsListVer) {
+    this.installedAppsListVer = installedAppsListVer;
   }
 
   @Override
