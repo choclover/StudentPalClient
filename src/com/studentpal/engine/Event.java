@@ -135,35 +135,35 @@ public class Event {
 
   //signaling that a request or response is coming in
   public static final int SIGNAL_TYPE_UNKNOWN                    = -1;
-  public static final int SIGNAL_TYPE_MSG_FROM_SVR               = 101;
-  public static final int SIGNAL_TYPE_MSG_TO_SVR                 = 102;
-  public static final int SIGNAL_TYPE_START_WATCHING_APP         = 103;
-  public static final int SIGNAL_TYPE_STOP_WATCHING_APP          = 104;
+  public static final int SIGNAL_TYPE_MSG_FROM_SVR               = 1001;
+  public static final int SIGNAL_TYPE_MSG_TO_SVR                 = 1002;
+  public static final int SIGNAL_TYPE_START_WATCHING_APP         = 1003;
+  public static final int SIGNAL_TYPE_STOP_WATCHING_APP          = 1004;
 
-  public static final int SIGNAL_SHOW_ACCESS_DENIED_NOTIFICATION = 111;
-  public static final int SIGNAL_ACCESS_RESCHEDULE_DAILY         = 112;
+  public static final int SIGNAL_SHOW_ACCESS_DENIED_NOTIFICATION = 1011;
+  public static final int SIGNAL_ACCESS_RESCHEDULE_DAILY         = 1012;
 
   //------------------------------------------------------------------
-  public static final int SIGNAL_TYPE_NETWORK_FAIL               = 150;
-  public static final int SIGNAL_TYPE_OUTSTREAM_READY            = 151;
+  public static final int SIGNAL_TYPE_NETWORK_FAIL               = 1050;
+  public static final int SIGNAL_TYPE_OUTSTREAM_READY            = 1051;
 
-  public static final int SIGNAL_TYPE_DEVICE_ADMIN_ENABLED       = 162;
-  public static final int SIGNAL_TYPE_DEVICE_ADMIN_DISABLED      = 163;
-  public static final int SIGNAL_TYPE_REG_FILTERED_PKG           = 164;
-  public static final int SIGNAL_TYPE_UNREG_FILTERED_PKG         = 165;
+  public static final int SIGNAL_TYPE_DEVICE_ADMIN_ENABLED       = 1062;
+  public static final int SIGNAL_TYPE_DEVICE_ADMIN_DISABLED      = 1063;
+  public static final int SIGNAL_TYPE_REG_FILTERED_PKG           = 1064;
+  public static final int SIGNAL_TYPE_UNREG_FILTERED_PKG         = 1065;
 
-  public static final int SIGNAL_TYPE_START_DAEMONTASK           = 201;
-  public static final int SIGNAL_TYPE_STOP_DAEMONTASK            = 202;
-  public static final int SIGNAL_TYPE_EXIT_DAEMONTASK            = 203;
+  public static final int SIGNAL_TYPE_START_DAEMONTASK           = 2001;
+  public static final int SIGNAL_TYPE_STOP_DAEMONTASK            = 2002;
+  public static final int SIGNAL_TYPE_EXIT_DAEMONTASK            = 2003;
   //Daemon WatchDog message related
-  public static final int SIGNAL_TYPE_DAEMON_WD_REQ              = 204;
-  public static final int SIGNAL_TYPE_DAEMON_WD_RESP             = 205;
-  public static final int SIGNAL_TYPE_DAEMON_WD_TIMEOUT          = 206;
+  public static final int SIGNAL_TYPE_DAEMON_WD_REQ              = 2004;
+  public static final int SIGNAL_TYPE_DAEMON_WD_RESP             = 2005;
+  public static final int SIGNAL_TYPE_DAEMON_WD_TIMEOUT          = 2006;
 
   //-------------------------------------------------------------------
-  public static final int SIGNAL_TYPE_RESP_LOGIN                 = 300;
-  public static final int SIGNAL_TYPE_RESP_GetAppList            = 301;
-
+  public static final int SIGNAL_TYPE_RESP_LOGIN                 = 3000;
+  public static final int SIGNAL_TYPE_RESP_GetAppList            = 3001;
+  public static final int SIGNAL_TYPE_RESP_RefreshAppList        = 3002;
 
   private static final HashMap<Integer, String> ERRCODE_DESC_MAPPER
     = new HashMap<Integer, String>();
@@ -177,7 +177,7 @@ public class Event {
    */
   private int type = 0;
   private int errcoe = 0;
-  private Object data = null;
+  private Object data = new Object();
 
   public void setData(int type, int code, Object data) {
     this.type = type;

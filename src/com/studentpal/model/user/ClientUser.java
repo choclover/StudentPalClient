@@ -1,5 +1,6 @@
 package com.studentpal.model.user;
 
+import static com.studentpal.app.db.DBaseManager.INVALID_APPLIST_VERSION;
 import com.studentpal.model.user.User;
 
 public class ClientUser extends User {
@@ -7,7 +8,8 @@ public class ClientUser extends User {
   private String phoneImsi;
   private String phoneImei;
   private String installedApps;
-  private int installedAppsListVer;
+
+  private int installedAppsListVer = INVALID_APPLIST_VERSION;
 
   /*
    * Methods

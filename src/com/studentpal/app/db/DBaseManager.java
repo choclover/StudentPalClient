@@ -6,7 +6,6 @@ import static com.studentpal.engine.Event.TAGNAME_APP_CLASSNAME;
 import static com.studentpal.engine.Event.TAGNAME_APP_NAME;
 import static com.studentpal.engine.Event.TAGNAME_APP_PKGNAME;
 import static com.studentpal.engine.Event.TAGNAME_PHONE_IMSI;
-import static com.studentpal.engine.Event.TAGNAME_PHONE_IMEI;
 import static com.studentpal.engine.Event.TAGNAME_PHONE_NUM;
 import static com.studentpal.engine.Event.TAGNAME_RULE_AUTH_TYPE;
 import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_ENDTIME;
@@ -16,6 +15,7 @@ import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_VALUE;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -42,6 +42,7 @@ public class DBaseManager /*implements AppHandler*/ {
    * Constants
    */
   private static final String TAG = "@@ DBaseManager";
+
 //  private static final String DATABASE_ROOT = "/mnt/sdcard/studentpal/db/";
   private static final String DATABASE_NAME         = "studentpal";
   private static final String DATABASE_FNAME        = DATABASE_NAME + ".db";
@@ -57,6 +58,8 @@ public class DBaseManager /*implements AppHandler*/ {
   //private static final String COL_NAME_APPSLIST_NAME        = "apps_list_version";
 
   private static final String TIME_LIST_DELIMETER = ";";
+
+  public static final int    INVALID_APPLIST_VERSION = -1;
 
   /*
    * Member fields
@@ -150,7 +153,7 @@ public class DBaseManager /*implements AppHandler*/ {
                 TAGNAME_APP_PKGNAME +"='"+ appInfo.getAppPkgname() +"'",
                 null, null, null, null);
             if (curApps.moveToFirst()) {
-              res = mDb.update(TABLE_NAME_MANAGED_APPS, cv,  //hemerr
+              res = mDb.update(TABLE_NAME_MANAGED_APPS, cv,
                   "TAGNAME_APP_PKGNAME = "+appInfo.getAppPkgname(), null);
             } else {
               res = mDb.insert(TABLE_NAME_MANAGED_APPS, null, cv);
@@ -276,8 +279,8 @@ public class DBaseManager /*implements AppHandler*/ {
             null,
             TAGNAME_APP_PKGNAME +"='"+ appInfo.getAppPkgname() +"'",
             null, null, null, null);
-        if (curApps.moveToNext()) {
-          //record already exited
+        if (curApps.moveToFirst()) {
+          //record already exists
           res = mDb.update(TABLE_NAME_MANAGED_APPS, cv,
               TAGNAME_APP_PKGNAME +"='"+ appInfo.getAppPkgname() +"'", null);
         } else {
@@ -295,12 +298,12 @@ public class DBaseManager /*implements AppHandler*/ {
   }
 
   public void saveManagedDevInfoToDB(ClientUser managedDev) {
-    List<ClientUser> managedDevs = new ArrayList<ClientUser>(1);
+    Set<ClientUser> managedDevs = new HashSet<ClientUser>();
     managedDevs.add(managedDev);
     saveManagedDevInfoToDB(managedDevs);
   }
 
-  public void saveManagedDevInfoToDB(List<ClientUser> managedDevs) {
+  public void saveManagedDevInfoToDB(Set<ClientUser> managedDevs) {
     Logger.i(TAG, "enter saveManagedDevInfoToDB()!");
     if (managedDevs==null || managedDevs.size()==0) {
       return;
@@ -319,14 +322,12 @@ public class DBaseManager /*implements AppHandler*/ {
         appVal = managedDev.getPhoneImsi();
         cv.put(TAGNAME_PHONE_IMSI, appVal);
         appVal = managedDev.getPhoneImei();
-        if (!Utils.isEmptyString(appVal)) {
-          cv.put(TAGNAME_PHONE_IMEI, appVal);
+
+        int appListVer = managedDev.getInstalledAppsListVer();
+        if (appListVer > 0) {
+          cv.put(COL_NAME_APPSLIST_VERSION, appListVer);
         }
 
-        appVal = managedDev.getInstalledApps();
-        if (appVal != null) {
-          cv.put(COL_NAME_APPSLIST, appVal);
-        }
         appVal = managedDev.getInstalledApps();
         if (appVal != null) {
           cv.put(COL_NAME_APPSLIST, appVal);
@@ -336,8 +337,8 @@ public class DBaseManager /*implements AppHandler*/ {
             null,
             TAGNAME_PHONE_NUM +"='"+ managedDev.getPhoneNum() +"'",
             null, null, null, null);
-        if (curDev.moveToNext()) {
-          //record already exited
+        if (curDev.moveToFirst()) {
+          //record already exists
           res = mDb.update(TABLE_NAME_MANAGED_DEVICE, cv,
               TAGNAME_PHONE_NUM +"='"+ managedDev.getPhoneNum() +"'", null);
         } else {
@@ -354,7 +355,7 @@ public class DBaseManager /*implements AppHandler*/ {
   }
 
   public int getAppsListVersion(String phone_no) {
-    Logger.i(TAG, "enter loadAccessCategoriesFromDB()!");
+    Logger.i(TAG, "enter getAppsListVersion()!");
 
     int appListVer = 0;
     try {
@@ -365,21 +366,21 @@ public class DBaseManager /*implements AppHandler*/ {
           null, null, null, null);
 
       String appListStr = "";
-      if (curDevice.moveToNext()) {
+      if (curDevice.moveToFirst()) {
         //col 3 is COL_NAME_APPSLIST_VERSION
         int startIdx = 3;
-        appListVer = Integer.valueOf(curDevice.getString(startIdx++)).intValue();
+        appListVer = curDevice.getInt(startIdx++);
 
         //检查每个受控的Application记录都存在于表中，否则重新获取记录列表，即返回版本号为0
         appListStr = curDevice.getString(startIdx++);
-        if (Utils.isEmptyString(appListStr)) {
+        if (! Utils.isEmptyString(appListStr)) {
           String[] pkgNameAry = appListStr.split("\\"+Event.APP_PKGNAME_DELIMETER);
           if (pkgNameAry!=null && pkgNameAry.length>0) {
             for (String pkgName : pkgNameAry) {
               Cursor curApp = mDb.query(TABLE_NAME_MANAGED_APPS,
                   null, TAGNAME_APP_PKGNAME +"='"+ pkgName +"'", null, null, null, null);
               //当某个Application记录不存在于表中
-              if (! curApp.moveToNext()) {
+              if (! curApp.moveToFirst()) {
                 appListVer = 0;
                 curApp.close();
                 break;

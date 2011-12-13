@@ -30,6 +30,7 @@ public class IoHandler implements AppHandler {
    */
   private static final int SLEEP_TIME = 250;  //mill-seconds
   private static final String CHARSET_NAME = "UTF-8";
+  private static final int LOG_LENGTH_LIMIT = 512;
 
   /*
    * Field members
@@ -407,14 +408,14 @@ public class IoHandler implements AppHandler {
 
             // All data is available now
             String msgStr = new String(buffer, getEncoding());
-            if (msgStr.length() > 512) {
-              Logger.i(TAG, "AndrClient Got a too long message to print\n");
-            } else {
-              Logger.i(TAG, "AndrClient Got a message:\n" + msgStr);
-            }
             if (Utils.isEmptyString(msgStr)) {
               continue;
             }
+            if (msgStr.length() > LOG_LENGTH_LIMIT) {
+              //Logger.i(TAG, "AndrClient Got a too long message to print\n");
+              msgStr = msgStr.substring(0, LOG_LENGTH_LIMIT) + "  ......";
+            }
+            Logger.i(TAG, "AndrClient Got a message:\n" + msgStr);
 
             msgHandler.receiveMessageFromServer(msgStr);
 

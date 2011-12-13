@@ -6,9 +6,16 @@ import static com.studentpal.engine.Event.SIGNAL_TYPE_MSG_FROM_SVR;
 import static com.studentpal.engine.Event.SIGNAL_TYPE_MSG_TO_SVR;
 import static com.studentpal.engine.Event.SIGNAL_TYPE_NETWORK_FAIL;
 import static com.studentpal.engine.Event.SIGNAL_TYPE_OUTSTREAM_READY;
+import static com.studentpal.engine.Event.SIGNAL_TYPE_RESP_GetAppList;
 import static com.studentpal.engine.Event.SIGNAL_TYPE_RESP_LOGIN;
+import static com.studentpal.engine.Event.SIGNAL_TYPE_RESP_RefreshAppList;
 import static com.studentpal.engine.Event.SIGNAL_TYPE_UNKNOWN;
-import static com.studentpal.engine.Event.*;
+import static com.studentpal.engine.Event.TAGNAME_ERR_CODE;
+import static com.studentpal.engine.Event.TAGNAME_RESULT;
+import static com.studentpal.engine.Event.TASKNAME_GetAppList;
+import static com.studentpal.engine.Event.TASKNAME_LOGIN;
+import static com.studentpal.engine.Event.TASKNAME_LOGIN_ADMIN;
+import static com.studentpal.engine.Event.TASKNAME_RefreshAppList;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -17,20 +24,21 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.content.Context;
 import android.os.Message;
 import android.util.Log;
 
-import com.studentpal.R;
+import com.studentpal.app.db.DBaseManager;
 import com.studentpal.app.listener.EventListener;
 import com.studentpal.engine.ClientEngine;
 import com.studentpal.engine.Event;
 import com.studentpal.engine.request.Request;
+import com.studentpal.model.ClientAppInfo;
 import com.studentpal.model.exception.STDException;
-import com.studentpal.util.ActivityUtil;
+import com.studentpal.model.user.ClientUser;
 import com.studentpal.util.Utils;
 import com.studentpal.util.logger.Logger;
 
@@ -245,7 +253,7 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     }
   }
 
-  public void receiveMessageFromServer(Request req) {
+  private void receiveRequestFromServer(Request req) {
     Message msg = this.obtainMessage(SIGNAL_TYPE_MSG_FROM_SVR, req);
     this.sendMessage(msg);
   }
@@ -275,7 +283,7 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
 
         //Received a REQUEST message from server,
         //then send the incoming request to MessageHandler to handle
-        receiveMessageFromServer(request);
+        receiveRequestFromServer(request);
       }
 
     } catch (InstantiationException ex) {
@@ -295,7 +303,8 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     String respType = msgObjRoot.getString(Event.TAGNAME_CMD_TYPE);
     int errCode = msgObjRoot.getInt(TAGNAME_ERR_CODE);
     int evtType = SIGNAL_TYPE_UNKNOWN;
-    Object resultObj = null;
+
+    JSONObject resultObj = null;
     if (msgObjRoot.has(TAGNAME_RESULT)) {
       resultObj = msgObjRoot.getJSONObject(TAGNAME_RESULT);
     }
@@ -303,15 +312,37 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     Event respEvt = null;
 
     if (Request.isEqualRequestType(respType, TASKNAME_LOGIN_ADMIN)) {
+      Set<ClientUser> clientUserSet = null;
+      if (resultObj != null) {
+        clientUserSet = saveManagedDevsInfoToDB(resultObj);
+      }
+
       evtType = SIGNAL_TYPE_RESP_LOGIN;
       respEvt = new Event();
-      respEvt.setData(evtType, errCode, resultObj);
+      respEvt.setData(evtType, errCode, clientUserSet);
+
     } else if (Request.isEqualRequestType(respType, TASKNAME_LOGIN)) {
       //Do nothing
+
     } else if (Request.isEqualRequestType(respType, TASKNAME_GetAppList)) {
+      Set<ClientAppInfo> appsInfoSet = null;
+      if (resultObj != null) {
+        appsInfoSet = saveManagedAppsInfoToDB(resultObj);
+      }
+
       evtType = SIGNAL_TYPE_RESP_GetAppList;
       respEvt = new Event();
-      respEvt.setData(evtType, errCode, resultObj);
+      respEvt.setData(evtType, errCode, appsInfoSet);
+
+    } else if (Request.isEqualRequestType(respType, TASKNAME_RefreshAppList)) {
+      Set<ClientAppInfo> appsInfoSet = null;
+      if (resultObj != null) {
+        appsInfoSet = saveManagedAppsInfoToDB(resultObj);
+      }
+
+      evtType = SIGNAL_TYPE_RESP_RefreshAppList;
+      respEvt = new Event();
+      respEvt.setData(evtType, errCode, appsInfoSet);
     }
 
     //Dispatch ACK event to corresponding screen to handle
@@ -319,6 +350,84 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
       Message msg = this.obtainMessage(evtType, respEvt);
       this.sendMessage(msg);
     }
+  }
+
+  private Set<ClientUser> saveManagedDevsInfoToDB(JSONObject jsonResObj) {
+    if (jsonResObj == null) {
+      Logger.w(TAG,  "Input result obj should NOT be NULL");
+      return null;
+    }
+
+    Set<ClientUser> managedDevs = null;
+    try {
+      JSONArray  devAry = jsonResObj.getJSONArray(Event.TAGNAME_DEVICES);
+      if (devAry!=null && devAry.length()>0) {
+
+        managedDevs = new HashSet<ClientUser>(devAry.length());
+
+        for (int i=0; i<devAry.length(); i++) {
+          JSONObject devObj = devAry.getJSONObject(i);
+          String phoneNo = devObj.getString(Event.TAGNAME_PHONE_NUM);
+          String phoneImsi = devObj.getString(Event.TAGNAME_PHONE_IMSI);
+          String phoneImei = null;
+          if (devObj.has(Event.TAGNAME_PHONE_IMEI)) {
+            phoneImei = devObj.getString(Event.TAGNAME_PHONE_IMEI);
+          }
+
+          ClientUser managedDev = new ClientUser(phoneNo, phoneImsi, phoneImei);
+          managedDevs.add(managedDev);
+        }
+
+        DBaseManager.getInstance().saveManagedDevInfoToDB(managedDevs);
+      }
+
+    } catch (JSONException e) {
+      Logger.d(TAG, e.toString());
+    }
+
+    return managedDevs;
+  }
+
+  private Set<ClientAppInfo> saveManagedAppsInfoToDB(JSONObject jsonResObj) {
+    if (jsonResObj == null) {
+      Logger.w(TAG,  "Input result obj should NOT be NULL");
+      return null;
+    }
+
+    Set<ClientAppInfo> appsInfoList = null;
+    try {
+      String installedApps = "";
+
+      JSONArray jsonAppsAry = jsonResObj.getJSONArray(Event.TAGNAME_APPLICATIONS);
+      if (jsonAppsAry!=null && jsonAppsAry.length()>0) {
+
+        appsInfoList = new HashSet<ClientAppInfo>();
+
+        for (int i=0; i<jsonAppsAry.length(); i++) {
+          ClientAppInfo appInfo = new ClientAppInfo(jsonAppsAry.getJSONObject(i));
+          appsInfoList.add(appInfo);
+
+          installedApps += appInfo.getAppPkgname() + Event.APP_PKGNAME_DELIMETER;
+        }
+
+        DBaseManager.getInstance().saveManagedAppsToDB(appsInfoList);
+      }
+
+      if (jsonResObj.has(Event.TAGNAME_PHONE_NUM)) {
+        String phoneNum = jsonResObj.getString(Event.TAGNAME_PHONE_NUM);
+        int appListVer = jsonResObj.getInt(Event.TAGNAME_VERSION);
+        ClientUser managedDev = new ClientUser(phoneNum, null, null);
+        managedDev.setInstalledAppsListVer(appListVer);
+        managedDev.setInstalledApps(installedApps);
+
+        DBaseManager.getInstance().saveManagedDevInfoToDB(managedDev);
+      }
+
+    } catch (JSONException e) {
+      Logger.d(TAG, e.toString());
+    }
+
+    return appsInfoList;
   }
 
 }

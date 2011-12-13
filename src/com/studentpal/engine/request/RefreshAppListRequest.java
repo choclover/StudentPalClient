@@ -60,7 +60,9 @@ public class RefreshAppListRequest extends Request {
         }
 
         JSONObject resultObj = new JSONObject();
+        resultObj.put(Event.TAGNAME_PHONE_NUM, targetPhoneNo);
         resultObj.put(Event.TAGNAME_APPLICATIONS, appAry);
+
         respObj.put(Event.TAGNAME_RESULT, resultObj);
 
         respObj.put(Event.TAGNAME_ERR_CODE, Event.ERRCODE_NOERROR);
