@@ -411,11 +411,14 @@ public class IoHandler implements AppHandler {
             if (Utils.isEmptyString(msgStr)) {
               continue;
             }
+
             if (msgStr.length() > LOG_LENGTH_LIMIT) {
               //Logger.i(TAG, "AndrClient Got a too long message to print\n");
-              msgStr = msgStr.substring(0, LOG_LENGTH_LIMIT) + "  ......";
+              Logger.i(TAG, "AndrClient Got a message:\n" +
+                  msgStr.substring(0, LOG_LENGTH_LIMIT) + "  ......");
+            } else {
+              Logger.i(TAG, "AndrClient Got a message:\n" + msgStr);
             }
-            Logger.i(TAG, "AndrClient Got a message:\n" + msgStr);
 
             msgHandler.receiveMessageFromServer(msgStr);
 

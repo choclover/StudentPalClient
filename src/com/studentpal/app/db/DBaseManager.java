@@ -55,6 +55,7 @@ public class DBaseManager /*implements AppHandler*/ {
 
   private static final String COL_NAME_APPSLIST             = "installedApps";
   private static final String COL_NAME_APPSLIST_VERSION     = "installedAppsListVer";
+  private static final String COL_NAME_IS_ACTIVE            = "isActive";
   //private static final String COL_NAME_APPSLIST_NAME        = "apps_list_version";
 
   private static final String TIME_LIST_DELIMETER = ";";
@@ -332,6 +333,7 @@ public class DBaseManager /*implements AppHandler*/ {
         if (appVal != null) {
           cv.put(COL_NAME_APPSLIST, appVal);
         }
+        cv.put(COL_NAME_IS_ACTIVE, 1);
 
         Cursor curDev = mDb.query(TABLE_NAME_MANAGED_DEVICE,
             null,
@@ -399,6 +401,39 @@ public class DBaseManager /*implements AppHandler*/ {
     }
 
     return appListVer;
+  }
+
+  public Set<ClientUser> getManagedDevsSet() {
+    Logger.i(TAG, "enter getAppsListVersion()!");
+    Set<ClientUser> result = null;
+
+    try {
+      mDb = openDB();
+      Cursor curDevice = mDb.query(TABLE_NAME_MANAGED_DEVICE,
+          null,
+          COL_NAME_IS_ACTIVE +"=1",
+          null, null, null, null);
+
+      int devCnt = curDevice.getCount();
+      if (devCnt > 0)  result = new HashSet<ClientUser>(devCnt);
+      while (curDevice.moveToNext()) {
+        String phoneNum  = curDevice.getString(1);
+        String phoneImsi = curDevice.getString(2);
+        ClientUser managedDev = new ClientUser(phoneNum, phoneImsi);
+        managedDev.setInstalledAppsListVer(curDevice.getInt(3));
+        managedDev.setInstalledApps(curDevice.getString(4));
+
+        result.add(managedDev);
+      }
+      curDevice.close();
+
+    } catch (SQLiteException ex) {
+      Logger.w(TAG, ex.toString());
+    } finally {
+      mDb.close();
+    }
+
+    return result;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -512,8 +547,9 @@ public class DBaseManager /*implements AppHandler*/ {
           "( _id INTEGER PRIMARY KEY AUTOINCREMENT ").append(
           ", " +TAGNAME_PHONE_NUM+       " TEXT").append(
           ", " +TAGNAME_PHONE_IMSI+      " TEXT").append(
-          ", " +COL_NAME_APPSLIST_VERSION+  " INTEGER DEFAULT 0").append(
-          ", " +COL_NAME_APPSLIST+       " TEXT").append(
+          ", " +COL_NAME_APPSLIST_VERSION+ " INTEGER DEFAULT 0").append(
+          ", " +COL_NAME_APPSLIST+         " TEXT DEFAULT NULL").append(
+          ", " +COL_NAME_IS_ACTIVE+        " INTEGER DEFAULT 0").append(
           ");").toString();
       dbase.execSQL(create_managed_device_table_sql);
     }

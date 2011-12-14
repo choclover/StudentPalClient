@@ -82,7 +82,9 @@ public abstract class Request /*extends Message*/ {
     reqObj.put(Event.TAGNAME_MSG_TYPE, Event.MESSAGE_HEADER_REQ);
     reqObj.put(Event.TAGNAME_CMD_TYPE, cmd_type);
     reqObj.put(Event.TAGNAME_MSG_ID, req_seq);
-    reqObj.put(Event.TAGNAME_ARGUMENTS, argsObj);
+    if (argsObj.length() > 0) {
+      reqObj.put(Event.TAGNAME_ARGUMENTS, argsObj);
+    }
 
     return reqObj;
   }

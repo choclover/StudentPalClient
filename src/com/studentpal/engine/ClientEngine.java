@@ -297,6 +297,13 @@ public class ClientEngine implements AppHandler {
     msgHandler.sendMessageToServer(request);
   }
 
+  public void logoutServer() throws STDException {
+    Logger.i(TAG, "enter loginServerFromClient");
+
+    Request request = new LoginRequest(Event.TASKNAME_LOGOUT, null);
+    msgHandler.sendMessageToServer(request);
+  }
+
   /*
    * Update information displayed on launcher screen
    */

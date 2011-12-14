@@ -22,7 +22,10 @@ public class RefreshAppListRequest extends Request {
     this.targetPhoneNo = targetPhoneNum;
   }
 
-  //called by Phone client
+  /*
+   * Don't delet this constructor, called by Phone client
+   * MessageHandler.handleRequestMessage()
+   */
   public RefreshAppListRequest() {
   }
 
@@ -36,6 +39,10 @@ public class RefreshAppListRequest extends Request {
     } else {
       executeClientRequest();
     }
+  }
+
+  public void setTargetPhoneNo(String targetPhoneNo) {
+    this.targetPhoneNo = targetPhoneNo;
   }
 
   /////////////////////////////////////////////////////////////////////////////
