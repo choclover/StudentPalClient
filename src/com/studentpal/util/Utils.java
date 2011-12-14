@@ -68,6 +68,14 @@ public class Utils {
     return pkgName;
   }
 
+  public static String truncateLongString(String oriStr, int limit) {
+    String result = oriStr;
+    if (oriStr.length() > limit) {
+      result = oriStr.substring(0, limit) + "  ......";
+    }
+    return result;
+  }
+
   public static String toMd5(byte[] bytes) {
     try {
       MessageDigest algorithm = MessageDigest.getInstance("MD5");

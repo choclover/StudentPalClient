@@ -19,6 +19,8 @@ public class GetAppListRequest extends Request {
   public GetAppListRequest(String targetPhoneNum, int appListVer) {
     this.targetPhoneNo = targetPhoneNum;
     this.appListVer = appListVer;
+
+    this.isAdminReq = true;
   }
 
   public String getName() {
@@ -26,6 +28,13 @@ public class GetAppListRequest extends Request {
   }
 
   public void execute() {
+    if (isAdminReq) {
+      executeAdminRequest();
+    }
+  }
+
+  /////////////////////////////////////////////////////////////////////////////
+  private void executeAdminRequest() {
     try {
       super.setRequestSeq(ClientEngine.getNextMsgId());
 

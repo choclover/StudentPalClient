@@ -34,7 +34,7 @@ public class RefreshAppListRequest extends Request {
   }
 
   public void execute() {
-    if (super.isAdminReq) {
+    if (isAdminReq) {
       executeAdminRequest();
     } else {
       executeClientRequest();

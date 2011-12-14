@@ -7,8 +7,8 @@ public class ResourceManager {
   public static final String ACTIVITY_NAME_MANAGEAPPS = "com.android.settings.ManageApplications";
   public static final String ACTIVITY_NAME_APPSDETAILS = "com.android.settings.InstalledAppDetails";
 
-  public static final String target_svr_ip = "10.60.4.69";
-  public static final String target_svr_ip1 = "192.168.11.252";
+  public static final String target_svr_ip1 = "10.60.4.69";
+  public static final String target_svr_ip = "192.168.11.252";
   public static final String target_svr_ip2 = "192.168.10.101";
 
   public static final String RES_STR_OK = "\u786e\u5b9a"; // 确定

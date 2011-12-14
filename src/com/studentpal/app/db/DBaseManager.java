@@ -151,7 +151,8 @@ public class DBaseManager /*implements AppHandler*/ {
 
             Cursor curApps = mDb.query(TABLE_NAME_MANAGED_APPS,
                 null,
-                TAGNAME_APP_PKGNAME +"='"+ appInfo.getAppPkgname() +"'",
+                TAGNAME_APP_PKGNAME +"=?",
+                new String[] {appInfo.getAppPkgname()},
                 null, null, null, null);
             if (curApps.moveToFirst()) {
               res = mDb.update(TABLE_NAME_MANAGED_APPS, cv,
@@ -263,10 +264,10 @@ public class DBaseManager /*implements AppHandler*/ {
       mDb = openDB();
       long res = -1;
 
-      ContentValues cv;
+      ContentValues cv = new ContentValues();
       String appVal;
       for (ClientAppInfo appInfo : appsListSet) {
-        cv = new ContentValues();
+        cv.clear();
         appVal = appInfo.getAppName();
         cv.put(TAGNAME_APP_NAME,      appVal);
         appVal = appInfo.getAppPkgname();
@@ -277,9 +278,9 @@ public class DBaseManager /*implements AppHandler*/ {
         }
 
         Cursor curApps = mDb.query(TABLE_NAME_MANAGED_APPS,
-            null,
-            TAGNAME_APP_PKGNAME +"='"+ appInfo.getAppPkgname() +"'",
-            null, null, null, null);
+            new String[] {"_id"},
+            TAGNAME_APP_PKGNAME +"=?", new String[] {appInfo.getAppPkgname()},
+            null, null, null);
         if (curApps.moveToFirst()) {
           //record already exists
           res = mDb.update(TABLE_NAME_MANAGED_APPS, cv,
@@ -319,10 +320,17 @@ public class DBaseManager /*implements AppHandler*/ {
       for (ClientUser managedDev : managedDevs) {
         cv = new ContentValues();
         appVal = managedDev.getPhoneNum();
-        cv.put(TAGNAME_PHONE_NUM, appVal);
+        if (! Utils.isEmptyString(appVal)) {
+          cv.put(TAGNAME_PHONE_NUM, appVal);
+        } else {
+          Logger.v("Skipped a ClientUser with NO phone number!");
+          continue;
+        }
+
         appVal = managedDev.getPhoneImsi();
-        cv.put(TAGNAME_PHONE_IMSI, appVal);
-        appVal = managedDev.getPhoneImei();
+        if (! Utils.isEmptyString(appVal)) {
+          cv.put(TAGNAME_PHONE_IMSI, appVal);
+        }
 
         int appListVer = managedDev.getInstalledAppsListVer();
         if (appListVer > 0) {
@@ -330,19 +338,22 @@ public class DBaseManager /*implements AppHandler*/ {
         }
 
         appVal = managedDev.getInstalledApps();
-        if (appVal != null) {
+        if (! Utils.isEmptyString(appVal)) {
           cv.put(COL_NAME_APPSLIST, appVal);
         }
         cv.put(COL_NAME_IS_ACTIVE, 1);
 
         Cursor curDev = mDb.query(TABLE_NAME_MANAGED_DEVICE,
-            null,
-            TAGNAME_PHONE_NUM +"='"+ managedDev.getPhoneNum() +"'",
-            null, null, null, null);
+            new String[] {COL_NAME_APPSLIST_VERSION},
+            TAGNAME_PHONE_NUM +"=?", new String[] {managedDev.getPhoneNum()},
+            //TAGNAME_PHONE_IMSI +"='"+ managedDev.getPhoneImsi() +"'",
+            null, null, null);
         if (curDev.moveToFirst()) {
           //record already exists
           res = mDb.update(TABLE_NAME_MANAGED_DEVICE, cv,
-              TAGNAME_PHONE_NUM +"='"+ managedDev.getPhoneNum() +"'", null);
+              TAGNAME_PHONE_NUM +"='"+ managedDev.getPhoneNum() +"'",
+              //TAGNAME_PHONE_IMSI +"='"+ managedDev.getPhoneImsi() +"'",
+              null);
         } else {
           res = mDb.insert(TABLE_NAME_MANAGED_DEVICE, null, cv);
         }
@@ -364,8 +375,8 @@ public class DBaseManager /*implements AppHandler*/ {
       mDb = openDB();
       Cursor curDevice = mDb.query(TABLE_NAME_MANAGED_DEVICE,
           null/*new String[] {COL_NAME_APPSLIST_VERSION}*/,
-          TAGNAME_PHONE_NUM +"='"+ phone_no +"'",
-          null, null, null, null);
+          TAGNAME_PHONE_NUM +"=?", new String[] {phone_no},
+          null, null, null);
 
       String appListStr = "";
       if (curDevice.moveToFirst()) {
@@ -380,7 +391,8 @@ public class DBaseManager /*implements AppHandler*/ {
           if (pkgNameAry!=null && pkgNameAry.length>0) {
             for (String pkgName : pkgNameAry) {
               Cursor curApp = mDb.query(TABLE_NAME_MANAGED_APPS,
-                  null, TAGNAME_APP_PKGNAME +"='"+ pkgName +"'", null, null, null, null);
+                  null, TAGNAME_APP_PKGNAME +"=?", new String[] {pkgName},
+                  null, null, null);
               //当某个Application记录不存在于表中
               if (! curApp.moveToFirst()) {
                 appListVer = 0;
