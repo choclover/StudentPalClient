@@ -20,6 +20,7 @@ public class LoginRequest extends Request {
     this._user  = user;
   }
 
+  @Override
   public String getName() {
     return _name;
   }

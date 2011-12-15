@@ -277,7 +277,7 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
         request.setRequestSeq(msgId);
 
         if (msgObjRoot.has(Event.TAGNAME_ARGUMENTS)) {
-          String args = msgObjRoot.getString(Event.TAGNAME_ARGUMENTS);
+          JSONObject args = msgObjRoot.getJSONObject(Event.TAGNAME_ARGUMENTS);
           request.setInputArguments(args);
         }
 

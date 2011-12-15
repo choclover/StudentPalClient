@@ -19,7 +19,8 @@ public abstract class Request /*extends Message*/ {
   protected boolean bIncoming = true;
   protected boolean bOutputContentReady = false;
 
-  protected String inputArguments = null;
+  protected JSONObject inputArguments = null;
+
   protected String outputContentStr = null;
 
   protected int req_seq = Event.MSG_ID_INVALID;
@@ -68,11 +69,11 @@ public abstract class Request /*extends Message*/ {
     }
   }
 
-  public String getInputArguments() {
+  public JSONObject getInputArguments() {
     return inputArguments;
   }
 
-  public void setInputArguments(String args) {
+  public void setInputArguments(JSONObject args) {
     inputArguments = args;
   }
 

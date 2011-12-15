@@ -29,6 +29,7 @@ public class RefreshAppListRequest extends Request {
   public RefreshAppListRequest() {
   }
 
+  @Override
   public String getName() {
     return Event.TASKNAME_RefreshAppList;
   }

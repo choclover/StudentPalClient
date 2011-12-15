@@ -23,6 +23,7 @@ public class GetAppListRequest extends Request {
     this.isAdminReq = true;
   }
 
+  @Override
   public String getName() {
     return Event.TASKNAME_GetAppList;
   }
