@@ -1,17 +1,6 @@
 package com.studentpal.app.db;
 
-import static com.studentpal.engine.Event.TAGNAME_ACCESS_CATE_ID;
-import static com.studentpal.engine.Event.TAGNAME_ACCESS_CATE_NAME;
-import static com.studentpal.engine.Event.TAGNAME_APP_CLASSNAME;
-import static com.studentpal.engine.Event.TAGNAME_APP_NAME;
-import static com.studentpal.engine.Event.TAGNAME_APP_PKGNAME;
-import static com.studentpal.engine.Event.TAGNAME_PHONE_IMSI;
-import static com.studentpal.engine.Event.TAGNAME_PHONE_NUM;
-import static com.studentpal.engine.Event.TAGNAME_RULE_AUTH_TYPE;
-import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_ENDTIME;
-import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_STARTTIME;
-import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_TYPE;
-import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_VALUE;
+import static com.studentpal.engine.Event.*;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -51,6 +40,7 @@ public class DBaseManager /*implements AppHandler*/ {
   private static final String TABLE_NAME_ACCESS_CATEGORIES  = "access_categories";
   private static final String TABLE_NAME_ACCESS_RULES       = "access_rules";
   private static final String TABLE_NAME_MANAGED_APPS       = "managed_applications";
+  private static final String TABLE_NAME_MANAGED_APPTYPES   = "managed_apptypes";
   private static final String TABLE_NAME_MANAGED_DEVICE     = "managed_device";
 
   private static final String COL_NAME_APPSLIST             = "installedApps";
@@ -95,9 +85,13 @@ public class DBaseManager /*implements AppHandler*/ {
     try {
       mDb = openDB();
 
+      /*
+       * 首先清空所有已存的category相关记录
+       */
       //clear old records first
       //String sqlStr = "DELETE FROM " + ACCESS_CATEGORY_TABLE_NAME;
       //mDb.execSQL(sqlStr);
+
       long res = -1;
       res = mDb.delete(TABLE_NAME_ACCESS_CATEGORIES, "1", null);
       res = mDb.delete(TABLE_NAME_ACCESS_RULES, "1", null);
@@ -156,7 +150,9 @@ public class DBaseManager /*implements AppHandler*/ {
                 null, null, null, null);
             if (curApps.moveToFirst()) {
               res = mDb.update(TABLE_NAME_MANAGED_APPS, cv,
-                  "TAGNAME_APP_PKGNAME = "+appInfo.getAppPkgname(), null);
+                               TAGNAME_APP_PKGNAME + "=?",
+                               new String[] {appInfo.getAppPkgname()}
+                    );
             } else {
               res = mDb.insert(TABLE_NAME_MANAGED_APPS, null, cv);
             }
@@ -542,18 +538,10 @@ public class DBaseManager /*implements AppHandler*/ {
       ");").toString();
     dbase.execSQL(create_rules_table_sql);
 
-    final String create_applications_table_sql = new StringBuffer().append(
-        "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_MANAGED_APPS).append(
-        "( _id INTEGER PRIMARY KEY AUTOINCREMENT ").append(
-        ", " +TAGNAME_APP_NAME+       " TEXT").append(
-        ", " +TAGNAME_APP_PKGNAME+    " TEXT").append(
-        ", " +TAGNAME_APP_CLASSNAME+  " TEXT").append(
-        ", " +TAGNAME_ACCESS_CATE_ID+ " INTEGER").append(
-        ", FOREIGN KEY(" +TAGNAME_ACCESS_CATE_ID+ ") REFERENCES " +TABLE_NAME_ACCESS_CATEGORIES+ "(" +TAGNAME_ACCESS_CATE_ID+ ")").append(
-        ");").toString();
-    dbase.execSQL(create_applications_table_sql);
-
-    if (isAdmin) {
+    /*
+     * Differs between Admin & Client
+     */
+    if (true == isAdmin) {
       final String create_managed_device_table_sql = new StringBuffer().append(
           "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_MANAGED_DEVICE).append(
           "( _id INTEGER PRIMARY KEY AUTOINCREMENT ").append(
@@ -564,6 +552,38 @@ public class DBaseManager /*implements AppHandler*/ {
           ", " +COL_NAME_IS_ACTIVE+        " INTEGER DEFAULT 0").append(
           ");").toString();
       dbase.execSQL(create_managed_device_table_sql);
+
+      final String create_applicatio_types_table_sql = new StringBuffer().append(
+          "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_MANAGED_APPTYPES).append(
+          "( _id INTEGER PRIMARY KEY AUTOINCREMENT ").append(
+          ", " +TAGNAME_APP_TYPENAME+       " TEXT").append(
+          ", " +TAGNAME_APP_TYPEDESC+       " TEXT").append(
+          ");").toString();
+      dbase.execSQL(create_applicatio_types_table_sql);
+
+      final String create_applications_table_sql = new StringBuffer().append(
+          "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_MANAGED_APPS).append(
+          "( _id INTEGER PRIMARY KEY AUTOINCREMENT ").append(
+          ", " +TAGNAME_APP_TYPENAME+   " TEXT").append(
+          ", " +TAGNAME_APP_PKGNAME+    " TEXT").append(
+          ", " +TAGNAME_APP_CLASSNAME+  " TEXT").append(
+          ", " +TAGNAME_APP_TYPEID+     " INTEGER").append(
+          ", FOREIGN KEY(" +TAGNAME_APP_TYPEID+ ") REFERENCES " +TABLE_NAME_MANAGED_APPTYPES+ "(" +TAGNAME_APP_TYPEID+ ")").append(
+          ");").toString();
+      dbase.execSQL(create_applications_table_sql);
+
+    } else {
+      final String create_applications_table_sql = new StringBuffer().append(
+          "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_MANAGED_APPS).append(
+          "( _id INTEGER PRIMARY KEY AUTOINCREMENT ").append(
+          ", " +TAGNAME_APP_NAME+       " TEXT").append(
+          ", " +TAGNAME_APP_PKGNAME+    " TEXT").append(
+          ", " +TAGNAME_APP_CLASSNAME+  " TEXT").append(
+          ", " +TAGNAME_ACCESS_CATE_ID+ " INTEGER").append(
+          ", FOREIGN KEY(" +TAGNAME_ACCESS_CATE_ID+ ") REFERENCES " +TABLE_NAME_ACCESS_CATEGORIES+ "(" +TAGNAME_ACCESS_CATE_ID+ ")").append(
+          ");").toString();
+      dbase.execSQL(create_applications_table_sql);
+
     }
 
   }

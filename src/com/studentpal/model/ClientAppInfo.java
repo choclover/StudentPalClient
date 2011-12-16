@@ -16,7 +16,7 @@ public class ClientAppInfo {
   private String app_name;
   private String app_classname;
   private String app_pkgname;
-  private String[] app_pkgList;
+  //private String[] app_pkgList;
 
   private static PackageManager pm = ClientEngine.getInstance().getPackageManager();
 

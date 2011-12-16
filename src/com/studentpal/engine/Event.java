@@ -33,12 +33,16 @@ public class Event {
 
   public static final String TAGNAME_DEVICES         = "devices";
   //public static final String TAGNAME_DEVICE          = "device";
-  public static final String TAGNAME_APPLICATIONS    = "applications";
-  public static final String TAGNAME_APP             = "application";
-  public static final String TAGNAME_APP_NAME        = "app_name";
-  public static final String TAGNAME_APP_CLASSNAME   = "app_classname";
-  public static final String TAGNAME_APP_PKGNAME     = "app_pkgname";
-  public static final String TAGNAME_APP_COMNAME     = "app_companyname";
+  public static final String TAGNAME_APPLICATIONS      = "applications";
+  public static final String TAGNAME_APPLICATION_TYPES = "application_types";
+  public static final String TAGNAME_APP               = "application";
+  public static final String TAGNAME_APP_NAME          = "app_name";
+  public static final String TAGNAME_APP_CLASSNAME     = "app_classname";
+  public static final String TAGNAME_APP_PKGNAME       = "app_pkgname";
+  public static final String TAGNAME_APP_COMNAME       = "app_companyname";
+  public static final String TAGNAME_APP_TYPEID        = "app_typeid";
+  public static final String TAGNAME_APP_TYPENAME      = "app_typename";
+  public static final String TAGNAME_APP_TYPEDESC      = "app_typendesc";
 
   public static final String TAGNAME_ACCESS_CATEGORIES = "access_categories";
   public static final String TAGNAME_ACCESS_CATEGORY   = "access_cate";
