@@ -36,6 +36,7 @@ import com.studentpal.app.listener.EventListener;
 import com.studentpal.engine.ClientEngine;
 import com.studentpal.engine.Event;
 import com.studentpal.engine.request.Request;
+import com.studentpal.model.AppTypeInfo;
 import com.studentpal.model.ClientAppInfo;
 import com.studentpal.model.exception.STDException;
 import com.studentpal.model.user.ClientUser;
@@ -411,6 +412,18 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
         }
 
         DBaseManager.getInstance().saveManagedAppsToDB(appsInfoList);
+      }
+
+      Set<AppTypeInfo> appTypesList = null;
+      JSONArray jsonAppTypesAry = jsonResObj.getJSONArray(
+          Event.TAGNAME_APPLICATION_TYPES);
+      if (jsonAppTypesAry!=null && jsonAppTypesAry.length()>0) {
+        appTypesList = new HashSet<AppTypeInfo>();
+        for (int i=0; i<jsonAppTypesAry.length(); i++) {
+          AppTypeInfo appTypeInfo = new AppTypeInfo(jsonAppTypesAry.getJSONObject(i));
+          appTypesList.add(appTypeInfo);
+        }
+        DBaseManager.getInstance().saveManagedAppTypesToDB(appTypesList);
       }
 
       if (jsonResObj.has(Event.TAGNAME_PHONE_NUM)) {

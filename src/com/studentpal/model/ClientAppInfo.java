@@ -16,6 +16,7 @@ public class ClientAppInfo {
   private String app_name;
   private String app_classname;
   private String app_pkgname;
+  private int    app_typeid = 0;
   //private String[] app_pkgList;
 
   private static PackageManager pm = ClientEngine.getInstance().getPackageManager();
@@ -49,6 +50,9 @@ public class ClientAppInfo {
     if (jsonAppInfoObj.has(Event.TAGNAME_APP_CLASSNAME)) {
       app_classname = jsonAppInfoObj.getString(Event.TAGNAME_APP_CLASSNAME);
     }
+    if (jsonAppInfoObj.has(Event.TAGNAME_APP_TYPEID)) {
+      app_typeid = jsonAppInfoObj.getInt(Event.TAGNAME_APP_TYPEID);
+    }
   }
 
   public String getAppName() {
@@ -61,6 +65,10 @@ public class ClientAppInfo {
 
   public String getAppPkgname() {
     return app_pkgname;
+  }
+
+  public int getAppTypeId() {
+    return app_typeid;
   }
 
   public String getIndexingKey() {

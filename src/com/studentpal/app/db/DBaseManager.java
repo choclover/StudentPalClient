@@ -17,6 +17,7 @@ import android.database.sqlite.SQLiteException;
 import com.studentpal.engine.ClientEngine;
 import com.studentpal.engine.Event;
 import com.studentpal.model.AccessCategory;
+import com.studentpal.model.AppTypeInfo;
 import com.studentpal.model.ClientAppInfo;
 import com.studentpal.model.exception.STDException;
 import com.studentpal.model.rules.AccessRule;
@@ -293,6 +294,10 @@ public class DBaseManager /*implements AppHandler*/ {
     } finally {
       mDb.close();
     }
+  }
+
+  public void saveManagedAppTypesToDB(Set<AppTypeInfo> appsListSet) {
+    //TODO
   }
 
   public void saveManagedDevInfoToDB(ClientUser managedDev) {
