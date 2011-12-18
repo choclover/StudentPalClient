@@ -11,6 +11,8 @@ import static com.studentpal.engine.Event.SIGNAL_TYPE_RESP_LOGIN;
 import static com.studentpal.engine.Event.SIGNAL_TYPE_RESP_RefreshAppList;
 import static com.studentpal.engine.Event.SIGNAL_TYPE_UNKNOWN;
 import static com.studentpal.engine.Event.TAGNAME_ERR_CODE;
+import static com.studentpal.engine.Event.TAGNAME_PHONE_IMSI;
+import static com.studentpal.engine.Event.TAGNAME_PHONE_NUM;
 import static com.studentpal.engine.Event.TAGNAME_RESULT;
 import static com.studentpal.engine.Event.TASKNAME_GetAppList;
 import static com.studentpal.engine.Event.TASKNAME_LOGIN;
@@ -318,12 +320,32 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
         clientUserSet = saveManagedDevsInfoToDB(resultObj);
       }
 
+      if (resultObj != null) {
+        if (resultObj.has(TAGNAME_PHONE_NUM)) {
+          ClientEngine.getInstance().setPhoneNum(
+              resultObj.getString(TAGNAME_PHONE_NUM));
+        }
+        if (resultObj.has(TAGNAME_PHONE_IMSI)) {
+          ClientEngine.getInstance().setPhoneIMSI(
+              resultObj.getString(TAGNAME_PHONE_IMSI));
+        }
+      }
+
       evtType = SIGNAL_TYPE_RESP_LOGIN;
       respEvt = new Event();
       respEvt.setData(evtType, errCode, clientUserSet);
 
     } else if (Request.isEqualRequestType(respType, TASKNAME_LOGIN)) {
-      //Do nothing
+      if (resultObj != null) {
+        if (resultObj.has(TAGNAME_PHONE_NUM)) {
+          ClientEngine.getInstance().setPhoneNum(
+              resultObj.getString(TAGNAME_PHONE_NUM));
+        }
+        if (resultObj.has(TAGNAME_PHONE_IMSI)) {
+          ClientEngine.getInstance().setPhoneIMSI(
+              resultObj.getString(TAGNAME_PHONE_IMSI));
+        }
+      }
 
     } else if (Request.isEqualRequestType(respType, TASKNAME_GetAppList)) {
       Set<ClientAppInfo> appsInfoSet = null;
@@ -353,6 +375,7 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     }
   }
 
+  /////////////////////////////////////////////////////////////////////////////
   private Set<ClientUser> saveManagedDevsInfoToDB(JSONObject jsonResObj) {
     if (jsonResObj == null) {
       Logger.w(TAG,  "Input result obj should NOT be NULL");

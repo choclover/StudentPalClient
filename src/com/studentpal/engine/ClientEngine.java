@@ -43,6 +43,9 @@ public class ClientEngine implements AppHandler {
    */
   private static ClientEngine instance = null;
 
+  private String  mobileNo;
+  private String  imsi;
+
   //Flag for indicating if it is the device admin controller
   private boolean             _isAdmin           = false;
 
@@ -213,6 +216,10 @@ public class ClientEngine implements AppHandler {
   }
 
   public String getPhoneNum() {
+    if (Utils.isEmptyString(mobileNo)) {
+      return mobileNo;
+    }
+
     String result = "";
     if (this._teleManager != null) {
       result = this._teleManager.getLine1Number();
@@ -221,6 +228,10 @@ public class ClientEngine implements AppHandler {
 //      }
     }
     return result;
+  }
+
+  public void setPhoneNum(String mobileNo) {
+    this.mobileNo = mobileNo;
   }
 
   public String getPhoneIMEI() {
@@ -232,11 +243,17 @@ public class ClientEngine implements AppHandler {
   }
 
   public String getPhoneIMSI() {
+    if (Utils.isEmptyString(this.imsi)) {
+      return imsi;
+    }
     String result = "";
     if (this._teleManager != null) {
       result = this._teleManager.getSubscriberId();
     }
     return result;
+  }
+  public void setPhoneIMSI(String imsi) {
+    this.imsi = imsi;
   }
 
   public int getApiVersion() {
