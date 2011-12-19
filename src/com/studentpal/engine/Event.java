@@ -8,6 +8,7 @@ public class Event {
    * Constants
    */
   public static final String APP_PKGNAME_DELIMETER = "|";
+  public static final String TIME_LIST_DELIMETER   = ";";
 
   public static final String MESSAGE_HEADER_ACK      = "A";
   public static final String MESSAGE_HEADER_REQ      = "R";

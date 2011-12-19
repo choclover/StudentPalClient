@@ -8,7 +8,7 @@ import com.studentpal.engine.Event;
 import com.studentpal.util.logger.Logger;
 
 
-public class GetAppListRequest extends Request {
+public class SyncAppListRequest extends Request {
 
   private String targetPhoneNo;
   private int    appListVer;
@@ -16,7 +16,7 @@ public class GetAppListRequest extends Request {
   /*
    * Methods
    */
-  public GetAppListRequest(String targetPhoneNum, int appListVer) {
+  public SyncAppListRequest(String targetPhoneNum, int appListVer) {
     this.targetPhoneNo = targetPhoneNum;
     this.appListVer = appListVer;
 
