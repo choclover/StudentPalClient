@@ -25,7 +25,7 @@ public class GetAppListRequest extends Request {
 
   @Override
   public String getName() {
-    return Event.TASKNAME_GetAppList;
+    return Event.TASKNAME_SyncAppList;
   }
 
   public void execute() {

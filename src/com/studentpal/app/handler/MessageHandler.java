@@ -10,11 +10,11 @@ import static com.studentpal.engine.Event.SIGNAL_TYPE_RESP_GetAppList;
 import static com.studentpal.engine.Event.SIGNAL_TYPE_RESP_LOGIN;
 import static com.studentpal.engine.Event.SIGNAL_TYPE_RESP_RefreshAppList;
 import static com.studentpal.engine.Event.SIGNAL_TYPE_UNKNOWN;
-import static com.studentpal.engine.Event.TAGNAME_ERR_CODE;
-import static com.studentpal.engine.Event.TAGNAME_PHONE_IMSI;
 import static com.studentpal.engine.Event.TAGNAME_PHONE_NUM;
+import static com.studentpal.engine.Event.TAGNAME_PHONE_IMSI;
+import static com.studentpal.engine.Event.TAGNAME_ERR_CODE;
 import static com.studentpal.engine.Event.TAGNAME_RESULT;
-import static com.studentpal.engine.Event.TASKNAME_GetAppList;
+import static com.studentpal.engine.Event.TASKNAME_SyncAppList;
 import static com.studentpal.engine.Event.TASKNAME_LOGIN;
 import static com.studentpal.engine.Event.TASKNAME_LOGIN_ADMIN;
 import static com.studentpal.engine.Event.TASKNAME_RefreshAppList;
@@ -38,6 +38,7 @@ import com.studentpal.app.listener.EventListener;
 import com.studentpal.engine.ClientEngine;
 import com.studentpal.engine.Event;
 import com.studentpal.engine.request.Request;
+import com.studentpal.model.AccessCategory;
 import com.studentpal.model.AppTypeInfo;
 import com.studentpal.model.ClientAppInfo;
 import com.studentpal.model.exception.STDException;
@@ -322,12 +323,10 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
 
       if (resultObj != null) {
         if (resultObj.has(TAGNAME_PHONE_NUM)) {
-          ClientEngine.getInstance().setPhoneNum(
-              resultObj.getString(TAGNAME_PHONE_NUM));
+          ClientEngine.getInstance().setPhoneNum(resultObj.getString(TAGNAME_PHONE_NUM));
         }
         if (resultObj.has(TAGNAME_PHONE_IMSI)) {
-          ClientEngine.getInstance().setPhoneIMSI(
-              resultObj.getString(TAGNAME_PHONE_IMSI));
+          ClientEngine.getInstance().setPhoneIMSI(resultObj.getString(TAGNAME_PHONE_IMSI));
         }
       }
 
@@ -338,16 +337,14 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     } else if (Request.isEqualRequestType(respType, TASKNAME_LOGIN)) {
       if (resultObj != null) {
         if (resultObj.has(TAGNAME_PHONE_NUM)) {
-          ClientEngine.getInstance().setPhoneNum(
-              resultObj.getString(TAGNAME_PHONE_NUM));
+          ClientEngine.getInstance().setPhoneNum(resultObj.getString(TAGNAME_PHONE_NUM));
         }
         if (resultObj.has(TAGNAME_PHONE_IMSI)) {
-          ClientEngine.getInstance().setPhoneIMSI(
-              resultObj.getString(TAGNAME_PHONE_IMSI));
+          ClientEngine.getInstance().setPhoneIMSI(resultObj.getString(TAGNAME_PHONE_IMSI));
         }
       }
 
-    } else if (Request.isEqualRequestType(respType, TASKNAME_GetAppList)) {
+    } else if (Request.isEqualRequestType(respType, TASKNAME_SyncAppList)) {
       Set<ClientAppInfo> appsInfoSet = null;
       if (resultObj != null) {
         appsInfoSet = saveManagedAppsInfoToDB(resultObj);
@@ -375,7 +372,6 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     }
   }
 
-  /////////////////////////////////////////////////////////////////////////////
   private Set<ClientUser> saveManagedDevsInfoToDB(JSONObject jsonResObj) {
     if (jsonResObj == null) {
       Logger.w(TAG,  "Input result obj should NOT be NULL");
@@ -466,4 +462,10 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     return appsInfoList;
   }
 
+  private Set<AccessCategory> saveAccessCatesInfoToDB(JSONObject jsonResObj) {
+    //TODO
+    Set<AccessCategory> result = null;
+
+    return result;
+  }
 }

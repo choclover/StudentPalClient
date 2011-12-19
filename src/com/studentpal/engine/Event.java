@@ -71,8 +71,10 @@ public class Event {
    * TASK constants
    */
   public static final String TASKNAME_Generic               = "Generic";
-  public static final String TASKNAME_GetAppList            = "GetAppList";
-  public static final String TASKNAME_GetAppTypeList        = "GetAppTypeList";
+  public static final String TASKNAME_SyncAppList           = "SyncAppList";
+  public static final String TASKNAME_SyncAppTypeList       = "SyncAppTypeList";
+  public static final String TASKNAME_SyncAppAccessCategory = "SyncAppAccessCategory";
+
   public static final String TASKNAME_RefreshAppList        = "RefreshAppList";
   public static final String TASKNAME_SetAppAccessCategory  = "SetAppAccessCategory";
   //public static final String TASKNAME_SetAccessCategories  = "SetAccessCategories";
