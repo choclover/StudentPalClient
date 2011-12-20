@@ -19,9 +19,9 @@ import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_ENDTIME;
 import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_STARTTIME;
 import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_TYPE;
 import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_VALUE;
+import static com.studentpal.engine.Event.TASKNAME_SetAppTypeList;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,11 +41,11 @@ import com.studentpal.model.rules.TimeRange;
 import com.studentpal.util.logger.Logger;
 
 
-public class SetAppAccessCategoryRequest extends Request {
+public class SetAppTypeListRequest extends Request {
 
   @Override
   public String getName() {
-    return Event.TASKNAME_SetAppAccessCategory;
+    return TASKNAME_SetAppTypeList;
   }
 
   @Override
@@ -122,7 +122,7 @@ public class SetAppAccessCategoryRequest extends Request {
 
       JSONObject argsObj = new JSONObject();
       argsObj.put(Event.TAGNAME_PHONE_NUM, "");
-//
+
 //      JSONObject reqObj = super.generateGenericRequestHeader(getName(), argsObj);
 //      setOutputContent(reqObj.toString());
 

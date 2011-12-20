@@ -74,10 +74,11 @@ public class Event {
   public static final String TASKNAME_Generic               = "Generic";
   public static final String TASKNAME_SyncAppList           = "SyncAppList";
   public static final String TASKNAME_SyncAppTypeList       = "SyncAppTypeList";
-  public static final String TASKNAME_SyncAppAccessCategory = "SyncAppAccessCategory";
+  public static final String TASKNAME_SyncAccessCategory = "SyncAccessCategory";
 
   public static final String TASKNAME_RefreshAppList        = "RefreshAppList";
-  public static final String TASKNAME_SetAppAccessCategory  = "SetAppAccessCategory";
+  public static final String TASKNAME_SetAppTypeList        = "SetAppTypeList";
+  public static final String TASKNAME_SetAccessCategory     = "SetAccessCategory";
   //public static final String TASKNAME_SetAccessCategories  = "SetAccessCategories";
   /* Tasks from Phone */
   public static final String TASKNAME_LOGIN         = "Login";
@@ -125,8 +126,10 @@ public class Event {
   /*
    * Value constants
    */
-  public static final int MSG_ID_INVALID = -1;
-  public static final int MSG_ID_NOTUSED = 0;
+  public static final int MSG_ID_INVALID             = -1;
+  public static final int MSG_ID_NOTUSED             = 0;
+  public static final int APP_TYPEID_INVALID         = -1;
+  public static final int APP_TYPEID_UNKNOWN         = 0;
 
   public static final int    RECUR_TYPE_DAILY        = 0x01;
   public static final int    RECUR_TYPE_WEEKLY       = 0x02;
