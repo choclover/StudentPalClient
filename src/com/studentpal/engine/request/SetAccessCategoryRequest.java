@@ -42,7 +42,11 @@ import com.studentpal.util.logger.Logger;
 
 
 public class SetAccessCategoryRequest extends Request {
+  private String targetPhoneNo;
 
+  /*
+   * Methods
+   */
   @Override
   public String getName() {
     return TASKNAME_SetAccessCategory;
@@ -55,6 +59,10 @@ public class SetAccessCategoryRequest extends Request {
     } else {
       executeClientRequest();
     }
+  }
+
+  public void setTargetPhoneNo(String targetPhoneNo) {
+    this.targetPhoneNo = targetPhoneNo;
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -118,10 +126,11 @@ public class SetAccessCategoryRequest extends Request {
 
   private void executeAdminRequest() {
     try {
+      //TODO
       super.setRequestSeq(ClientEngine.getNextMsgId());
 
       JSONObject argsObj = new JSONObject();
-      argsObj.put(Event.TAGNAME_PHONE_NUM, "");
+      argsObj.put(Event.TAGNAME_PHONE_NUM, targetPhoneNo);
 
 //      JSONObject reqObj = super.generateGenericRequestHeader(getName(), argsObj);
 //      setOutputContent(reqObj.toString());

@@ -1,15 +1,14 @@
 package com.studentpal.model.user;
 
-import static com.studentpal.app.db.DBaseManager.INVALID_APPLIST_VERSION;
+import static com.studentpal.app.db.DBaseManager.INVALID_VERSION;
 import com.studentpal.model.user.User;
 
 public class ClientUser extends User {
-  private String phoneNum;
-  private String phoneImsi;
-  private String phoneImei;
+
   private String installedApps;
 
-  private int installedAppsListVer = INVALID_APPLIST_VERSION;
+  private int installedAppsListVer   = INVALID_VERSION;
+  private int installedAccessCateVer = INVALID_VERSION;
 
   /*
    * Methods
@@ -22,18 +21,6 @@ public class ClientUser extends User {
     this.phoneNum  = phoneNum;
     this.phoneImsi = phoneImsi;
     this.phoneImei = phoneImei;
-  }
-
-  public String getPhoneNum() {
-    return phoneNum;
-  }
-
-  public String getPhoneImsi() {
-    return phoneImsi;
-  }
-
-  public String getPhoneImei() {
-    return phoneImei;
   }
 
   public String getInstalledApps() {
@@ -50,6 +37,14 @@ public class ClientUser extends User {
 
   public void setInstalledAppsListVer(int installedAppsListVer) {
     this.installedAppsListVer = installedAppsListVer;
+  }
+
+  public int getInstalledAccessCateVer() {
+    return installedAccessCateVer;
+  }
+
+  public void setInstalledAccessCateVer(int installedAccessCateVer) {
+    this.installedAccessCateVer = installedAccessCateVer;
   }
 
   @Override

@@ -23,7 +23,7 @@ public class RefreshAppListRequest extends Request {
   }
 
   /*
-   * Don't delet this constructor, called by Phone client
+   * Don't delete this constructor, called by Phone client
    * MessageHandler.handleRequestMessage()
    */
   public RefreshAppListRequest() {

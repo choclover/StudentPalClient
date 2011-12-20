@@ -11,14 +11,14 @@ import com.studentpal.util.logger.Logger;
 public class SyncAccessCategoryRequest extends Request {
 
   private String targetPhoneNo;
-  private int    appListVer;
+  private int    cateListVer;
 
   /*
    * Methods
    */
-  public SyncAccessCategoryRequest(String targetPhoneNum, int appListVer) {
+  public SyncAccessCategoryRequest(String targetPhoneNum, int cateListVer) {
     this.targetPhoneNo = targetPhoneNum;
-    this.appListVer = appListVer;
+    this.cateListVer = cateListVer;
 
     this.isAdminReq = true;
   }
@@ -41,7 +41,7 @@ public class SyncAccessCategoryRequest extends Request {
 
       JSONObject argsObj = new JSONObject();
       argsObj.put(Event.TAGNAME_PHONE_NUM, targetPhoneNo);
-      argsObj.put(Event.TAGNAME_VERSION, appListVer);
+      argsObj.put(Event.TAGNAME_VERSION, cateListVer);
 
       JSONObject reqObj = super.generateGenericRequestHeader(getName(), argsObj);
       setOutputContent(reqObj.toString());

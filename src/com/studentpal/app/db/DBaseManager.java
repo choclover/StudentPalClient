@@ -23,6 +23,7 @@ import com.studentpal.model.exception.STDException;
 import com.studentpal.model.rules.AccessRule;
 import com.studentpal.model.rules.Recurrence;
 import com.studentpal.model.rules.TimeRange;
+import com.studentpal.model.user.AdminUser;
 import com.studentpal.model.user.ClientUser;
 import com.studentpal.util.Utils;
 import com.studentpal.util.logger.Logger;
@@ -43,15 +44,18 @@ public class DBaseManager /*implements AppHandler*/ {
   private static final String TABLE_NAME_MANAGED_APPS       = "managed_applications";
   private static final String TABLE_NAME_MANAGED_APPTYPES   = "managed_apptypes";
   private static final String TABLE_NAME_MANAGED_DEVICE     = "managed_device";
+  private static final String TABLE_NAME_ADMIN_DEVICE       = "admin_device";
 
   private static final String COL_NAME_APPSLIST             = "installedApps";
   private static final String COL_NAME_APPSLIST_VERSION     = "installedAppsListVer";
+  private static final String COL_NAME_APPTYPES_VERSION     = "installedAppTypesVer";
+
   private static final String COL_NAME_IS_ACTIVE            = "isActive";
   //private static final String COL_NAME_APPSLIST_NAME        = "apps_list_version";
 
   private static final String TIME_LIST_DELIMETER = ";";
 
-  public static final int    INVALID_APPLIST_VERSION = -1;
+  public static final int    INVALID_VERSION = -1;
 
   /*
    * Member fields
@@ -449,6 +453,32 @@ public class DBaseManager /*implements AppHandler*/ {
     return result;
   }
 
+  public void saveAdminUserInfoToDB(AdminUser adminUser) {
+
+  }
+
+  public int getAppsListVersion() {
+    Logger.i(TAG, "enter getAdminUser()!");
+    int result = INVALID_VERSION;
+
+    try {
+      mDb = openDB();
+      Cursor curDevice = mDb.query(TABLE_NAME_MANAGED_DEVICE,
+          null, null,
+          null, null, null, null);
+      if (curDevice.moveToFirst()) {
+        //3 is the column of COL_NAME_APPTYPES_VERSION
+        result = curDevice.getInt(3);
+      }
+    } catch (SQLiteException ex) {
+      Logger.w(TAG, ex.toString());
+    } finally {
+      mDb.close();
+    }
+
+    return result;
+  }
+
   //////////////////////////////////////////////////////////////////////////////
   private String getDatabaseRoot() {
     String result = "";
@@ -547,6 +577,15 @@ public class DBaseManager /*implements AppHandler*/ {
      * Differs between Admin & Client
      */
     if (true == isAdmin) {
+      final String create_admin_device_table_sql = new StringBuffer().append(
+          "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_ADMIN_DEVICE).append(
+          ", " +TAGNAME_PHONE_NUM+       " TEXT").append(
+          ", " +TAGNAME_PHONE_IMSI+      " TEXT").append(
+          ", " +TAGNAME_NICKNAME+        " TEXT").append(
+          ", " +COL_NAME_APPTYPES_VERSION+ " INTEGER DEFAULT 0").append(
+          ");").toString();
+      dbase.execSQL(create_admin_device_table_sql);
+
       final String create_managed_device_table_sql = new StringBuffer().append(
           "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_MANAGED_DEVICE).append(
           "( _id INTEGER PRIMARY KEY AUTOINCREMENT ").append(
@@ -558,14 +597,15 @@ public class DBaseManager /*implements AppHandler*/ {
           ");").toString();
       dbase.execSQL(create_managed_device_table_sql);
 
-      final String create_applicatio_types_table_sql = new StringBuffer().append(
+      final String create_app_types_table_sql = new StringBuffer().append(
           "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_MANAGED_APPTYPES).append(
-          "( _id INTEGER PRIMARY KEY AUTOINCREMENT ").append(
+          "( _id INTEGER PRIMARY KEY ").append(
           ", " +TAGNAME_APP_TYPENAME+       " TEXT").append(
           ", " +TAGNAME_APP_TYPEDESC+       " TEXT").append(
           ");").toString();
-      dbase.execSQL(create_applicatio_types_table_sql);
+      dbase.execSQL(create_app_types_table_sql);
 
+      //本地存储受控手机上安装的程序列表
       final String create_applications_table_sql = new StringBuffer().append(
           "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_MANAGED_APPS).append(
           "( _id INTEGER PRIMARY KEY AUTOINCREMENT ").append(
@@ -573,7 +613,9 @@ public class DBaseManager /*implements AppHandler*/ {
           ", " +TAGNAME_APP_PKGNAME+    " TEXT").append(
           ", " +TAGNAME_APP_CLASSNAME+  " TEXT").append(
           ", " +TAGNAME_APP_TYPEID+     " INTEGER").append(
+          ", " +TAGNAME_APP_OWNERID+    " INTEGER").append(
           ", FOREIGN KEY(" +TAGNAME_APP_TYPEID+ ") REFERENCES " +TABLE_NAME_MANAGED_APPTYPES+ "(" +TAGNAME_APP_TYPEID+ ")").append(
+          ", FOREIGN KEY(" +TAGNAME_APP_OWNERID+ ") REFERENCES " +TABLE_NAME_MANAGED_DEVICE+ "(" +TAGNAME_PHONE_NUM+ ")").append(
           ");").toString();
       dbase.execSQL(create_applications_table_sql);
 

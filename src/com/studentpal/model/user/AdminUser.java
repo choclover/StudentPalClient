@@ -1,11 +1,15 @@
 package com.studentpal.model.user;
 
+import static com.studentpal.app.db.DBaseManager.INVALID_VERSION;
+
 import com.studentpal.model.user.User;
 import com.studentpal.util.Utils;
 
 public class AdminUser extends User {
   private String loginName;
   private String loginPwd;
+
+  private int installedAppTypesVer   = INVALID_VERSION;
 
   public AdminUser(String loginName, String loginPwd) {
     this.loginName = loginName;
@@ -18,6 +22,14 @@ public class AdminUser extends User {
 
   public String getLoginPwd() {
     return loginPwd;
+  }
+
+  public int getInstalledAppTypesVer() {
+    return installedAppTypesVer;
+  }
+
+  public void setInstalledAppTypesVer(int installedAppTypesVer) {
+    this.installedAppTypesVer = installedAppTypesVer;
   }
 
   public String getEncryptedPwd() {

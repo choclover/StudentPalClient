@@ -44,6 +44,7 @@ public class Event {
   public static final String TAGNAME_APP_TYPEID        = "app_typeid";
   public static final String TAGNAME_APP_TYPENAME      = "app_typename";
   public static final String TAGNAME_APP_TYPEDESC      = "app_typendesc";
+  public static final String TAGNAME_APP_OWNERID       = "app_ownerid";
 
   public static final String TAGNAME_ACCESS_CATEGORIES = "access_categories";
   public static final String TAGNAME_ACCESS_CATEGORY   = "access_cate";
