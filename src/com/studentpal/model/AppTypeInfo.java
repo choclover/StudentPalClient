@@ -3,44 +3,49 @@ package com.studentpal.model;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.content.pm.ApplicationInfo;
-
 import com.studentpal.engine.Event;
-import com.studentpal.util.logger.Logger;
 
 public class AppTypeInfo {
   //private static final String TAG = "AppTypeInfo";
 
-  private String type_name;
-  private String type_id;
+  private String _name;
+  private int _id;
 
-  public AppTypeInfo(String _id, String typeName) {
-    type_name = typeName;
-    type_id   = _id;
+  public AppTypeInfo(int _id, String name) {
+    this._name = name;
+    this._id   = _id;
   }
 
   public AppTypeInfo(JSONObject jsonAppInfoObj) throws JSONException {
     if (jsonAppInfoObj == null) {
       throw new JSONException("Input parameter is NULL!");
     }
-    type_id = jsonAppInfoObj.getString(Event.TAGNAME_APP_TYPEID);
-    type_name = jsonAppInfoObj.getString(Event.TAGNAME_APP_TYPENAME);
+    _id = jsonAppInfoObj.getInt(Event.TAGNAME_APP_TYPEID);
+    _name = jsonAppInfoObj.getString(Event.TAGNAME_APP_TYPENAME);
   }
 
-  public String getType_name() {
-    return type_name;
+  public String getName() {
+    return _name;
   }
 
-  public void setType_name(String type_name) {
-    this.type_name = type_name;
+  public void setName(String name) {
+    this._name = name;
   }
 
-  public String getType_id() {
-    return type_id;
+  public int getId() {
+    return _id;
   }
 
-  public void setType_id(String type_id) {
-    this.type_id = type_id;
+  public void setId(int id) {
+    this._id = id;
+  }
+
+  public JSONObject toJsonObject() throws JSONException {
+    JSONObject result = new JSONObject();
+    result.put(Event.TAGNAME_APP_TYPEID, _id);
+    result.put(Event.TAGNAME_APP_TYPENAME, _name);
+
+    return result;
   }
 
 }

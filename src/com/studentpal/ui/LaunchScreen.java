@@ -104,13 +104,15 @@ public class LaunchScreen extends Activity {
     }
 
     //Turn on Device Admin
-    if (false) enableDeviceAdmin();  //FIXME
+    if (false) {
+      enableDeviceAdmin();  //FIXME -- need enable DeviceAdmin in product
 
-    //Register filtered package name
-//    ArrayList<String> pkgsName = new ArrayList<String>();
-//    pkgsName.add(ResourceManager.APPLICATION_PKG_NAME);
-//    pkgsName.add(ResourceManager.DAEMON_SVC_PKG_NAME);
-//    registerFilteredPkgs(pkgsName, true);
+      //Register filtered package name
+      ArrayList<String> pkgsName = new ArrayList<String>();
+      pkgsName.add(ResourceManager.APPLICATION_PKG_NAME);
+      pkgsName.add(ResourceManager.DAEMON_SVC_PKG_NAME);
+      registerFilteredPkgs(pkgsName, true);
+    }
 
   }//onCreate
 

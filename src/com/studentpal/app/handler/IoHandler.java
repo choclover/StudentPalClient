@@ -41,7 +41,7 @@ public class IoHandler implements AppHandler {
   private ClientEngine  engine      = null;
   private MessageHandler msgHandler = null;
 
-  //private boolean isLogin = false;  //TODO how to use this flag in client?
+  //private boolean isLogin = false;
 
   private Socket socketConn = null;
   //private SocketChannel socketConn = null;

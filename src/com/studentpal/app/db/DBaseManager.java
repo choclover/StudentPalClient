@@ -46,9 +46,11 @@ public class DBaseManager /*implements AppHandler*/ {
   private static final String TABLE_NAME_MANAGED_DEVICE     = "managed_device";
   private static final String TABLE_NAME_ADMIN_DEVICE       = "admin_device";
 
+  private static final String COL_NAME_ID                   = "_id";
   private static final String COL_NAME_APPSLIST             = "installedApps";
   private static final String COL_NAME_APPSLIST_VERSION     = "installedAppsListVer";
   private static final String COL_NAME_APPTYPES_VERSION     = "installedAppTypesVer";
+  private static final String COL_NAME_CATESLIST_VERSION    = "installedCatesListVer";
 
   private static final String COL_NAME_IS_ACTIVE            = "isActive";
   //private static final String COL_NAME_APPSLIST_NAME        = "apps_list_version";
@@ -279,7 +281,7 @@ public class DBaseManager /*implements AppHandler*/ {
         }
 
         Cursor curApps = mDb.query(TABLE_NAME_MANAGED_APPS,
-            new String[] {"_id"},
+            new String[] {COL_NAME_ID},
             TAGNAME_APP_PKGNAME +"=?", new String[] {appInfo.getAppPkgname()},
             null, null, null);
         if (curApps.moveToFirst()) {
@@ -300,8 +302,42 @@ public class DBaseManager /*implements AppHandler*/ {
     }
   }
 
-  public void saveManagedAppTypesToDB(Set<AppTypeInfo> appsListSet) {
-    //TODO
+  public void saveManagedAppTypesToDB(Set<AppTypeInfo> appTypesSet) {
+    if (appTypesSet==null || appTypesSet.size()==0) return;
+    Logger.i(TAG, "enter saveManagedAppTypesToDB()!");
+
+    try {
+      mDb = openDB();
+      long res = -1;
+
+      ContentValues cv = new ContentValues();
+      String appVal;
+      for (AppTypeInfo appTypeInfo : appTypesSet) {
+        cv.clear();
+        cv.put(COL_NAME_ID,  appTypeInfo.getId());
+        appVal = appTypeInfo.getName();
+        cv.put(TAGNAME_APP_TYPENAME,  appVal);
+
+        Cursor curApps = mDb.query(TABLE_NAME_MANAGED_APPTYPES,
+            new String[] {COL_NAME_ID},
+            TAGNAME_APP_TYPENAME +"=?", new String[] {appTypeInfo.getName()},
+            null, null, null);
+        if (curApps.moveToFirst()) {
+          //record already exists
+          res = mDb.update(TABLE_NAME_MANAGED_APPTYPES, cv,
+              TAGNAME_APP_TYPENAME +"=?",
+              new String[] {appTypeInfo.getName()} );
+        } else {
+          res = mDb.insert(TABLE_NAME_MANAGED_APPS, null, cv);
+        }
+        curApps.close();
+      }
+
+    } catch (SQLiteException ex) {
+      Logger.w(TAG, ex.toString());
+    } finally {
+      mDb.close();
+    }
   }
 
   public void saveManagedDevInfoToDB(ClientUser managedDev) {
@@ -337,15 +373,20 @@ public class DBaseManager /*implements AppHandler*/ {
           cv.put(TAGNAME_PHONE_IMSI, appVal);
         }
 
-        int appListVer = managedDev.getInstalledAppsListVer();
-        if (appListVer > 0) {
-          cv.put(COL_NAME_APPSLIST_VERSION, appListVer);
+        int version = managedDev.getInstalledAppsListVer();
+        if (version > 0) {
+          cv.put(COL_NAME_APPSLIST_VERSION, version);
         }
-
         appVal = managedDev.getInstalledApps();
         if (! Utils.isEmptyString(appVal)) {
           cv.put(COL_NAME_APPSLIST, appVal);
         }
+
+        version = managedDev.getInstalledAccessCateVer();
+        if (version > 0) {
+          cv.put(COL_NAME_APPSLIST_VERSION, version);
+        }
+
         cv.put(COL_NAME_IS_ACTIVE, 1);
 
         Cursor curDev = mDb.query(TABLE_NAME_MANAGED_DEVICE,
@@ -356,9 +397,9 @@ public class DBaseManager /*implements AppHandler*/ {
         if (curDev.moveToFirst()) {
           //record already exists
           res = mDb.update(TABLE_NAME_MANAGED_DEVICE, cv,
-              TAGNAME_PHONE_NUM +"='"+ managedDev.getPhoneNum() +"'",
+              TAGNAME_PHONE_NUM +"=?",
               //TAGNAME_PHONE_IMSI +"='"+ managedDev.getPhoneImsi() +"'",
-              null);
+              new String[] {managedDev.getPhoneNum()} );
         } else {
           res = mDb.insert(TABLE_NAME_MANAGED_DEVICE, null, cv);
         }
@@ -370,6 +411,53 @@ public class DBaseManager /*implements AppHandler*/ {
     } finally {
       mDb.close();
     }
+  }
+
+  public void saveAdminUserInfoToDB(AdminUser adminUser) {
+    if (adminUser == null) return;
+    Logger.i(TAG, "enter saveAdminUserInfoToDB()!");
+
+    try {
+      mDb = openDB();
+      long res = -1;
+
+      ContentValues cv = new ContentValues();
+      String appVal;
+      appVal = adminUser.getPhoneNum();
+      cv.put(TAGNAME_PHONE_NUM, appVal);
+      appVal = adminUser.getPhoneImsi();
+      cv.put(TAGNAME_PHONE_IMSI, appVal);
+      appVal = adminUser.getNickName();
+      if (! Utils.isEmptyString(appVal)) {
+        cv.put(TAGNAME_NICKNAME, appVal);
+      }
+
+      Cursor curApps = mDb.query(TABLE_NAME_ADMIN_DEVICE,
+          new String[] {COL_NAME_ID},
+          TAGNAME_PHONE_NUM +"=?", new String[] {adminUser.getPhoneNum()},
+          null, null, null);
+      if (curApps.moveToFirst()) {
+        //record already exists
+        res = mDb.update(TABLE_NAME_ADMIN_DEVICE, cv,
+            TAGNAME_PHONE_NUM +"=?",
+            new String[] {adminUser.getPhoneNum()});
+      } else {
+        res = mDb.insert(TABLE_NAME_ADMIN_DEVICE, null, cv);
+      }
+      curApps.close();
+
+    } catch (SQLiteException ex) {
+      Logger.w(TAG, ex.toString());
+      //rebuildTables(mDb);
+    } finally {
+      mDb.close();
+    }
+  }
+
+  public void saveCategoryVerToDB(int version, String targetPhoneNo) {
+    ClientUser managedDev = new ClientUser(targetPhoneNo, null);
+    managedDev.setInstalledAccessCateVer(version);
+    saveManagedDevInfoToDB(managedDev);
   }
 
   public int getAppsListVersion(String phone_no) {
@@ -390,24 +478,24 @@ public class DBaseManager /*implements AppHandler*/ {
         appListVer = curDevice.getInt(startIdx++);
 
         //检查每个受控的Application记录都存在于表中，否则重新获取记录列表，即返回版本号为0
-        appListStr = curDevice.getString(startIdx++);
-        if (! Utils.isEmptyString(appListStr)) {
-          String[] pkgNameAry = appListStr.split("\\"+Event.APP_PKGNAME_DELIMETER);
-          if (pkgNameAry!=null && pkgNameAry.length>0) {
-            for (String pkgName : pkgNameAry) {
-              Cursor curApp = mDb.query(TABLE_NAME_MANAGED_APPS,
-                  null, TAGNAME_APP_PKGNAME +"=?", new String[] {pkgName},
-                  null, null, null);
-              //当某个Application记录不存在于表中
-              if (! curApp.moveToFirst()) {
-                appListVer = 0;
-                curApp.close();
-                break;
-              }
-              curApp.close();
-            }
-          }
-        }
+//        appListStr = curDevice.getString(startIdx++);
+//        if (! Utils.isEmptyString(appListStr)) {
+//          String[] pkgNameAry = appListStr.split("\\"+Event.APP_PKGNAME_DELIMETER);
+//          if (pkgNameAry!=null && pkgNameAry.length>0) {
+//            for (String pkgName : pkgNameAry) {
+//              Cursor curApp = mDb.query(TABLE_NAME_MANAGED_APPS,
+//                  null, TAGNAME_APP_PKGNAME +"=?", new String[] {pkgName},
+//                  null, null, null);
+//              //当某个Application记录不存在于表中
+//              if (! curApp.moveToFirst()) {
+//                appListVer = 0;
+//                curApp.close();
+//                break;
+//              }
+//              curApp.close();
+//            }
+//          }
+//        }
       }
       curDevice.close();
 
@@ -453,10 +541,47 @@ public class DBaseManager /*implements AppHandler*/ {
     return result;
   }
 
-  public void saveAdminUserInfoToDB(AdminUser adminUser) {
+  public ClientUser getManagedDev(String targetPhoneNo) {
+    if (Utils.isEmptyString(targetPhoneNo)) {
+      return null;
+    }
 
+    ClientUser result = null;
+
+    try {
+      mDb = openDB();
+      Cursor curDevice = mDb.query(TABLE_NAME_MANAGED_DEVICE,
+          null,
+          COL_NAME_IS_ACTIVE +"=1",
+          null, null, null, null);
+      if (curDevice.moveToFirst()) {
+        Cursor curDev = mDb.query(TABLE_NAME_MANAGED_DEVICE,
+            new String[] {COL_NAME_APPSLIST_VERSION},
+            TAGNAME_PHONE_NUM +"=?", new String[] {targetPhoneNo},
+            //TAGNAME_PHONE_IMSI +"='"+ managedDev.getPhoneImsi() +"'",
+            null, null, null);
+
+        if (curDev.moveToFirst()) {
+          int startIdx = 0;
+          String phoneNum  = curDev.getString(startIdx++);  //col0
+          String phoneImsi = curDev.getString(startIdx++);  //col1
+          int appsListVer = curDev.getInt(startIdx++);      //col2
+          int catesListVer = curDev.getInt(startIdx++);     //col4
+
+          result = new ClientUser(phoneNum, phoneImsi);
+          result.setInstalledAppsListVer(appsListVer);
+          result.setInstalledAccessCateVer(catesListVer);
+        }
+      }
+      curDevice.close();
+    } catch (SQLiteException ex) {
+      Logger.w(TAG, ex.toString());
+    } finally {
+      mDb.close();
+    }
+
+    return result;
   }
-
   public int getAppsListVersion() {
     Logger.i(TAG, "enter getAdminUser()!");
     int result = INVALID_VERSION;
@@ -591,9 +716,10 @@ public class DBaseManager /*implements AppHandler*/ {
           "( _id INTEGER PRIMARY KEY AUTOINCREMENT ").append(
           ", " +TAGNAME_PHONE_NUM+       " TEXT").append(
           ", " +TAGNAME_PHONE_IMSI+      " TEXT").append(
-          ", " +COL_NAME_APPSLIST_VERSION+ " INTEGER DEFAULT 0").append(
-          ", " +COL_NAME_APPSLIST+         " TEXT DEFAULT NULL").append(
-          ", " +COL_NAME_IS_ACTIVE+        " INTEGER DEFAULT 0").append(
+          ", " +COL_NAME_APPSLIST_VERSION+  " INTEGER DEFAULT 0").append(
+          ", " +COL_NAME_APPSLIST+          " TEXT DEFAULT NULL").append(
+          ", " +COL_NAME_CATESLIST_VERSION+ " INTEGER DEFAULT 0").append(
+          ", " +COL_NAME_IS_ACTIVE+         " INTEGER DEFAULT 0").append(
           ");").toString();
       dbase.execSQL(create_managed_device_table_sql);
 
@@ -602,6 +728,8 @@ public class DBaseManager /*implements AppHandler*/ {
           "( _id INTEGER PRIMARY KEY ").append(
           ", " +TAGNAME_APP_TYPENAME+       " TEXT").append(
           ", " +TAGNAME_APP_TYPEDESC+       " TEXT").append(
+          ", " +TAGNAME_OWNERID+            " INTEGER").append(
+          ", FOREIGN KEY(" +TAGNAME_OWNERID+ ") REFERENCES " +TABLE_NAME_MANAGED_DEVICE+ "(" +TAGNAME_PHONE_NUM+ ")").append(
           ");").toString();
       dbase.execSQL(create_app_types_table_sql);
 
@@ -613,9 +741,9 @@ public class DBaseManager /*implements AppHandler*/ {
           ", " +TAGNAME_APP_PKGNAME+    " TEXT").append(
           ", " +TAGNAME_APP_CLASSNAME+  " TEXT").append(
           ", " +TAGNAME_APP_TYPEID+     " INTEGER").append(
-          ", " +TAGNAME_APP_OWNERID+    " INTEGER").append(
+          ", " +TAGNAME_OWNERID+    " INTEGER").append(
           ", FOREIGN KEY(" +TAGNAME_APP_TYPEID+ ") REFERENCES " +TABLE_NAME_MANAGED_APPTYPES+ "(" +TAGNAME_APP_TYPEID+ ")").append(
-          ", FOREIGN KEY(" +TAGNAME_APP_OWNERID+ ") REFERENCES " +TABLE_NAME_MANAGED_DEVICE+ "(" +TAGNAME_PHONE_NUM+ ")").append(
+          ", FOREIGN KEY(" +TAGNAME_OWNERID+ ") REFERENCES " +TABLE_NAME_MANAGED_DEVICE+ "(" +TAGNAME_PHONE_NUM+ ")").append(
           ");").toString();
       dbase.execSQL(create_applications_table_sql);
 

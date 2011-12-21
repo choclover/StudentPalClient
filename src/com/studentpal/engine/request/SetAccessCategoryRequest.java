@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -42,7 +43,7 @@ import com.studentpal.util.logger.Logger;
 
 
 public class SetAccessCategoryRequest extends Request {
-  private String targetPhoneNo;
+  private static final String TAG = "@@ SetAccessCategoryRequest";
 
   /*
    * Methods
@@ -61,10 +62,6 @@ public class SetAccessCategoryRequest extends Request {
     }
   }
 
-  public void setTargetPhoneNo(String targetPhoneNo) {
-    this.targetPhoneNo = targetPhoneNo;
-  }
-
   /////////////////////////////////////////////////////////////////////////////
   private void executeClientRequest() {
     try {
@@ -72,14 +69,14 @@ public class SetAccessCategoryRequest extends Request {
       JSONObject resultObj = new JSONObject();
 
       try {
-        if (this.inputArguments == null) {
+        if (inputArguments==null || ! (inputArguments instanceof JSONObject)) {
           respObj.put(TAGNAME_ERR_CODE, ERRCODE_MSG_FORMAT_ERR);
 
         } else {
           Map<Integer, AccessCategory> catesMap =
               new HashMap<Integer, AccessCategory>();
 
-          JSONObject argsParam = this.inputArguments;  //new JSONObject(inputJsonArgs);
+          JSONObject argsParam = (JSONObject)inputArguments;  //new JSONObject(inputJsonArgs);
 
           //从输入参数中取出CATEGORY信息
           JSONArray catesAry = argsParam.getJSONArray(TAGNAME_ACCESS_CATEGORIES);
@@ -126,19 +123,29 @@ public class SetAccessCategoryRequest extends Request {
 
   private void executeAdminRequest() {
     try {
-      //TODO
-      super.setRequestSeq(ClientEngine.getNextMsgId());
+      if (inputArguments==null || ! (inputArguments instanceof Set<?>)) {
+        Logger.e(TAG, "Input argument format error");
 
-      JSONObject argsObj = new JSONObject();
-      argsObj.put(Event.TAGNAME_PHONE_NUM, targetPhoneNo);
+      } else {
+        JSONArray jsonCatesAry = new JSONArray();
+        for (AccessCategory anCate : (Set<AccessCategory>)inputArguments) {
+          jsonCatesAry.put(anCate.toJsonObject());
+        }
 
-//      JSONObject reqObj = super.generateGenericRequestHeader(getName(), argsObj);
-//      setOutputContent(reqObj.toString());
+        super.setRequestSeq(ClientEngine.getNextMsgId());
+
+        JSONObject argsObj = new JSONObject();
+        argsObj.put(Event.TAGNAME_PHONE_NUM, targetPhoneNo);
+
+        JSONObject reqObj = super.generateGenericRequestHeader(getName(), argsObj);
+        setOutputContent(reqObj.toString());
+      }
 
     } catch (JSONException ex) {
       Logger.w(getName(), "In execute() got an error:" + ex.toString());
     }
   }
+
   //////////////////////////////////////////////////////////////////////////////
   private void retrieveAppAccessCategory(
       JSONArray appsAry, Map<Integer, AccessCategory> sourceMap) throws STDException {
@@ -178,55 +185,12 @@ public class SetAccessCategoryRequest extends Request {
     }
 
     try {
-//      Map<Integer, AccessCategory> catesMap = new HashMap<Integer, AccessCategory>();
-
       for (int i=0; i<catesAry.length(); i++) {
         JSONObject cateObj = catesAry.getJSONObject(i);
 
         AccessCategory aCate = new AccessCategory();
-        aCate.set_id(cateObj.getInt(TAGNAME_ACCESS_CATE_ID));
-        aCate.set_name(cateObj.getString(TAGNAME_ACCESS_CATE_NAME));
-
-        if (cateObj.has(TAGNAME_ACCESS_RULES) == true) {
-          JSONArray rulesAry = cateObj.getJSONArray(TAGNAME_ACCESS_RULES);
-          for (int m=0; m<rulesAry.length(); m++) {
-            JSONObject ruleObj = rulesAry.getJSONObject(m);
-
-            AccessRule aRule = new AccessRule();
-            aRule.setAccessType(ruleObj.getInt(TAGNAME_RULE_AUTH_TYPE));
-            Recurrence recur = Recurrence.getInstance(ruleObj.getInt(TAGNAME_RULE_REPEAT_TYPE));
-            if (recur.getRecurType() != Recurrence.DAILY) {
-              recur.setRecurValue(ruleObj.getInt(TAGNAME_RULE_REPEAT_VALUE));
-            }
-            aRule.setRecurrence(recur);
-
-            JSONArray timerangeAry = ruleObj.getJSONArray(TAGNAME_ACCESS_TIMERANGES);
-            for (int k=0; k<timerangeAry.length(); k++) {
-              JSONObject trObj = timerangeAry.getJSONObject(k);
-
-              TimeRange tr = new TimeRange();
-              String time = trObj.getString(TAGNAME_RULE_REPEAT_STARTTIME);
-              int idx = time.indexOf(':');
-              int hour = Integer.parseInt(time.substring(0, idx));
-              int min  = Integer.parseInt(time.substring(idx+1));
-              tr.setTime(TimeRange.TIME_TYPE_START, hour, min);
-
-              time = trObj.getString(TAGNAME_RULE_REPEAT_ENDTIME);
-              idx = time.indexOf(':');
-              hour = Integer.parseInt(time.substring(0, idx));
-              min  = Integer.parseInt(time.substring(idx+1));
-              tr.setTime(TimeRange.TIME_TYPE_END, hour, min);
-
-              aRule.addTimeRange(tr);
-            }//for time_ranges
-
-            aCate.addAccessRule(aRule);
-
-          }//for rules
-        }
-
+        aCate.populateFromJsObject(cateObj);
         intoMap.put(aCate.get_id(), aCate);
-
       }//for cates
 
     } catch (JSONException ex) {

@@ -13,8 +13,6 @@ import com.studentpal.util.logger.Logger;
 
 
 public class RefreshAppListRequest extends Request {
-  private String targetPhoneNo;
-
   /*
    * Methods
    */
@@ -42,10 +40,6 @@ public class RefreshAppListRequest extends Request {
     }
   }
 
-  public void setTargetPhoneNo(String targetPhoneNo) {
-    this.targetPhoneNo = targetPhoneNo;
-  }
-
   /////////////////////////////////////////////////////////////////////////////
   private void executeClientRequest() {
     try {
@@ -61,7 +55,6 @@ public class RefreshAppListRequest extends Request {
             app.put(Event.TAGNAME_APP_NAME, appInfo.getAppName());
             app.put(Event.TAGNAME_APP_CLASSNAME, appInfo.getAppClassname());
             app.put(Event.TAGNAME_APP_PKGNAME, appInfo.getAppPkgname());
-            app.put(Event.TAGNAME_ACCESS_CATEGORY, 1);  //FIXME
 
             appAry.put(app);
           }

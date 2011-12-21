@@ -19,18 +19,23 @@ public abstract class Request /*extends Message*/ {
   protected boolean bIncoming = true;
   protected boolean bOutputContentReady = false;
 
-  protected JSONObject inputArguments = null;
+  protected Object inputArguments = null;
 
   protected String outputContentStr = null;
 
   protected int req_seq = Event.MSG_ID_INVALID;
   protected boolean isAdminReq = false;
+  protected String targetPhoneNo;
 
   /*
    * Methods
    */
   public static boolean isEqualRequestType(String reqType1, String reqType2) {
     return reqType1!=null && reqType2!=null && reqType1.equals(reqType2);
+  }
+
+  public void setTargetPhoneNo(String targetPhoneNo) {
+    this.targetPhoneNo = targetPhoneNo;
   }
 
   /////////////////////////////////////////////////////////////////////////////
@@ -69,11 +74,11 @@ public abstract class Request /*extends Message*/ {
     }
   }
 
-  public JSONObject getInputArguments() {
+  public Object getInputArguments() {
     return inputArguments;
   }
 
-  public void setInputArguments(JSONObject args) {
+  public void setInputArguments(Object args) {
     inputArguments = args;
   }
 

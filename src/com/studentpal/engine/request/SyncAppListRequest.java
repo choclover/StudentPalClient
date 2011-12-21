@@ -9,8 +9,9 @@ import com.studentpal.util.logger.Logger;
 
 
 public class SyncAppListRequest extends Request {
-
-  private String targetPhoneNo;
+  /*
+   * Member fields
+   */
   private int    appListVer;
 
   /*
@@ -40,8 +41,8 @@ public class SyncAppListRequest extends Request {
       super.setRequestSeq(ClientEngine.getNextMsgId());
 
       JSONObject argsObj = new JSONObject();
-      argsObj.put(Event.TAGNAME_PHONE_NUM, targetPhoneNo);
-      argsObj.put(Event.TAGNAME_VERSION, appListVer);
+      argsObj.put(Event.TAGNAME_PHONE_NUM, this.targetPhoneNo);
+      argsObj.put(Event.TAGNAME_VERSION, this.appListVer);
 
       JSONObject reqObj = super.generateGenericRequestHeader(getName(), argsObj);
       setOutputContent(reqObj.toString());

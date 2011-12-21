@@ -38,7 +38,9 @@ public class LoginRequest extends Request {
         argsObj.put(TAGNAME_LOGIN_NAME, ((AdminUser) _user).getLoginName());
 
         String passwd = ((AdminUser) _user).getLoginPwd();
-        //passwd = ((AdminUser) _user).getEncryptedPwd();  //FIXME
+        if (false) {
+          passwd = ((AdminUser) _user).getEncryptedPwd();  //FIXME use encrypted passwd
+        }
         argsObj.put(TAGNAME_LOGIN_PASSWD, passwd);
 
       } else if (_name.equals(TASKNAME_LOGOUT)) {

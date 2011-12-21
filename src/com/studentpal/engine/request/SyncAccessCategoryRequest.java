@@ -9,8 +9,9 @@ import com.studentpal.util.logger.Logger;
 
 
 public class SyncAccessCategoryRequest extends Request {
-
-  private String targetPhoneNo;
+  /*
+   * Member fields
+   */
   private int    cateListVer;
 
   /*

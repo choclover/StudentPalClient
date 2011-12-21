@@ -8,6 +8,7 @@ import com.studentpal.util.Utils;
 public class AdminUser extends User {
   private String loginName;
   private String loginPwd;
+  private String nickName;
 
   private int installedAppTypesVer   = INVALID_VERSION;
 
@@ -24,6 +25,10 @@ public class AdminUser extends User {
     return loginPwd;
   }
 
+  public String getEncryptedPwd() {
+    return loginPwd==null ? null : Utils.toMd5(loginPwd.getBytes());
+  }
+
   public int getInstalledAppTypesVer() {
     return installedAppTypesVer;
   }
@@ -32,10 +37,17 @@ public class AdminUser extends User {
     this.installedAppTypesVer = installedAppTypesVer;
   }
 
-  public String getEncryptedPwd() {
-    return loginPwd==null ? null : Utils.toMd5(loginPwd.getBytes());
+  public String getNickName() {
+    return nickName;
   }
 
+  public void setNickName(String nickName) {
+    this.nickName = nickName;
+  }
+
+  /*
+   *
+   */
   @Override
   public boolean equals(Object o) {
     if (this == o) {

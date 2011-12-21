@@ -31,8 +31,9 @@ public class Event {
   public static final String TAGNAME_LOGIN_NAME      = "login_name";
   public static final String TAGNAME_LOGIN_PASSWD    = "login_passwd";
   public static final String TAGNAME_NICKNAME        = "nickname";
+  public static final String TAGNAME_OWNERID     = "ownerid";
 
-  public static final String TAGNAME_DEVICES         = "devices";
+  public static final String TAGNAME_DEVICES           = "devices";
   //public static final String TAGNAME_DEVICE          = "device";
   public static final String TAGNAME_APPLICATIONS      = "applications";
   public static final String TAGNAME_APPLICATION_TYPES = "application_types";
@@ -75,7 +76,7 @@ public class Event {
   public static final String TASKNAME_Generic               = "Generic";
   public static final String TASKNAME_SyncAppList           = "SyncAppList";
   public static final String TASKNAME_SyncAppTypeList       = "SyncAppTypeList";
-  public static final String TASKNAME_SyncAccessCategory = "SyncAccessCategory";
+  public static final String TASKNAME_SyncAccessCategory    = "SyncAccessCategory";
 
   public static final String TASKNAME_RefreshAppList        = "RefreshAppList";
   public static final String TASKNAME_SetAppTypeList        = "SetAppTypeList";
@@ -175,8 +176,12 @@ public class Event {
 
   //-------------------------------------------------------------------
   public static final int SIGNAL_TYPE_RESP_LOGIN                 = 3000;
-  public static final int SIGNAL_TYPE_RESP_GetAppList            = 3001;
+  public static final int SIGNAL_TYPE_RESP_SyncAppList           = 3001;
   public static final int SIGNAL_TYPE_RESP_RefreshAppList        = 3002;
+  public static final int SIGNAL_TYPE_RESP_SyncAppTypeList       = 3003;
+  public static final int SIGNAL_TYPE_RESP_SetAppTypeList        = 3004;
+  public static final int SIGNAL_TYPE_RESP_SyncAccessCategory    = 3005;
+  public static final int SIGNAL_TYPE_RESP_SetAccessCategory     = 3006;
 
   private static final HashMap<Integer, String> ERRCODE_DESC_MAPPER
     = new HashMap<Integer, String>();

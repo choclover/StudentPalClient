@@ -9,8 +9,9 @@ import com.studentpal.util.logger.Logger;
 
 
 public class SyncAppTypeListRequest extends Request {
-
-  private String targetPhoneNo;
+  /*
+   * Member fields
+   */
   private int    appListVer;
 
   /*

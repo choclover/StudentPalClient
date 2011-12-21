@@ -1,11 +1,27 @@
 package com.studentpal.model;
 
+import static com.studentpal.engine.Event.TAGNAME_ACCESS_CATE_ID;
+import static com.studentpal.engine.Event.TAGNAME_ACCESS_CATE_NAME;
+import static com.studentpal.engine.Event.TAGNAME_ACCESS_RULES;
+import static com.studentpal.engine.Event.TAGNAME_ACCESS_TIMERANGES;
+import static com.studentpal.engine.Event.TAGNAME_RULE_AUTH_TYPE;
+import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_ENDTIME;
+import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_STARTTIME;
+import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_TYPE;
+import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_VALUE;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import com.studentpal.app.handler.RuleScheduler;
+import com.studentpal.model.exception.STDException;
 import com.studentpal.model.rules.AccessRule;
+import com.studentpal.model.rules.Recurrence;
 import com.studentpal.model.rules.TimeRange;
 import com.studentpal.util.logger.Logger;
 
@@ -29,6 +45,18 @@ public class AccessCategory {
   public AccessCategory() {
     _managedAppsMap = new HashMap<ClientAppInfo, Integer>();
     _rulesList = new ArrayList<AccessRule>();
+  }
+
+  public AccessCategory(JSONObject jsonCateObj) throws JSONException {
+    if (jsonCateObj == null) {
+      throw new JSONException("Input parameter is NULL!");
+    }
+
+    try {
+      populateFromJsObject(jsonCateObj);
+    } catch (STDException e) {
+      Logger.w(TAG, e.toString());
+    }
   }
 
   public void addManagedApp(ClientAppInfo appInfo) {
@@ -82,11 +110,11 @@ public class AccessCategory {
   public void adjustRestrictedRuleCount(ClientAppInfo appInfo, int delta) {
     if (appInfo == null || delta == 0)
       return;
-    
+
     if (_managedAppsMap.containsKey(appInfo) == false) {
       Logger.w(TAG, "_managedAppsMap NOT contains AppInfo: " + appInfo.getAppName());
     }
-    
+
     synchronized (_managedAppsMap) {
       Integer oldCnt = _managedAppsMap.get(appInfo);
       Integer newCnt = oldCnt + delta;
@@ -110,7 +138,7 @@ public class AccessCategory {
     }
     return result;
   }
-  
+
   public boolean isAccessDenied(ClientAppInfo appInfo) {
     return ! isAccessPermitted(appInfo);
   }
@@ -130,7 +158,7 @@ public class AccessCategory {
   public void set_id(int id) {
     _id = id;
   }
-  
+
   public String toString() {
     StringBuffer buff = new StringBuffer();
     buff.append("\nCate ID: "+_id).append("\tCate Name: "+_name);
@@ -138,20 +166,78 @@ public class AccessCategory {
       buff.append("\nRule auth type: " + rule.getAccessType())
           .append("\nRule recur type: " + rule.getRecurrence().getName())
           .append("\tRecur value: " + rule.getRecurrence().getRecurValue());
-      
+
       for (TimeRange tr : rule.getTimeRangeList()) {
         buff.append("\nStart Time: " + tr.getStartTime().toString())
         .append("\tEnd Time: " +  tr.getEndTime().toString());
       }
     }
-    
+
     for (ClientAppInfo appInfo : _managedAppsMap.keySet()) {
       buff.append("\nManaged App: " + appInfo.getAppName())
         .append(", "+ appInfo.getAppPkgname())
         .append(", "+ appInfo.getAppClassname());
     }
-    
+
     return buff.toString();
   }
+
+  public JSONObject toJsonObject() throws JSONException {
+    JSONObject result = new JSONObject();
+
+
+
+    return result;
+  }
+
+  public void populateFromJsObject(JSONObject cateObj) throws JSONException, STDException {
+    if (cateObj == null) {
+      Logger.w(TAG,  "Input result obj should NOT be NULL");
+      return;
+    }
+
+    set_id(cateObj.getInt(TAGNAME_ACCESS_CATE_ID));
+    set_name(cateObj.getString(TAGNAME_ACCESS_CATE_NAME));
+
+    if (cateObj.has(TAGNAME_ACCESS_RULES) == true) {
+      JSONArray rulesAry = cateObj.getJSONArray(TAGNAME_ACCESS_RULES);
+      for (int m=0; m<rulesAry.length(); m++) {
+        JSONObject ruleObj = rulesAry.getJSONObject(m);
+
+        AccessRule aRule = new AccessRule();
+        aRule.setAccessType(ruleObj.getInt(TAGNAME_RULE_AUTH_TYPE));
+        Recurrence recur = Recurrence.getInstance(ruleObj.getInt(TAGNAME_RULE_REPEAT_TYPE));
+        if (recur.getRecurType() != Recurrence.DAILY) {
+          recur.setRecurValue(ruleObj.getInt(TAGNAME_RULE_REPEAT_VALUE));
+        }
+        aRule.setRecurrence(recur);
+
+        JSONArray timerangeAry = ruleObj.getJSONArray(TAGNAME_ACCESS_TIMERANGES);
+        for (int k=0; k<timerangeAry.length(); k++) {
+          JSONObject trObj = timerangeAry.getJSONObject(k);
+
+          TimeRange tr = new TimeRange();
+          String time = trObj.getString(TAGNAME_RULE_REPEAT_STARTTIME);
+          int idx = time.indexOf(':');
+          int hour = Integer.parseInt(time.substring(0, idx));
+          int min  = Integer.parseInt(time.substring(idx+1));
+          tr.setTime(TimeRange.TIME_TYPE_START, hour, min);
+
+          time = trObj.getString(TAGNAME_RULE_REPEAT_ENDTIME);
+          idx = time.indexOf(':');
+          hour = Integer.parseInt(time.substring(0, idx));
+          min  = Integer.parseInt(time.substring(idx+1));
+          tr.setTime(TimeRange.TIME_TYPE_END, hour, min);
+
+          aRule.addTimeRange(tr);
+        }//for time_ranges
+
+        addAccessRule(aRule);
+
+      }//for rules
+    }//if
+
+  }//populate
+
 
 }

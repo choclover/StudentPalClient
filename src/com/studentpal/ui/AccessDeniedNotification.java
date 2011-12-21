@@ -21,7 +21,7 @@ public class AccessDeniedNotification extends Activity {
     builder.setPositiveButton(ResourceManager.RES_STR_SENDREQUEST,
       new DialogInterface.OnClickListener() {
         public void onClick(DialogInterface dialog, int id) {
-          //FIXME
+          //TODO  -- send request to admin
 //          Intent i = new Intent(AccessDeniedNotification.this,
 //              AccessRequestForm.class);
 //          i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

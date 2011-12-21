@@ -29,6 +29,7 @@ import com.studentpal.model.ClientAppInfo;
 import com.studentpal.model.exception.STDException;
 import com.studentpal.model.user.AdminUser;
 import com.studentpal.model.user.ClientUser;
+import com.studentpal.model.user.User;
 import com.studentpal.ui.AccessDeniedNotification;
 import com.studentpal.util.ActivityUtil;
 import com.studentpal.util.Utils;
@@ -45,6 +46,7 @@ public class ClientEngine implements AppHandler {
 
   private String  mobileNo;
   private String  imsi;
+  private User    selfUser;
 
   //Flag for indicating if it is the device admin controller
   private boolean             _isAdmin           = false;
@@ -260,6 +262,10 @@ public class ClientEngine implements AppHandler {
     return android.os.Build.VERSION.SDK_INT;
   }
 
+  public User getSelfUser() {
+    return this.selfUser;
+  }
+
   // Message handling methods //////////////////////////////////////////////////
 
   public void showAccessDeniedNotification() {
@@ -300,8 +306,8 @@ public class ClientEngine implements AppHandler {
     }
 
     //This is a Client engine
-    ClientUser user = new ClientUser(phoneNum, imsiNum);
-    Request request = new LoginRequest(Event.TASKNAME_LOGIN, user);
+    this.selfUser = new ClientUser(phoneNum, imsiNum);
+    Request request = new LoginRequest(Event.TASKNAME_LOGIN, this.selfUser);
     msgHandler.sendMessageToServer(request);
   }
 
@@ -309,8 +315,8 @@ public class ClientEngine implements AppHandler {
     Logger.i(TAG, "enter loginServerFromAdmin");
 
     //This is a Admin engine
-    AdminUser user = new AdminUser(loginName, loginPwd);
-    Request request = new LoginRequest(Event.TASKNAME_LOGIN_ADMIN, user);
+    this.selfUser = new AdminUser(loginName, loginPwd);
+    Request request = new LoginRequest(Event.TASKNAME_LOGIN_ADMIN, this.selfUser);
     msgHandler.sendMessageToServer(request);
   }
 

@@ -29,13 +29,13 @@ import com.studentpal.util.logger.Logger;
 
 public class DaemonHandler implements AppHandler, ProcessListener {
   private static final String TAG = "@@ DaemonHandler";
-  
+
   /*
    * Constants
    */
   public static final int DAEMON_WATCHDOG_INTERVAL = 500;   //milliseconds为单位
-  public static final int DAEMON_WATCHDOG_TIMEOUT_LEN  = DAEMON_WATCHDOG_INTERVAL * 2; 
-  
+  public static final int DAEMON_WATCHDOG_TIMEOUT_LEN  = DAEMON_WATCHDOG_INTERVAL * 2;
+
   /*
    * Field members
    */
@@ -52,7 +52,7 @@ public class DaemonHandler implements AppHandler, ProcessListener {
   private Messenger mMsgerToMyself = null;
   /* Connection for interacting with the main interface of the service. */
   private ServiceConnection mSvcConnection = null;
-  
+
   //////////////////////////////////////////////////////////////////////////////
   private DaemonHandler() {
     initialize();
@@ -69,13 +69,13 @@ public class DaemonHandler implements AppHandler, ProcessListener {
   public void launch() {
     this.engine = ClientEngine.getInstance();
     this.launcher = engine.getContext();
-    
+
     /**
      * Target we publish for Daemon service to send messages to MessageHandler/myself.
      */
     mMsgerToMyself = new Messenger(msgHandler);
     mSvcConnection = new MyServiceConnection();
-    
+
     try {
       ProcessListenerInfo listenerInfo = new ProcessListenerInfo();
       listenerInfo.addProcess(ACTIVITY_NAME_MANAGEAPPS);
@@ -86,7 +86,7 @@ public class DaemonHandler implements AppHandler, ProcessListener {
     } catch (STDException e) {
       Logger.w(TAG, e.toString());
     }
-    
+
     if (false) {  //hemerr
       //startDaemonTask();
     }
@@ -100,25 +100,25 @@ public class DaemonHandler implements AppHandler, ProcessListener {
   public Handler getMsgHandler() {
     return this.msgHandler;
   }
-  
+
   public void startDaemonTask() {
     //no matter if Daemon service is running or not,
     //start it anyway and bind to it next.
     ActivityUtil.startDaemonService(launcher);
     //Utils.sleep(200);  //hemerr -- maybe not useful
-    doBindService(); 
+    doBindService();
   }
-  
+
   public void stopDaemonTask() {
     ((IncomingHandler) this.msgHandler).terminate();
     doUnbindService();
   }
-  
+
   public void exitDaemonService() throws RemoteException {
     int sigType = Event.SIGNAL_TYPE_EXIT_DAEMONTASK;
     sendMsgToDaemon(sigType);
   }
-  
+
   @Override
   public void notifyProcessIsForeground(boolean isForeground, String procName) {
     if (isForeground) {
@@ -127,8 +127,8 @@ public class DaemonHandler implements AppHandler, ProcessListener {
       stopDaemonTask();
     }
   }
-  
-  //start or stop Daemon task according to the status of monitoring task 
+
+  //start or stop Daemon task according to the status of monitoring task
   //in AccessController
   public void handleMonitorTaskRunning(boolean running) {
     Logger.d(TAG, "To handle Monitor Task Running state of: "+running);
@@ -142,19 +142,19 @@ public class DaemonHandler implements AppHandler, ProcessListener {
   private void initialize() {
     this.msgHandler = new IncomingHandler();
   }
-  
+
   private void doBindService() {
     Logger.d(TAG, "Binding to Daemon service!");
-    
+
     // Establish a connection with the service.
-    launcher.bindService(new Intent(Event.ACTION_DAEMON_SVC), 
+    launcher.bindService(new Intent(Event.ACTION_DAEMON_SVC),
         mSvcConnection, Context.BIND_AUTO_CREATE);
     bBoundToDaemon = true;
   }
 
   private void doUnbindService() {
     Logger.d(TAG, "Unbinding from Daemon service!");
-    
+
     if (bBoundToDaemon) {
       // If we have received the service, and hence registered with
       // it, then now is the time to unregister.
@@ -166,16 +166,16 @@ public class DaemonHandler implements AppHandler, ProcessListener {
           // has crashed.
         }
       }
-      
-      if (mSvcConnection != null) {  
+
+      if (mSvcConnection != null) {
         // Detach our existing connection.
         launcher.unbindService(mSvcConnection);
       }
-      
+
       bBoundToDaemon = false;
     }
   }
-  
+
   private void sendMsgToDaemon(int msgtype) throws RemoteException {
     if (mMsgerToDaemon == null) {
       Logger.w(TAG, "Messanger To Daemon should NOT be NULL!");
@@ -188,7 +188,7 @@ public class DaemonHandler implements AppHandler, ProcessListener {
 
   /////////////////////////////////////////////////////////////////////////////
   class MyServiceConnection implements ServiceConnection {
-    
+
     public void onServiceConnected(ComponentName className, IBinder service) {
       Logger.d(TAG, "Connected to Daemon service @ "+service);
 
@@ -215,12 +215,12 @@ public class DaemonHandler implements AppHandler, ProcessListener {
       // This is called when the connection with the service has been
       // unexpectedly disconnected -- that is, its process crashed.
       Logger.d(TAG, "Disconnected from Daemon service @ ");
-      
+
       mMsgerToDaemon = null;
       doUnbindService();
     }
   };
-  
+
   /**
    * Handler of incoming messages from clients.
    */
@@ -230,7 +230,7 @@ public class DaemonHandler implements AppHandler, ProcessListener {
       Logger.d(TAG, "IncomingHandler.terminate()!");
       removeMessages(SIGNAL_TYPE_DAEMON_WD_TIMEOUT);
     }
-    
+
     @Override
     public void handleMessage(Message msg) {
       int sigType = msg.what;
@@ -252,7 +252,7 @@ public class DaemonHandler implements AppHandler, ProcessListener {
 
       case SIGNAL_TYPE_DAEMON_WD_TIMEOUT:
         Logger.w(TAG, "Waiting for Daemon Watchdog request has timeout!");
-        
+
         if (false == ActivityUtil.checkAppIsInstalled(launcher,
             ResourceManager.DAEMON_SVC_PKG_NAME)) {
           //FIXME: get apk from sdcard or other location
@@ -264,26 +264,25 @@ public class DaemonHandler implements AppHandler, ProcessListener {
             Logger.w(TAG, "Daemon APK file NOT exists!");
             return;
           }
-          
-          Uri apkUri = Uri.fromFile(apkFile); 
+
+          Uri apkUri = Uri.fromFile(apkFile);
           Intent intent = new Intent(Intent.ACTION_VIEW);
           intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
           intent.setDataAndType(apkUri,"application/vnd.android.package-archive");
           launcher.startActivity(intent);
-          
+
           try {
             Thread.sleep(3000);  //FIXME
           } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
           }
-          
+
         } else {
           String info = "Daemon APK is already installed!";
           ActivityUtil.showToast(launcher, info);
           Logger.d(TAG, info);
         }
-      
+
         if (false == ActivityUtil.checkServiceIsRunning(launcher,
             ResourceManager.DAEMON_SVC_PKG_NAME)) {
           Logger.w(TAG, "Daemon is NOT running, relaunching it!");
@@ -293,15 +292,15 @@ public class DaemonHandler implements AppHandler, ProcessListener {
           Logger.w(TAG, "Daemon is still running.");
         }
         break;
-        
+
       case SIGNAL_TYPE_START_DAEMONTASK:
         startDaemonTask();
         break;
-      
+
       case SIGNAL_TYPE_STOP_DAEMONTASK:
         stopDaemonTask();
         break;
-        
+
       default:
         super.handleMessage(msg);
 

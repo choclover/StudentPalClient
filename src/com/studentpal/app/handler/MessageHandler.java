@@ -1,28 +1,13 @@
 package com.studentpal.app.handler;
 
-import static com.studentpal.engine.Event.SIGNAL_ACCESS_RESCHEDULE_DAILY;
-import static com.studentpal.engine.Event.SIGNAL_SHOW_ACCESS_DENIED_NOTIFICATION;
-import static com.studentpal.engine.Event.SIGNAL_TYPE_MSG_FROM_SVR;
-import static com.studentpal.engine.Event.SIGNAL_TYPE_MSG_TO_SVR;
-import static com.studentpal.engine.Event.SIGNAL_TYPE_NETWORK_FAIL;
-import static com.studentpal.engine.Event.SIGNAL_TYPE_OUTSTREAM_READY;
-import static com.studentpal.engine.Event.SIGNAL_TYPE_RESP_GetAppList;
-import static com.studentpal.engine.Event.SIGNAL_TYPE_RESP_LOGIN;
-import static com.studentpal.engine.Event.SIGNAL_TYPE_RESP_RefreshAppList;
-import static com.studentpal.engine.Event.SIGNAL_TYPE_UNKNOWN;
-import static com.studentpal.engine.Event.TAGNAME_PHONE_NUM;
-import static com.studentpal.engine.Event.TAGNAME_PHONE_IMSI;
-import static com.studentpal.engine.Event.TAGNAME_ERR_CODE;
-import static com.studentpal.engine.Event.TAGNAME_RESULT;
-import static com.studentpal.engine.Event.TASKNAME_SyncAppList;
-import static com.studentpal.engine.Event.TASKNAME_LOGIN;
-import static com.studentpal.engine.Event.TASKNAME_LOGIN_ADMIN;
-import static com.studentpal.engine.Event.TASKNAME_RefreshAppList;
+import static com.studentpal.engine.Event.*;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -42,6 +27,7 @@ import com.studentpal.model.AccessCategory;
 import com.studentpal.model.AppTypeInfo;
 import com.studentpal.model.ClientAppInfo;
 import com.studentpal.model.exception.STDException;
+import com.studentpal.model.user.AdminUser;
 import com.studentpal.model.user.ClientUser;
 import com.studentpal.util.Utils;
 import com.studentpal.util.logger.Logger;
@@ -319,15 +305,20 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
       Set<ClientUser> clientUserSet = null;
       if (resultObj != null) {
         clientUserSet = saveManagedDevsInfoToDB(resultObj);
-      }
 
-      if (resultObj != null) {
+        //save Admin user info to DB
+        String selfPhoneNo="", selfPhoneImsi="";
         if (resultObj.has(TAGNAME_PHONE_NUM)) {
-          ClientEngine.getInstance().setPhoneNum(resultObj.getString(TAGNAME_PHONE_NUM));
+          selfPhoneNo = resultObj.getString(TAGNAME_PHONE_NUM);
+          ClientEngine.getInstance().setPhoneNum(selfPhoneNo);
         }
         if (resultObj.has(TAGNAME_PHONE_IMSI)) {
-          ClientEngine.getInstance().setPhoneIMSI(resultObj.getString(TAGNAME_PHONE_IMSI));
+          selfPhoneImsi = resultObj.getString(TAGNAME_PHONE_IMSI);
+          ClientEngine.getInstance().setPhoneIMSI(selfPhoneImsi);
         }
+
+        AdminUser adminUser = (AdminUser)engine.getSelfUser();
+        DBaseManager.getInstance().saveAdminUserInfoToDB(adminUser);
       }
 
       evtType = SIGNAL_TYPE_RESP_LOGIN;
@@ -350,7 +341,7 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
         appsInfoSet = saveManagedAppsInfoToDB(resultObj);
       }
 
-      evtType = SIGNAL_TYPE_RESP_GetAppList;
+      evtType = SIGNAL_TYPE_RESP_SyncAppList;
       respEvt = new Event();
       respEvt.setData(evtType, errCode, appsInfoSet);
 
@@ -363,7 +354,56 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
       evtType = SIGNAL_TYPE_RESP_RefreshAppList;
       respEvt = new Event();
       respEvt.setData(evtType, errCode, appsInfoSet);
+
+    } else if (Request.isEqualRequestType(respType, TASKNAME_SyncAppTypeList)) {
+      Set<AppTypeInfo> appTypesSet = null;
+      if (resultObj != null) {
+        appTypesSet = saveAppTypesInfoToDB(resultObj);
+      }
+
+      evtType = SIGNAL_TYPE_RESP_SyncAppTypeList;
+      respEvt = new Event();
+      respEvt.setData(evtType, errCode, appTypesSet);
+
+    } else if (Request.isEqualRequestType(respType, TASKNAME_SetAppTypeList)) {
+      if (resultObj!=null && resultObj.has(TAGNAME_VERSION)) {
+        int appTypesVer = resultObj.getInt(TAGNAME_VERSION);
+        AdminUser selfUser = (AdminUser)engine.getSelfUser();
+        if (selfUser != null) {
+          selfUser.setInstalledAppTypesVer(appTypesVer);
+          DBaseManager.getInstance().saveAdminUserInfoToDB(selfUser);
+        }
+      }
+
+//      evtType = SIGNAL_TYPE_RESP_SetAppTypeList;
+//      respEvt = new Event();
+//      respEvt.setData(evtType, errCode, appsInfoSet);
+
+    } else if (Request.isEqualRequestType(respType, TASKNAME_SyncAccessCategory)) {
+      List<AccessCategory> appsInfoSet = null;
+      if (resultObj != null) {
+        appsInfoSet = saveAccessCatesInfoToDB(resultObj);
+      }
+
+      evtType = SIGNAL_TYPE_RESP_SyncAccessCategory;
+      respEvt = new Event();
+      respEvt.setData(evtType, errCode, appsInfoSet);
+
+    } else if (Request.isEqualRequestType(respType, TASKNAME_SetAccessCategory)) {
+      if (resultObj!=null
+          && resultObj.has(TAGNAME_VERSION)
+          && resultObj.has(TAGNAME_PHONE_NUM)) {
+        String targetPhoneNo = resultObj.getString(TAGNAME_PHONE_NUM);
+        int version = resultObj.getInt(TAGNAME_VERSION);
+
+        DBaseManager.getInstance().saveCategoryVerToDB(version, targetPhoneNo);
+      }
+
+      evtType = SIGNAL_TYPE_RESP_SetAccessCategory;
+      respEvt = new Event();
+      //respEvt.setData(evtType, errCode, );
     }
+
 
     //Dispatch ACK event to corresponding screen to handle
     if (evtType != SIGNAL_TYPE_UNKNOWN) {
@@ -372,6 +412,9 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     }
   }
 
+  /*
+   * DB operations
+   */
   private Set<ClientUser> saveManagedDevsInfoToDB(JSONObject jsonResObj) {
     if (jsonResObj == null) {
       Logger.w(TAG,  "Input result obj should NOT be NULL");
@@ -433,18 +476,6 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
         DBaseManager.getInstance().saveManagedAppsToDB(appsInfoList);
       }
 
-      Set<AppTypeInfo> appTypesList = null;
-      JSONArray jsonAppTypesAry = jsonResObj.getJSONArray(
-          Event.TAGNAME_APPLICATION_TYPES);
-      if (jsonAppTypesAry!=null && jsonAppTypesAry.length()>0) {
-        appTypesList = new HashSet<AppTypeInfo>();
-        for (int i=0; i<jsonAppTypesAry.length(); i++) {
-          AppTypeInfo appTypeInfo = new AppTypeInfo(jsonAppTypesAry.getJSONObject(i));
-          appTypesList.add(appTypeInfo);
-        }
-        DBaseManager.getInstance().saveManagedAppTypesToDB(appTypesList);
-      }
-
       if (jsonResObj.has(Event.TAGNAME_PHONE_NUM)) {
         String phoneNum = jsonResObj.getString(Event.TAGNAME_PHONE_NUM);
         int appListVer = jsonResObj.getInt(Event.TAGNAME_VERSION);
@@ -462,9 +493,54 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     return appsInfoList;
   }
 
-  private Set<AccessCategory> saveAccessCatesInfoToDB(JSONObject jsonResObj) {
-    //TODO
-    Set<AccessCategory> result = null;
+  private Set<AppTypeInfo> saveAppTypesInfoToDB(JSONObject jsonResObj) {
+    if (jsonResObj == null) {
+      Logger.w(TAG,  "Input result obj should NOT be NULL");
+      return null;
+    }
+
+    Set<AppTypeInfo> result = null;
+    try {
+      //String targetPhoneNo = jsonResObj.getString(TAGNAME_PHONE_NUM);
+
+      JSONArray jsonAppTypesAry = jsonResObj.getJSONArray(
+          Event.TAGNAME_APPLICATION_TYPES);
+      if (jsonAppTypesAry!=null && jsonAppTypesAry.length()>0) {
+        result = new HashSet<AppTypeInfo>();
+        for (int i=0; i<jsonAppTypesAry.length(); i++) {
+          AppTypeInfo appTypeInfo = new AppTypeInfo(jsonAppTypesAry.getJSONObject(i));
+          result.add(appTypeInfo);
+        }
+        DBaseManager.getInstance().saveManagedAppTypesToDB(result);
+      }
+    } catch (JSONException e) {
+      Logger.d(TAG, e.toString());
+    }
+
+    return result;
+  }
+
+  private List<AccessCategory> saveAccessCatesInfoToDB(JSONObject jsonResObj) {
+    if (jsonResObj == null) {
+      Logger.w(TAG,  "Input result obj should NOT be NULL");
+      return null;
+    }
+
+    List<AccessCategory> result = null;
+    try {
+      JSONArray jsonCatesAry = jsonResObj.getJSONArray(
+          Event.TAGNAME_ACCESS_CATEGORIES);
+      if (jsonCatesAry!=null && jsonCatesAry.length()>0) {
+        result = new ArrayList<AccessCategory>();
+        for (int i=0; i<jsonCatesAry.length(); i++) {
+          AccessCategory accessCate = new AccessCategory(jsonCatesAry.getJSONObject(i));
+          result.add(accessCate);
+        }
+        DBaseManager.getInstance().saveAccessCategoriesToDB(result);
+      }
+    } catch (JSONException e) {
+      Logger.d(TAG, e.toString());
+    }
 
     return result;
   }
