@@ -292,7 +292,6 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
   private void handleResponseMessage(JSONObject msgObjRoot) throws JSONException {
     String respType = msgObjRoot.getString(Event.TAGNAME_CMD_TYPE);
     int errCode = msgObjRoot.getInt(TAGNAME_ERR_CODE);
-    int evtType = SIGNAL_TYPE_UNKNOWN;
 
     JSONObject resultObj = null;
     if (msgObjRoot.has(TAGNAME_RESULT)) {
@@ -300,6 +299,22 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     }
 
     Event respEvt = null;
+    if (errCode == ERRCODE_NOERROR) {
+      respEvt = handleNoErrorResponse(respType, errCode, resultObj);
+    }
+
+    //Send message to MessageHandler,
+    //then Dispatch ACK event to corresponding screen to handle
+    if (respEvt!=null && respEvt.getType()!=SIGNAL_TYPE_UNKNOWN) {
+      Message msg = this.obtainMessage(respEvt.getType(), respEvt);
+      this.sendMessage(msg);
+    }
+  }
+
+  private Event handleNoErrorResponse(String respType, int errCode,
+      JSONObject resultObj) throws JSONException {
+    Event respEvt = null;
+    int evtType = SIGNAL_TYPE_UNKNOWN;
 
     if (Request.isEqualRequestType(respType, TASKNAME_LOGIN_ADMIN)) {
       Set<ClientUser> clientUserSet = null;
@@ -318,6 +333,9 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
         }
 
         AdminUser adminUser = (AdminUser)engine.getSelfUser();
+        adminUser.setPhoneNum(selfPhoneNo);
+        adminUser.setPhoneImsi(selfPhoneImsi);
+
         DBaseManager.getInstance().saveAdminUserInfoToDB(adminUser);
       }
 
@@ -401,16 +419,12 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
 
       evtType = SIGNAL_TYPE_RESP_SetAccessCategory;
       respEvt = new Event();
-      //respEvt.setData(evtType, errCode, );
+      //respEvt.setData(evtType, errCode, ???);
     }
 
-
-    //Dispatch ACK event to corresponding screen to handle
-    if (evtType != SIGNAL_TYPE_UNKNOWN) {
-      Message msg = this.obtainMessage(evtType, respEvt);
-      this.sendMessage(msg);
-    }
+    return respEvt;
   }
+
 
   /*
    * DB operations
@@ -445,7 +459,7 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
       }
 
     } catch (JSONException e) {
-      Logger.d(TAG, e.toString());
+      Logger.w(TAG, e.toString());
     }
 
     return managedDevs;
@@ -461,19 +475,21 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     try {
       String installedApps = "";
 
-      JSONArray jsonAppsAry = jsonResObj.getJSONArray(Event.TAGNAME_APPLICATIONS);
-      if (jsonAppsAry!=null && jsonAppsAry.length()>0) {
+      if (jsonResObj.has(Event.TAGNAME_APPLICATIONS)) {
+        JSONArray jsonAppsAry = jsonResObj.getJSONArray(Event.TAGNAME_APPLICATIONS);
+        if (jsonAppsAry!=null && jsonAppsAry.length()>0) {
 
-        appsInfoList = new HashSet<ClientAppInfo>();
+          appsInfoList = new HashSet<ClientAppInfo>();
 
-        for (int i=0; i<jsonAppsAry.length(); i++) {
-          ClientAppInfo appInfo = new ClientAppInfo(jsonAppsAry.getJSONObject(i));
-          appsInfoList.add(appInfo);
+          for (int i=0; i<jsonAppsAry.length(); i++) {
+            ClientAppInfo appInfo = new ClientAppInfo(jsonAppsAry.getJSONObject(i));
+            appsInfoList.add(appInfo);
 
-          installedApps += appInfo.getAppPkgname() + Event.APP_PKGNAME_DELIMETER;
+            installedApps += appInfo.getAppPkgname() + Event.APP_PKGNAME_DELIMETER;
+          }
+
+          DBaseManager.getInstance().saveManagedAppsToDB(appsInfoList);
         }
-
-        DBaseManager.getInstance().saveManagedAppsToDB(appsInfoList);
       }
 
       if (jsonResObj.has(Event.TAGNAME_PHONE_NUM)) {
@@ -481,13 +497,13 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
         int appListVer = jsonResObj.getInt(Event.TAGNAME_VERSION);
         ClientUser managedDev = new ClientUser(phoneNum, null, null);
         managedDev.setInstalledAppsListVer(appListVer);
-        managedDev.setInstalledApps(installedApps);
+        //managedDev.setInstalledApps(installedApps);  //we donot need this field any more
 
         DBaseManager.getInstance().saveManagedDevInfoToDB(managedDev);
       }
 
     } catch (JSONException e) {
-      Logger.d(TAG, e.toString());
+      Logger.w(TAG, e.toString());
     }
 
     return appsInfoList;
@@ -514,7 +530,7 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
         DBaseManager.getInstance().saveManagedAppTypesToDB(result);
       }
     } catch (JSONException e) {
-      Logger.d(TAG, e.toString());
+      Logger.w(TAG, e.toString());
     }
 
     return result;
@@ -539,9 +555,13 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
         DBaseManager.getInstance().saveAccessCategoriesToDB(result);
       }
     } catch (JSONException e) {
-      Logger.d(TAG, e.toString());
+      Logger.w(TAG, e.toString());
     }
 
     return result;
   }
+
+
 }
+
+

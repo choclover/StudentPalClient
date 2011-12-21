@@ -31,6 +31,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.studentpal.app.db.DBaseManager;
 import com.studentpal.engine.ClientEngine;
 import com.studentpal.engine.Event;
 import com.studentpal.model.AccessCategory;
@@ -67,16 +68,19 @@ public class SetAppTypeListRequest extends Request {
         Logger.e(TAG, "Input argument format error");
 
       } else {
-        JSONArray jsonCatesAry = new JSONArray();
+        int version = DBaseManager.getInstance().getAppTypesListVersion();
+
+        JSONArray jsonTypesAry = new JSONArray();
         for (AppTypeInfo appType : (Set<AppTypeInfo>)inputArguments) {
-          jsonCatesAry.put(appType.toJsonObject());
+          jsonTypesAry.put(appType.toJsonObject());
         }
 
         super.setRequestSeq(ClientEngine.getNextMsgId());
 
         JSONObject argsObj = new JSONObject();
-        argsObj.put(Event.TAGNAME_PHONE_NUM, this.targetPhoneNo);
-
+        argsObj.put(Event.TAGNAME_PHONE_NUM, targetPhoneNo);
+        argsObj.put(Event.TAGNAME_VERSION, version);
+        argsObj.put(Event.TAGNAME_APPLICATION_TYPES, jsonTypesAry);
 
         JSONObject reqObj = super.generateGenericRequestHeader(getName(), argsObj);
         setOutputContent(reqObj.toString());
