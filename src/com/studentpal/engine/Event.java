@@ -7,41 +7,44 @@ public class Event {
   /*
    * Constants
    */
-  public static final String APP_PKGNAME_DELIMETER = "|";
-  public static final String TIME_LIST_DELIMETER   = ";";
+  public static final String APP_PKGNAME_DELIMETER     = "|";
+  public static final String TIME_LIST_DELIMETER       = ";";
 
-  public static final String MESSAGE_HEADER_ACK      = "A";
-  public static final String MESSAGE_HEADER_REQ      = "R";
-  public static final String MESSAGE_HEADER_NOTIF    = "N";
+  public static final String MESSAGE_HEADER_ACK        = "A";
+  public static final String MESSAGE_HEADER_REQ        = "R";
+  public static final String MESSAGE_HEADER_NOTIF      = "N";
 
-  public static final String TAGNAME_MSG_TYPE        = "msg_type";
-  public static final String TAGNAME_MSG_ID          = "msg_id";
-  public static final String TAGNAME_CMD_TYPE        = "cmd_type";
-  public static final String TAGNAME_ERR_CODE        = "err_code";
-  public static final String TAGNAME_ERR_DESC        = "err_desc";
-  public static final String TAGNAME_RESULT          = "result";
-  public static final String TAGNAME_ARGUMENTS       = "args";
-  //public static final String TAGNAME_BUNDLE_PARAM    = "bundle_param";
+  public static final String TAGNAME_MSG_TYPE          = "msg_type";
+  public static final String TAGNAME_MSG_ID            = "msg_id";
+  public static final String TAGNAME_CMD_TYPE          = "cmd_type";
+  public static final String TAGNAME_ERR_CODE          = "err_code";
+  public static final String TAGNAME_ERR_DESC          = "err_desc";
+  public static final String TAGNAME_RESULT            = "result";
+  public static final String TAGNAME_ARGUMENTS         = "args";
+  //public static final String TAGNAME_BUNDLE_PARAM      = "bundle_param";
 
-  public static final String TAGNAME_VERSION         = "version";
-  public static final String TAGNAME_APPSLIST_VER    = "applist_ver";
-  public static final String TAGNAME_PHONE_NUM       = "phone_no";
-  public static final String TAGNAME_PHONE_IMSI      = "phone_imsi";
-  public static final String TAGNAME_PHONE_IMEI      = "phone_imei";
-  public static final String TAGNAME_LOGIN_NAME      = "login_name";
-  public static final String TAGNAME_LOGIN_PASSWD    = "login_passwd";
-  public static final String TAGNAME_NICKNAME        = "nickname";
-  public static final String TAGNAME_OWNERID     = "ownerid";
+  public static final String TAGNAME_VERSION           = "version";
+  public static final String TAGNAME_APPSLIST_VER      = "applist_ver";
+  public static final String TAGNAME_PHONE_NUM         = "phone_no";
+  public static final String TAGNAME_PHONE_IMSI        = "phone_imsi";
+  public static final String TAGNAME_PHONE_IMEI        = "phone_imei";
+  public static final String TAGNAME_LOGIN_NAME        = "login_name";
+  public static final String TAGNAME_LOGIN_PASSWD      = "login_passwd";
+  public static final String TAGNAME_NICKNAME          = "nickname";
+  public static final String TAGNAME_OWNERID           = "ownerid";
+  public static final String TAGNAME_SYS_PRESET        = "sys_preset";
 
   public static final String TAGNAME_DEVICES           = "devices";
   //public static final String TAGNAME_DEVICE          = "device";
   public static final String TAGNAME_APPLICATIONS      = "applications";
-  public static final String TAGNAME_APPLICATION_TYPES = "application_types";
   public static final String TAGNAME_APP               = "application";
   public static final String TAGNAME_APP_NAME          = "app_name";
   public static final String TAGNAME_APP_CLASSNAME     = "app_classname";
   public static final String TAGNAME_APP_PKGNAME       = "app_pkgname";
   public static final String TAGNAME_APP_COMNAME       = "app_companyname";
+
+  public static final String TAGNAME_APPLICATION_TYPES = "application_types";
+  public static final String TAGNAME_APPLICATION_TYPE  = "app_type";
   public static final String TAGNAME_APP_TYPEID        = "app_typeid";
   public static final String TAGNAME_APP_TYPENAME      = "app_typename";
   public static final String TAGNAME_APP_TYPEDESC      = "app_typendesc";

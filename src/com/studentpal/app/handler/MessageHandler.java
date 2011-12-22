@@ -300,7 +300,7 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
 
     Event respEvt = null;
     if (errCode == ERRCODE_NOERROR) {
-      respEvt = handleNoErrorResponse(respType, errCode, resultObj);
+      respEvt = constructEventFromResp(respType, errCode, resultObj);
     }
 
     //Send message to MessageHandler,
@@ -311,32 +311,37 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     }
   }
 
-  private Event handleNoErrorResponse(String respType, int errCode,
+  /////////////////////////////////////////////////////////////////////////////
+  private Event constructEventFromResp(String respType, int errCode,
       JSONObject resultObj) throws JSONException {
     Event respEvt = null;
     int evtType = SIGNAL_TYPE_UNKNOWN;
 
     if (Request.isEqualRequestType(respType, TASKNAME_LOGIN_ADMIN)) {
       Set<ClientUser> clientUserSet = null;
-      if (resultObj != null) {
-        clientUserSet = saveManagedDevsInfoToDB(resultObj);
+      switch (errCode) {
+      case ERRCODE_NOERROR:
+        if (resultObj != null) {
+          clientUserSet = saveManagedDevsInfoToDB(resultObj);
 
-        //save Admin user info to DB
-        String selfPhoneNo="", selfPhoneImsi="";
-        if (resultObj.has(TAGNAME_PHONE_NUM)) {
-          selfPhoneNo = resultObj.getString(TAGNAME_PHONE_NUM);
-          ClientEngine.getInstance().setPhoneNum(selfPhoneNo);
+          //save Admin user info to DB
+          String selfPhoneNo="", selfPhoneImsi="";
+          if (resultObj.has(TAGNAME_PHONE_NUM)) {
+            selfPhoneNo = resultObj.getString(TAGNAME_PHONE_NUM);
+            ClientEngine.getInstance().setPhoneNum(selfPhoneNo);
+          }
+          if (resultObj.has(TAGNAME_PHONE_IMSI)) {
+            selfPhoneImsi = resultObj.getString(TAGNAME_PHONE_IMSI);
+            ClientEngine.getInstance().setPhoneIMSI(selfPhoneImsi);
+          }
+
+          AdminUser adminUser = (AdminUser)engine.getSelfUser();
+          adminUser.setPhoneNum(selfPhoneNo);
+          adminUser.setPhoneImsi(selfPhoneImsi);
+
+          DBaseManager.getInstance().saveAdminUserInfoToDB(adminUser);
         }
-        if (resultObj.has(TAGNAME_PHONE_IMSI)) {
-          selfPhoneImsi = resultObj.getString(TAGNAME_PHONE_IMSI);
-          ClientEngine.getInstance().setPhoneIMSI(selfPhoneImsi);
-        }
-
-        AdminUser adminUser = (AdminUser)engine.getSelfUser();
-        adminUser.setPhoneNum(selfPhoneNo);
-        adminUser.setPhoneImsi(selfPhoneImsi);
-
-        DBaseManager.getInstance().saveAdminUserInfoToDB(adminUser);
+        break;
       }
 
       evtType = SIGNAL_TYPE_RESP_LOGIN;
@@ -344,19 +349,29 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
       respEvt.setData(evtType, errCode, clientUserSet);
 
     } else if (Request.isEqualRequestType(respType, TASKNAME_LOGIN)) {
-      if (resultObj != null) {
-        if (resultObj.has(TAGNAME_PHONE_NUM)) {
-          ClientEngine.getInstance().setPhoneNum(resultObj.getString(TAGNAME_PHONE_NUM));
+      switch (errCode) {
+      case ERRCODE_NOERROR:
+        if (resultObj != null) {
+          if (resultObj.has(TAGNAME_PHONE_NUM)) {
+            ClientEngine.getInstance().setPhoneNum(
+                resultObj.getString(TAGNAME_PHONE_NUM));
+          }
+          if (resultObj.has(TAGNAME_PHONE_IMSI)) {
+            ClientEngine.getInstance().setPhoneIMSI(
+                resultObj.getString(TAGNAME_PHONE_IMSI));
+          }
         }
-        if (resultObj.has(TAGNAME_PHONE_IMSI)) {
-          ClientEngine.getInstance().setPhoneIMSI(resultObj.getString(TAGNAME_PHONE_IMSI));
-        }
+        break;
       }
 
     } else if (Request.isEqualRequestType(respType, TASKNAME_SyncAppList)) {
       Set<ClientAppInfo> appsInfoSet = null;
-      if (resultObj != null) {
-        appsInfoSet = saveManagedAppsInfoToDB(resultObj);
+      switch (errCode) {
+      case ERRCODE_NOERROR:
+        if (resultObj != null) {
+          appsInfoSet = saveManagedAppsInfoToDB(resultObj);
+        }
+        break;
       }
 
       evtType = SIGNAL_TYPE_RESP_SyncAppList;
@@ -365,8 +380,12 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
 
     } else if (Request.isEqualRequestType(respType, TASKNAME_RefreshAppList)) {
       Set<ClientAppInfo> appsInfoSet = null;
-      if (resultObj != null) {
-        appsInfoSet = saveManagedAppsInfoToDB(resultObj);
+      switch (errCode) {
+      case ERRCODE_NOERROR:
+        if (resultObj != null) {
+          appsInfoSet = saveManagedAppsInfoToDB(resultObj);
+        }
+        break;
       }
 
       evtType = SIGNAL_TYPE_RESP_RefreshAppList;
@@ -375,8 +394,12 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
 
     } else if (Request.isEqualRequestType(respType, TASKNAME_SyncAppTypeList)) {
       Set<AppTypeInfo> appTypesSet = null;
-      if (resultObj != null) {
-        appTypesSet = saveAppTypesInfoToDB(resultObj);
+      switch (errCode) {
+      case ERRCODE_NOERROR:
+        if (resultObj != null) {
+          appTypesSet = saveAppTypesInfoToDB(resultObj);
+        }
+        break;
       }
 
       evtType = SIGNAL_TYPE_RESP_SyncAppTypeList;
@@ -384,23 +407,31 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
       respEvt.setData(evtType, errCode, appTypesSet);
 
     } else if (Request.isEqualRequestType(respType, TASKNAME_SetAppTypeList)) {
-      if (resultObj!=null && resultObj.has(TAGNAME_VERSION)) {
-        int appTypesVer = resultObj.getInt(TAGNAME_VERSION);
-        AdminUser selfUser = (AdminUser)engine.getSelfUser();
-        if (selfUser != null) {
-          selfUser.setInstalledAppTypesVer(appTypesVer);
-          DBaseManager.getInstance().saveAdminUserInfoToDB(selfUser);
+      switch (errCode) {
+      case ERRCODE_NOERROR:
+        if (resultObj != null) {
+          int appTypesVer = resultObj.getInt(TAGNAME_VERSION);
+          AdminUser selfUser = (AdminUser) engine.getSelfUser();
+          if (selfUser != null) {
+            selfUser.setInstalledAppTypesVer(appTypesVer);
+            DBaseManager.getInstance().saveAdminUserInfoToDB(selfUser);
+          }
         }
       }
 
-//      evtType = SIGNAL_TYPE_RESP_SetAppTypeList;
-//      respEvt = new Event();
-//      respEvt.setData(evtType, errCode, appsInfoSet);
+      // evtType = SIGNAL_TYPE_RESP_SetAppTypeList;
+      // respEvt = new Event();
+      // respEvt.setData(evtType, errCode, appsInfoSet);
 
-    } else if (Request.isEqualRequestType(respType, TASKNAME_SyncAccessCategory)) {
+    } else if (Request
+        .isEqualRequestType(respType, TASKNAME_SyncAccessCategory)) {
       List<AccessCategory> appsInfoSet = null;
-      if (resultObj != null) {
-        appsInfoSet = saveAccessCatesInfoToDB(resultObj);
+      switch (errCode) {
+      case ERRCODE_NOERROR:
+        if (resultObj != null) {
+          appsInfoSet = saveAccessCatesInfoToDB(resultObj);
+        }
+        break;
       }
 
       evtType = SIGNAL_TYPE_RESP_SyncAccessCategory;
@@ -408,13 +439,16 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
       respEvt.setData(evtType, errCode, appsInfoSet);
 
     } else if (Request.isEqualRequestType(respType, TASKNAME_SetAccessCategory)) {
-      if (resultObj!=null
-          && resultObj.has(TAGNAME_VERSION)
-          && resultObj.has(TAGNAME_PHONE_NUM)) {
-        String targetPhoneNo = resultObj.getString(TAGNAME_PHONE_NUM);
-        int version = resultObj.getInt(TAGNAME_VERSION);
+      switch (errCode) {
+      case ERRCODE_NOERROR:
+        if (resultObj != null) {
+          String targetPhoneNo = resultObj.getString(TAGNAME_PHONE_NUM);
+          int version = resultObj.getInt(TAGNAME_VERSION);
 
-        DBaseManager.getInstance().saveCategoryVerToDB(version, targetPhoneNo);
+          DBaseManager.getInstance()
+              .saveCategoryVerToDB(version, targetPhoneNo);
+        }
+        break;
       }
 
       evtType = SIGNAL_TYPE_RESP_SetAccessCategory;
