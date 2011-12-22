@@ -68,6 +68,8 @@ public class AccessCategory {
   }
 
   public AccessCategory(JSONObject jsonCateObj) throws JSONException {
+    this();
+
     if (jsonCateObj == null) {
       throw new JSONException("Input parameter is NULL!");
     }

@@ -8,8 +8,9 @@ import com.studentpal.engine.Event;
 public class AppTypeInfo {
   //private static final String TAG = "AppTypeInfo";
 
-  private String   _name;
   private int      _id;
+  private String   _name;
+  private String   _desc;
   //if or not this apptype is system preset or user-created
   private boolean  isSysPreset;
 
@@ -24,6 +25,17 @@ public class AppTypeInfo {
     }
     _id = jsonAppInfoObj.getInt(Event.TAGNAME_APP_TYPEID);
     _name = jsonAppInfoObj.getString(Event.TAGNAME_APP_TYPENAME);
+
+    if (jsonAppInfoObj.has(Event.TAGNAME_APP_TYPEDESC)) {
+      _desc = jsonAppInfoObj.getString(Event.TAGNAME_APP_TYPEDESC);
+    }
+
+    if (jsonAppInfoObj.has(Event.TAGNAME_SYS_PRESET)) {
+      int isSysPresetVal = jsonAppInfoObj.getInt(Event.TAGNAME_SYS_PRESET);
+      isSysPreset = (isSysPresetVal==1);
+    } else {
+      isSysPreset = false;
+    }
   }
 
   public String getName() {
@@ -32,6 +44,14 @@ public class AppTypeInfo {
 
   public void setName(String name) {
     this._name = name;
+  }
+
+  public String getDesc() {
+    return _desc;
+  }
+
+  public void setDesc(String desc) {
+    this._desc = desc;
   }
 
   public int getId() {

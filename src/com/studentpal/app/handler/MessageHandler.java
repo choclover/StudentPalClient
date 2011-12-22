@@ -508,6 +508,7 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     Set<ClientAppInfo> appsInfoList = null;
     try {
       String installedApps = "";
+      String targetPhoneNo = jsonResObj.getString(TAGNAME_PHONE_NUM);
 
       if (jsonResObj.has(Event.TAGNAME_APPLICATIONS)) {
         JSONArray jsonAppsAry = jsonResObj.getJSONArray(Event.TAGNAME_APPLICATIONS);
@@ -522,15 +523,15 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
             installedApps += appInfo.getAppPkgname() + Event.APP_PKGNAME_DELIMETER;
           }
 
-          DBaseManager.getInstance().saveManagedAppsToDB(appsInfoList);
+          DBaseManager.getInstance().saveManagedAppsToDB(targetPhoneNo, appsInfoList);
         }
       }
 
       if (jsonResObj.has(Event.TAGNAME_PHONE_NUM)) {
         String phoneNum = jsonResObj.getString(Event.TAGNAME_PHONE_NUM);
-        int appListVer = jsonResObj.getInt(Event.TAGNAME_VERSION);
+        int version = jsonResObj.getInt(Event.TAGNAME_VERSION);
         ClientUser managedDev = new ClientUser(phoneNum, null, null);
-        managedDev.setInstalledAppsListVer(appListVer);
+        managedDev.setInstalledAppsListVer(version);
         //managedDev.setInstalledApps(installedApps);  //we donot need this field any more
 
         DBaseManager.getInstance().saveManagedDevInfoToDB(managedDev);
@@ -553,16 +554,27 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     try {
       //String targetPhoneNo = jsonResObj.getString(TAGNAME_PHONE_NUM);
 
-      JSONArray jsonAppTypesAry = jsonResObj.getJSONArray(
-          Event.TAGNAME_APPLICATION_TYPES);
-      if (jsonAppTypesAry!=null && jsonAppTypesAry.length()>0) {
-        result = new HashSet<AppTypeInfo>();
-        for (int i=0; i<jsonAppTypesAry.length(); i++) {
-          AppTypeInfo appTypeInfo = new AppTypeInfo(jsonAppTypesAry.getJSONObject(i));
-          result.add(appTypeInfo);
+      if (jsonResObj.has(TAGNAME_APPLICATION_TYPES)) {
+        JSONArray jsonAppTypesAry = jsonResObj.getJSONArray(
+            Event.TAGNAME_APPLICATION_TYPES);
+        if (jsonAppTypesAry!=null && jsonAppTypesAry.length()>0) {
+          result = new HashSet<AppTypeInfo>();
+          for (int i=0; i<jsonAppTypesAry.length(); i++) {
+            AppTypeInfo appTypeInfo = new AppTypeInfo(jsonAppTypesAry.getJSONObject(i));
+            result.add(appTypeInfo);
+          }
+          DBaseManager.getInstance().saveManagedAppTypesToDB(result);
         }
-        DBaseManager.getInstance().saveManagedAppTypesToDB(result);
       }
+
+      //save AppTypes version to DB
+      if (jsonResObj.has(TAGNAME_VERSION)) {
+        int version = jsonResObj.getInt(TAGNAME_VERSION);
+        AdminUser adminUser = (AdminUser)engine.getSelfUser();
+        adminUser.setInstalledAppTypesVer(version);
+        DBaseManager.getInstance().saveAdminUserInfoToDB(adminUser);
+      }
+
     } catch (JSONException e) {
       Logger.w(TAG, e.toString());
     }
@@ -588,6 +600,18 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
         }
         DBaseManager.getInstance().saveAccessCategoriesToDB(result);
       }
+
+      //save Access Category version to DB
+      if (jsonResObj.has(Event.TAGNAME_PHONE_NUM)) {
+        String phoneNum = jsonResObj.getString(Event.TAGNAME_PHONE_NUM);
+        int version = jsonResObj.getInt(Event.TAGNAME_VERSION);
+
+        ClientUser managedDev = new ClientUser(phoneNum, null, null);
+        managedDev.setInstalledAccessCateVer(version);
+
+        DBaseManager.getInstance().saveManagedDevInfoToDB(managedDev);
+      }
+
     } catch (JSONException e) {
       Logger.w(TAG, e.toString());
     }
