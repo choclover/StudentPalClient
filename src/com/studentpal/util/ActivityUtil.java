@@ -24,7 +24,6 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
 
-import com.studentpal.R;
 import com.studentpal.app.ResourceManager;
 import com.studentpal.engine.ClientEngine;
 import com.studentpal.engine.Event;

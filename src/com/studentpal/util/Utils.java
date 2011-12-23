@@ -1,12 +1,67 @@
 package com.studentpal.util;
 
+import static com.studentpal.engine.Event.ACCESS_TYPE_DENIED;
+import static com.studentpal.engine.Event.ACCESS_TYPE_PERMITTED;
+import static com.studentpal.engine.Event.RECUR_TYPE_DAILY;
+import static com.studentpal.engine.Event.RECUR_TYPE_MONTHLY;
+import static com.studentpal.engine.Event.RECUR_TYPE_WEEKLY;
+import static com.studentpal.engine.Event.RECUR_TYPE_YEARLY;
+import static com.studentpal.engine.Event.TAGNAME_ACCESS_CATEGORY;
+import static com.studentpal.engine.Event.TAGNAME_ACCESS_CATE_ID;
+import static com.studentpal.engine.Event.TAGNAME_ACCESS_CATE_NAME;
+import static com.studentpal.engine.Event.TAGNAME_ACCESS_RULE;
+import static com.studentpal.engine.Event.TAGNAME_ACCESS_RULES;
+import static com.studentpal.engine.Event.TAGNAME_ACCESS_TIMERANGE;
+import static com.studentpal.engine.Event.TAGNAME_ACCESS_TIMERANGES;
+import static com.studentpal.engine.Event.TAGNAME_APP;
+import static com.studentpal.engine.Event.TAGNAME_APPLICATION_TYPE;
+import static com.studentpal.engine.Event.TAGNAME_APPLICATION_TYPES;
+import static com.studentpal.engine.Event.TAGNAME_APP_CLASSNAME;
+import static com.studentpal.engine.Event.TAGNAME_APP_NAME;
+import static com.studentpal.engine.Event.TAGNAME_APP_PKGNAME;
+import static com.studentpal.engine.Event.TAGNAME_APP_TYPEID;
+import static com.studentpal.engine.Event.TAGNAME_APP_TYPENAME;
+import static com.studentpal.engine.Event.TAGNAME_RULE_AUTH_TYPE;
+import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_ENDTIME;
+import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_STARTTIME;
+import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_TYPE;
+import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_VALUE;
+import static com.studentpal.engine.Event.TXT_ACCESS_TYPE_DENIED;
+import static com.studentpal.engine.Event.TXT_ACCESS_TYPE_PERMITTED;
+import static com.studentpal.engine.Event.TXT_RECUR_TYPE_DAILY;
+import static com.studentpal.engine.Event.TXT_RECUR_TYPE_MONTHLY;
+import static com.studentpal.engine.Event.TXT_RECUR_TYPE_WEEKLY;
+import static com.studentpal.engine.Event.TXT_RECUR_TYPE_YEARLY;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Formatter;
+import java.util.Calendar;
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import com.studentpal.util.logger.Logger;
+
+
 public class Utils {
+  private static final String TAG = "@@ Client.Utils";
 
   public static boolean isValidPhoneNumber(final String phoneNum) {
     return (phoneNum != null && phoneNum.trim().length() == 11);
@@ -87,6 +142,204 @@ public class Utils {
     }
   }
 
+  public static void loadAppTypesDefFromFile(File appTypeDefFName,
+      JSONArray appTypesAry) {
+    try {
+      DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+      DocumentBuilder dbd = dbf.newDocumentBuilder();
+      Document doc = dbd.parse(appTypeDefFName);
+      Element rootElem = doc.getDocumentElement();
+
+      NodeList appsTypeList = rootElem.getElementsByTagName(TAGNAME_APPLICATION_TYPE);
+      if (appsTypeList!=null && appsTypeList.getLength()>0) {
+        for (int i=0; i<appsTypeList.getLength(); i++) {
+          Element appTypeElem = (Element)appsTypeList.item(i);
+
+          JSONObject appTypeObj = new JSONObject();
+          NamedNodeMap attrs = appTypeElem.getAttributes();
+          if (attrs != null) {
+            Node typeIdNode = attrs.getNamedItem(TAGNAME_APP_TYPEID);
+            if (typeIdNode!=null
+                && false==isEmptyString(typeIdNode.getNodeValue())) {
+              appTypeObj.put(TAGNAME_APP_TYPEID, typeIdNode.getNodeValue());
+            }
+
+            Node typeNameNode = attrs.getNamedItem(TAGNAME_APP_TYPENAME);
+            if (typeNameNode != null) {
+              appTypeObj.put(TAGNAME_APP_TYPENAME, typeNameNode.getNodeValue());
+            } else {
+              continue;
+            }
+
+            if (appTypesAry != null) appTypesAry.put(appTypeObj);
+          }
+        }
+      }//appsTypeList
+
+      Logger.i(TAG,
+          "Done loading Category Definition From File: "
+              + appTypeDefFName.getPath());
+
+    } catch (ParserConfigurationException e) {
+      e.printStackTrace();
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    } catch (SAXException e) {
+      e.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
+    } catch (JSONException e) {
+      e.printStackTrace();
+    } finally {
+    }
+  }
+
+  public static void loadCateDefFromFile(File cateDefFName,
+      JSONArray catesAry, JSONArray appsAry) {
+    try {
+      DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+      DocumentBuilder dbd = dbf.newDocumentBuilder();
+      Document doc = dbd.parse(cateDefFName);
+      Element rootElem = doc.getDocumentElement();
+
+      NodeList catesNodeList = rootElem.getElementsByTagName(TAGNAME_ACCESS_CATEGORY);
+      if (catesNodeList!=null && catesNodeList.getLength()>0) {
+        for (int i=0; i<catesNodeList.getLength(); i++) {
+          Element cateElem = (Element)catesNodeList.item(i);
+
+          JSONArray rulesAry = new JSONArray();
+          NodeList rulesList = cateElem.getElementsByTagName(TAGNAME_ACCESS_RULE);
+          for (int k=0; k<rulesList.getLength(); k++) {
+            Element ruleElem = (Element)rulesList.item(k);
+
+            JSONObject aRuleObj = new JSONObject();
+            NamedNodeMap attrs = ruleElem.getAttributes();
+            if (attrs != null) {
+              String attrVal = attrs.getNamedItem(TAGNAME_RULE_AUTH_TYPE).getNodeValue();
+              if (attrVal.equalsIgnoreCase(TXT_ACCESS_TYPE_DENIED)) {
+                aRuleObj.put(TAGNAME_RULE_AUTH_TYPE, ACCESS_TYPE_DENIED);
+              } else if (attrVal.equalsIgnoreCase(TXT_ACCESS_TYPE_PERMITTED)) {
+                aRuleObj.put(TAGNAME_RULE_AUTH_TYPE, ACCESS_TYPE_PERMITTED);
+              }
+
+              attrVal = attrs.getNamedItem(TAGNAME_RULE_REPEAT_TYPE).getNodeValue();
+              if (attrVal.equalsIgnoreCase(TXT_RECUR_TYPE_DAILY)) {
+                aRuleObj.put(TAGNAME_RULE_REPEAT_TYPE, RECUR_TYPE_DAILY);
+
+                String repeatStr = attrs.getNamedItem(TAGNAME_RULE_REPEAT_VALUE).getNodeValue();
+                aRuleObj.put(TAGNAME_RULE_REPEAT_VALUE, 0);
+
+              } else if (attrVal.equalsIgnoreCase(TXT_RECUR_TYPE_WEEKLY)) {
+                aRuleObj.put(TAGNAME_RULE_REPEAT_TYPE, RECUR_TYPE_WEEKLY);
+
+                int repeatVal = 0;
+                String repeatStr = attrs.getNamedItem(TAGNAME_RULE_REPEAT_VALUE).getNodeValue();
+                StringTokenizer repeatTokens = new StringTokenizer(repeatStr, ",");
+                while (repeatTokens.hasMoreTokens()) {
+                  repeatStr = repeatTokens.nextToken();
+                  int repeatDay = 0;
+                  if (repeatStr.equalsIgnoreCase("SUNDAY")) {
+                    repeatDay = Calendar.SUNDAY;
+                  } else if (repeatStr.equalsIgnoreCase("MONDAY")) {
+                    repeatDay = Calendar.MONDAY;
+                  } else if (repeatStr.equalsIgnoreCase("TUESDAY")) {
+                    repeatDay = Calendar.TUESDAY;
+                  } else if (repeatStr.equalsIgnoreCase("WEDNESDAY")) {
+                    repeatDay = Calendar.WEDNESDAY;
+                  } else if (repeatStr.equalsIgnoreCase("THURSDAY")) {
+                    repeatDay = Calendar.THURSDAY;
+                  } else if (repeatStr.equalsIgnoreCase("FRIDAY")) {
+                    repeatDay = Calendar.FRIDAY;
+                  } else if (repeatStr.equalsIgnoreCase("SATURDAY")) {
+                    repeatDay = Calendar.SATURDAY;
+                  }
+
+                  if (repeatDay > 0) repeatVal |= (1 << (repeatDay-1) );
+                }
+                aRuleObj.put(TAGNAME_RULE_REPEAT_VALUE, repeatVal);
+
+              } if (attrVal.equalsIgnoreCase(TXT_RECUR_TYPE_MONTHLY)) {
+                aRuleObj.put(TAGNAME_RULE_REPEAT_TYPE, RECUR_TYPE_MONTHLY);
+              } if (attrVal.equalsIgnoreCase(TXT_RECUR_TYPE_YEARLY)) {
+                aRuleObj.put(TAGNAME_RULE_REPEAT_TYPE, RECUR_TYPE_YEARLY);
+              }
+
+              JSONArray trsAry = new JSONArray();
+              NodeList trList = ruleElem.getElementsByTagName(TAGNAME_ACCESS_TIMERANGE);
+              for (int m=0; m<trList.getLength(); m++) {
+                Element trElem = (Element)trList.item(m);
+                attrs = trElem.getAttributes();
+                if (attrs != null) {
+                  JSONObject aTrObj = new JSONObject();
+                  String trVal = attrs.getNamedItem(TAGNAME_RULE_REPEAT_STARTTIME).getNodeValue();
+                  aTrObj.put(TAGNAME_RULE_REPEAT_STARTTIME, trVal);
+                  trVal = attrs.getNamedItem(TAGNAME_RULE_REPEAT_ENDTIME).getNodeValue();
+                  aTrObj.put(TAGNAME_RULE_REPEAT_ENDTIME, trVal);
+
+                  trsAry.put(aTrObj);
+                }
+              }
+              aRuleObj.put(TAGNAME_ACCESS_TIMERANGES, trsAry);
+
+            }//ruleElem' attrs
+
+            rulesAry.put(aRuleObj);
+
+          }//rulesList
+
+          JSONObject aCateObj = new JSONObject();
+          NamedNodeMap cateAttrs = cateElem.getAttributes();
+          if (cateAttrs != null) {
+            aCateObj.put(TAGNAME_ACCESS_CATE_ID,
+                Integer.valueOf(cateAttrs.getNamedItem(
+                    TAGNAME_ACCESS_CATE_ID).getNodeValue()));
+            aCateObj.put(TAGNAME_ACCESS_CATE_NAME,
+                cateAttrs.getNamedItem(TAGNAME_ACCESS_CATE_NAME).getNodeValue());
+
+            //load cate ids string
+            aCateObj.put(TAGNAME_APPLICATION_TYPES,
+                cateAttrs.getNamedItem(TAGNAME_APPLICATION_TYPES).getNodeValue());
+          }
+          aCateObj.put(TAGNAME_ACCESS_RULES, rulesAry);
+
+          catesAry.put(aCateObj);
+        }
+      }//catesList
+
+      NodeList appsList = rootElem.getElementsByTagName(TAGNAME_APP);
+      if (appsList!=null && appsList.getLength()>0) {
+        for (int i=0; i<appsList.getLength(); i++) {
+          Element appElem = (Element)appsList.item(i);
+
+          JSONObject anAppObj = new JSONObject();
+          NamedNodeMap attrs = appElem.getAttributes();
+          if (attrs != null) {
+            anAppObj.put(TAGNAME_APP_NAME, attrs.getNamedItem(TAGNAME_APP_NAME).getNodeValue());
+            anAppObj.put(TAGNAME_APP_PKGNAME, attrs.getNamedItem(TAGNAME_APP_PKGNAME).getNodeValue());
+            anAppObj.put(TAGNAME_APP_CLASSNAME, attrs.getNamedItem(TAGNAME_APP_CLASSNAME).getNodeValue());
+            anAppObj.put(TAGNAME_ACCESS_CATE_ID, attrs.getNamedItem(TAGNAME_ACCESS_CATE_ID).getNodeValue());
+
+            if (appsAry != null) appsAry.put(anAppObj);
+          }
+        }
+      }//appsList
+
+      Logger.i(TAG,
+          "Over loading Category Definition From File: "
+              + cateDefFName.getPath());
+
+    } catch (ParserConfigurationException e) {
+      e.printStackTrace();
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    } catch (SAXException e) {
+      e.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
+    } catch (JSONException e) {
+      e.printStackTrace();
+    }
+  }
   ////////////////////////////////////////////////////////////////////////////
   private static String toHexString(byte[] bytes, String separator) {
     StringBuilder hexString = new StringBuilder();

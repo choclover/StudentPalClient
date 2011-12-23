@@ -380,10 +380,9 @@ public class DBaseManager /*implements AppHandler*/ {
       String appVal;
       for (ClientUser managedDev : managedDevs) {
         cv = new ContentValues();
-        appVal = managedDev.getPhoneNum();
-        if (! Utils.isEmptyString(appVal)) {
-          cv.put(TAGNAME_PHONE_NUM, appVal);
-        } else {
+
+        String targetPhoneNo = managedDev.getPhoneNum();
+        if (Utils.isEmptyString(targetPhoneNo)) {
           Logger.v("Skipped a ClientUser with NO phone number!");
           continue;
         }
@@ -411,7 +410,7 @@ public class DBaseManager /*implements AppHandler*/ {
 
         Cursor curDev = mDb.query(TABLE_NAME_MANAGED_DEVICE,
             new String[] {COL_NAME_APPSLIST_VERSION},
-            TAGNAME_PHONE_NUM +"=?", new String[] {managedDev.getPhoneNum()},
+            TAGNAME_PHONE_NUM +"=?", new String[] {targetPhoneNo},
             //TAGNAME_PHONE_IMSI +"='"+ managedDev.getPhoneImsi() +"'",
             null, null, null);
         if (curDev.moveToFirst()) {
@@ -419,13 +418,15 @@ public class DBaseManager /*implements AppHandler*/ {
           res = mDb.update(TABLE_NAME_MANAGED_DEVICE, cv,
               TAGNAME_PHONE_NUM +"=?",
               //TAGNAME_PHONE_IMSI +"='"+ managedDev.getPhoneImsi() +"'",
-              new String[] {managedDev.getPhoneNum()} );
+              new String[] {targetPhoneNo} );
         } else {
+          cv.put(TAGNAME_PHONE_NUM, appVal);
           res = mDb.insert(TABLE_NAME_MANAGED_DEVICE, null, cv);
         }
         curDev.close();
 
       }//for
+
     } catch (SQLiteException ex) {
       Logger.w(TAG, ex.toString());
     } finally {
