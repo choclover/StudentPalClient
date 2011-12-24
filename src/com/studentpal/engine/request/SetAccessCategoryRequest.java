@@ -45,7 +45,7 @@ public class SetAccessCategoryRequest extends Request {
   }
 
   @Override
-  public void execute() {
+  public void execute() throws STDException {
     if (isAdminReq) {
       executeAdminRequest();
     } else {
@@ -112,10 +112,10 @@ public class SetAccessCategoryRequest extends Request {
     }
   }
 
-  private void executeAdminRequest() {
+  private void executeAdminRequest() throws STDException {
     try {
       if (inputArguments==null || ! (inputArguments instanceof Set<?>)) {
-        Logger.e(TAG, "Input argument format error");
+        throw new STDException("Input argument format error for "+getName());
 
       } else {
         int version = DBaseManager.getInstance().getAccessCatesListVersion(

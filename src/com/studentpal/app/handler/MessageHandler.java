@@ -177,8 +177,12 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
         if (req.isIncomingReq()) {
           //Execute this request in the main thread,
           //and then append the processed request (i.e. response) to message queue again
-          req.execute();
-          this.sendMessageToServer(req);
+          try {
+            req.execute();
+            this.sendMessageToServer(req);
+          } catch (STDException ex) {
+            Logger.w(TAG, ex.getMessage());
+          }
 
         } else if (req.isOutgoingReq() && req.isOutputContentReady()) {
           String replyStr = req.getOutputContent();
@@ -299,9 +303,7 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     }
 
     Event respEvt = null;
-    if (errCode == ERRCODE_NOERROR) {
-      respEvt = constructEventFromResp(respType, errCode, resultObj);
-    }
+    respEvt = constructEventFromResponse(respType, errCode, resultObj);
 
     //Send message to MessageHandler,
     //then Dispatch ACK event to corresponding screen to handle
@@ -312,7 +314,7 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
   }
 
   /////////////////////////////////////////////////////////////////////////////
-  private Event constructEventFromResp(String respType, int errCode,
+  private Event constructEventFromResponse(String respType, int errCode,
       JSONObject resultObj) throws JSONException {
     Event respEvt = null;
     int evtType = SIGNAL_TYPE_UNKNOWN;
@@ -441,6 +443,7 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     } else if (Request.isEqualRequestType(respType, TASKNAME_SetAccessCategory)) {
       switch (errCode) {
       case ERRCODE_NOERROR:
+      case ERRCODE_CLIENT_CONN_LOST:
         if (resultObj != null) {
           String targetPhoneNo = resultObj.getString(TAGNAME_PHONE_NUM);
           int version = resultObj.getInt(TAGNAME_VERSION);
@@ -552,8 +555,6 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
 
     Set<AppTypeInfo> result = null;
     try {
-      //String targetPhoneNo = jsonResObj.getString(TAGNAME_PHONE_NUM);
-
       if (jsonResObj.has(TAGNAME_APPLICATION_TYPES)) {
         JSONArray jsonAppTypesAry = jsonResObj.getJSONArray(
             Event.TAGNAME_APPLICATION_TYPES);
@@ -590,15 +591,17 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
 
     List<AccessCategory> result = null;
     try {
-      JSONArray jsonCatesAry = jsonResObj.getJSONArray(
-          Event.TAGNAME_ACCESS_CATEGORIES);
-      if (jsonCatesAry!=null && jsonCatesAry.length()>0) {
-        result = new ArrayList<AccessCategory>();
-        for (int i=0; i<jsonCatesAry.length(); i++) {
-          AccessCategory accessCate = new AccessCategory(jsonCatesAry.getJSONObject(i));
-          result.add(accessCate);
+      if (jsonResObj.has(TAGNAME_ACCESS_CATEGORIES)) {
+        JSONArray jsonCatesAry = jsonResObj.getJSONArray(
+            TAGNAME_ACCESS_CATEGORIES);
+        if (jsonCatesAry!=null && jsonCatesAry.length()>0) {
+          result = new ArrayList<AccessCategory>();
+          for (int i=0; i<jsonCatesAry.length(); i++) {
+            AccessCategory accessCate = new AccessCategory(jsonCatesAry.getJSONObject(i));
+            result.add(accessCate);
+          }
+          DBaseManager.getInstance().saveAccessCategoriesToDB(result);
         }
-        DBaseManager.getInstance().saveAccessCategoriesToDB(result);
       }
 
       //save Access Category version to DB

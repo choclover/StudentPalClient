@@ -11,10 +11,10 @@ public abstract class Recurrence {
   public final static int WEEKLY   = Event.RECUR_TYPE_WEEKLY;
   public final static int MONTHLY  = Event.RECUR_TYPE_MONTHLY;
   public final static int YEARLY   = Event.RECUR_TYPE_YEARLY;
-  
+
   Object recurValue = null;
   int recurType = DAILY;
-  
+
   public static Recurrence getInstance(int type) throws STDException {
     Recurrence inst = null;
     switch (type) {
@@ -33,20 +33,20 @@ public abstract class Recurrence {
     }
     return inst;
   }
-  
+
   public abstract String getName();
   public abstract void setRecurValue(Object recureVal) throws STDException;
   public abstract boolean isOccurringToday();
   public abstract String toString();
-  
+
   public int getRecurType() {
     return recurType;
   }
 
-  public Object getRecurValue() {
-    return recurValue;
+  public int getRecurValue() {
+    return 0;
   }
-  
+
   /**
    * Inner class
    */
@@ -54,11 +54,11 @@ public abstract class Recurrence {
     public DAILY() {
       recurType = DAILY;
     }
-    
+
     public String getName() {
       return "DAILY";
     }
-    
+
     public void setRecurValue(Object recureVal) {
       recurValue = recureVal;
     }
@@ -66,21 +66,21 @@ public abstract class Recurrence {
     public boolean isOccurringToday() {
       return true;
     }
-    
+
     public String toString() {
       return "";
     }
   }
-  
+
   static final class WEEKLY extends Recurrence {
     public WEEKLY() {
       recurType = WEEKLY;
     }
-    
+
     public String getName() {
       return "WEEKLY";
     }
-    
+
     public void setRecurValue(Object recurVal) throws STDException {
       if (recurVal==null || !(recurVal instanceof Integer) ) {
         throw new STDException("Illegal recurrence value");
@@ -90,36 +90,45 @@ public abstract class Recurrence {
           throw new STDException("Recurrence value out of valid range: "+Integer.toHexString(val));
         } else {
           Logger.d("Setting "+getName()+ " RecurValue to: " + Integer.toHexString(val));
-          this.recurValue = recurVal; 
+          this.recurValue = recurVal;
         }
       }
     }
 
     public boolean isOccurringToday() {
       if (recurValue == null) return false;
-      
+
       Calendar c = Calendar.getInstance();
       int weekDay = c.get(Calendar.DAY_OF_WEEK);
       weekDay = 1 << (weekDay-1);
       int recur = (recurValue!=null) ? ((Integer)recurValue) : 0;
-      
+
       return (weekDay & recur) != 0 ;
     }
-    
+
     public String toString() {
       return String.valueOf(recurValue);
     }
-  }
-  
+
+    public int getRecurValue() {
+      int result = 0;
+      if (recurValue instanceof Integer) {
+        result = ((Integer)recurValue).intValue();
+      }
+      return result;
+    }
+
+  }//WEEKLY
+
   static final class MONTHLY extends Recurrence {
     public MONTHLY() {
       recurType = MONTHLY;
     }
-    
+
     public String getName() {
       return "MONTHLY";
     }
-    
+
     public void setRecurValue(Object recurVal) throws STDException {
       if (recurVal!=null && recurVal instanceof Long) {
         Long val = (Long)recurVal;
@@ -127,7 +136,7 @@ public abstract class Recurrence {
           throw new STDException("Recurrence value out of valid range: "+Long.toHexString(val));
         } else {
           Logger.d("Setting "+getName()+ " RecurValue to: " + Long.toHexString(val));
-          this.recurValue = recurVal; 
+          this.recurValue = recurVal;
         }
       } else {
         throw new STDException("Invalid recurrence value");
@@ -140,7 +149,7 @@ public abstract class Recurrence {
       boolean result = false;
       Calendar c = Calendar.getInstance();
       long monDay = c.get(Calendar.DAY_OF_MONTH);
-      
+
       if (recurValue instanceof int []) {
         for (int date : (int[]) recurValue) {
           if (monDay == date) {
@@ -148,17 +157,26 @@ public abstract class Recurrence {
             break;
           }
         }
-      } else if (recurValue instanceof Long) {
+      } else if (recurValue instanceof Integer) {
         monDay = 1 << (monDay-1);
-        long recur = (recurValue!=null) ? ((Long)recurValue) : 0;
+        long recur = (recurValue!=null) ? ((Integer)recurValue) : 0;
         result =  (monDay & recur) != 0 ;
       }
-      
+
       return result;
     }
-    
+
     public String toString() {
       return String.valueOf(recurValue);
     }
-  }
+
+    public int getRecurValue() {
+      int result = 0;
+      if (recurValue instanceof Integer) {
+        result = ((Integer)recurValue).intValue();
+      }
+      return result;
+    }
+
+  }//MONTHLY
 }

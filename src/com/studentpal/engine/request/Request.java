@@ -6,6 +6,7 @@ import org.json.JSONObject;
 import com.studentpal.app.handler.MessageHandler;
 import com.studentpal.engine.ClientEngine;
 import com.studentpal.engine.Event;
+import com.studentpal.model.exception.STDException;
 
 
 public abstract class Request /*extends Message*/ {
@@ -42,7 +43,7 @@ public abstract class Request /*extends Message*/ {
   // public void execute(MessageHandler msgHandler) {
   // }
 
-  public abstract void execute();
+  public abstract void execute() throws STDException;
 
   public String getName() {
     return Event.TASKNAME_Generic;

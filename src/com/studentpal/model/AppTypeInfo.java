@@ -14,6 +14,9 @@ public class AppTypeInfo {
   //if or not this apptype is system preset or user-created
   private boolean  isSysPreset;
 
+  public AppTypeInfo() {
+  }
+
   public AppTypeInfo(int _id, String name) {
     this._name = name;
     this._id   = _id;
@@ -74,7 +77,11 @@ public class AppTypeInfo {
     JSONObject result = new JSONObject();
     result.put(Event.TAGNAME_APP_TYPEID, _id);
     result.put(Event.TAGNAME_APP_TYPENAME, _name);
-    result.put(Event.TAGNAME_SYS_PRESET, isSysPreset ? 1 : 0);
+    if (isSysPreset) {
+      result.put(Event.TAGNAME_SYS_PRESET, 1);
+    } else {
+      //result.put(Event.TAGNAME_SYS_PRESET, 0);
+    }
 
     return result;
   }

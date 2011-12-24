@@ -163,7 +163,10 @@ public class DBaseManager /*implements AppHandler*/ {
             } else {
               res = mDb.insert(TABLE_NAME_MANAGED_APPS, null, cv);
             }
-          }
+
+            curApps.close();
+
+          }//for
         }
       }
 
@@ -243,13 +246,13 @@ public class DBaseManager /*implements AppHandler*/ {
           String className = curApp.getString(3);
           ClientAppInfo appInfo = new ClientAppInfo(appName, pkgName, className);
           aCate.addManagedApp(appInfo);
-
         }//while curApp
         curApp.close();
 
         catesList.add(aCate);
 
       }//while curCate
+
       curCate.close();
 
     } catch (SQLiteException ex) {
@@ -583,30 +586,26 @@ public class DBaseManager /*implements AppHandler*/ {
 
     try {
       mDb = openDB();
-      Cursor curDevice = mDb.query(TABLE_NAME_MANAGED_DEVICE,
-          null,
-          COL_NAME_IS_ACTIVE +"=1",
-          null, null, null, null);
-      if (curDevice.moveToFirst()) {
-        Cursor curDev = mDb.query(TABLE_NAME_MANAGED_DEVICE,
-            new String[] {COL_NAME_APPSLIST_VERSION},
-            TAGNAME_PHONE_NUM +"=?", new String[] {targetPhoneNo},
-            //TAGNAME_PHONE_IMSI +"='"+ managedDev.getPhoneImsi() +"'",
-            null, null, null);
 
-        if (curDev.moveToFirst()) {
-          //int startIdx = 0;
-          String phoneNum  = curDev.getString(0);  //col0
-          String phoneImsi = curDev.getString(1);  //col1
-          int appsListVer = curDev.getInt(2);      //col2
-          int catesListVer = curDev.getInt(4);     //col4
+      Cursor curDev = mDb.query(TABLE_NAME_MANAGED_DEVICE,
+          new String[] { COL_NAME_APPSLIST_VERSION }, TAGNAME_PHONE_NUM
+              + "=? AND " + COL_NAME_IS_ACTIVE + "=1",
+          new String[] { targetPhoneNo },
+          // TAGNAME_PHONE_IMSI +"='"+ managedDev.getPhoneImsi() +"'",
+          null, null, null);
 
-          result = new ClientUser(phoneNum, phoneImsi);
-          result.setInstalledAppsListVer(appsListVer);
-          result.setInstalledAccessCateVer(catesListVer);
-        }
+      if (curDev.moveToFirst()) {
+        // int startIdx = 0;
+        String phoneNum = curDev.getString(0); // col0
+        String phoneImsi = curDev.getString(1); // col1
+        int appsListVer = curDev.getInt(2); // col2
+        int catesListVer = curDev.getInt(4); // col4
+
+        result = new ClientUser(phoneNum, phoneImsi);
+        result.setInstalledAppsListVer(appsListVer);
+        result.setInstalledAccessCateVer(catesListVer);
       }
-      curDevice.close();
+      curDev.close();
 
     } catch (SQLiteException ex) {
       Logger.w(TAG, ex.toString());
@@ -630,6 +629,8 @@ public class DBaseManager /*implements AppHandler*/ {
         //get the value of column of COL_NAME_APPTYPES_VERSION
         result = curDevice.getInt(0);
       }
+      curDevice.close();
+
     } catch (SQLiteException ex) {
       Logger.w(TAG, ex.toString());
     } finally {
@@ -654,6 +655,8 @@ public class DBaseManager /*implements AppHandler*/ {
         //get value of the column of COL_NAME_CATESLIST_VERSION
         result = curDevice.getInt(0);
       }
+      curDevice.close();
+
     } catch (SQLiteException ex) {
       Logger.w(TAG, ex.toString());
     } finally {

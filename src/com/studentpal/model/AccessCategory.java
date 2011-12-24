@@ -1,16 +1,8 @@
 package com.studentpal.model;
 
-import static com.studentpal.engine.Event.ACCESS_TYPE_DENIED;
-import static com.studentpal.engine.Event.ACCESS_TYPE_PERMITTED;
-import static com.studentpal.engine.Event.RECUR_TYPE_DAILY;
-import static com.studentpal.engine.Event.RECUR_TYPE_MONTHLY;
-import static com.studentpal.engine.Event.RECUR_TYPE_WEEKLY;
-import static com.studentpal.engine.Event.RECUR_TYPE_YEARLY;
 import static com.studentpal.engine.Event.TAGNAME_ACCESS_CATE_ID;
 import static com.studentpal.engine.Event.TAGNAME_ACCESS_CATE_NAME;
-import static com.studentpal.engine.Event.TAGNAME_ACCESS_RULE;
 import static com.studentpal.engine.Event.TAGNAME_ACCESS_RULES;
-import static com.studentpal.engine.Event.TAGNAME_ACCESS_TIMERANGE;
 import static com.studentpal.engine.Event.TAGNAME_ACCESS_TIMERANGES;
 import static com.studentpal.engine.Event.TAGNAME_APPLICATION_TYPES;
 import static com.studentpal.engine.Event.TAGNAME_RULE_AUTH_TYPE;
@@ -18,25 +10,14 @@ import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_ENDTIME;
 import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_STARTTIME;
 import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_TYPE;
 import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_VALUE;
-import static com.studentpal.engine.Event.TXT_ACCESS_TYPE_DENIED;
-import static com.studentpal.engine.Event.TXT_ACCESS_TYPE_PERMITTED;
-import static com.studentpal.engine.Event.TXT_RECUR_TYPE_DAILY;
-import static com.studentpal.engine.Event.TXT_RECUR_TYPE_MONTHLY;
-import static com.studentpal.engine.Event.TXT_RECUR_TYPE_WEEKLY;
-import static com.studentpal.engine.Event.TXT_RECUR_TYPE_YEARLY;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
-import java.util.StringTokenizer;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.NodeList;
 
 import com.studentpal.app.handler.RuleScheduler;
 import com.studentpal.model.exception.STDException;
@@ -54,6 +35,8 @@ public class AccessCategory {
   private String _name;
   private int _id;
   private RuleScheduler scheduler;
+
+  private String managedAppTypes;
 
   /*
    * ClientAppInfo -- An AppInfo instance managed by this category Integer --
@@ -213,7 +196,8 @@ public class AccessCategory {
         JSONObject jsonRuleObj = new JSONObject();
         jsonRuleObj.put(TAGNAME_RULE_AUTH_TYPE, aRule.getAccessType());
         jsonRuleObj.put(TAGNAME_RULE_REPEAT_TYPE, aRule.getRecurType());
-        jsonRuleObj.put(TAGNAME_RULE_REPEAT_VALUE, aRule.getRecurrence().toString());
+        jsonRuleObj.put(TAGNAME_RULE_REPEAT_VALUE,
+                        aRule.getRecurrence().getRecurValue());
 
         JSONArray jsonTrsAry = new JSONArray();
         List<TimeRange> trsList = aRule.getTimeRangeList();
@@ -234,7 +218,9 @@ public class AccessCategory {
 
     result.put(TAGNAME_ACCESS_CATE_ID, _id);
     result.put(TAGNAME_ACCESS_CATE_NAME, _name);
-    result.put(TAGNAME_APPLICATION_TYPES, _name);
+    if (managedAppTypes != null) {
+      result.put(TAGNAME_APPLICATION_TYPES, managedAppTypes);
+    }
     result.put(TAGNAME_ACCESS_RULES, jsonRulesAry);
 
     return result;
@@ -246,8 +232,9 @@ public class AccessCategory {
       return;
     }
 
-    set_id(cateObj.getInt(TAGNAME_ACCESS_CATE_ID));
-    set_name(cateObj.getString(TAGNAME_ACCESS_CATE_NAME));
+    _id   = cateObj.getInt(TAGNAME_ACCESS_CATE_ID);
+    _name = cateObj.getString(TAGNAME_ACCESS_CATE_NAME);
+    managedAppTypes = cateObj.getString(TAGNAME_APPLICATION_TYPES);
 
     if (cateObj.has(TAGNAME_ACCESS_RULES) == true) {
       JSONArray rulesAry = cateObj.getJSONArray(TAGNAME_ACCESS_RULES);
@@ -289,5 +276,9 @@ public class AccessCategory {
 
   }//populate
 
-
+  public AccessCategory clone() {
+    AccessCategory result = new AccessCategory();
+    //TODO
+    return result;
+  }
 }

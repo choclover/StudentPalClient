@@ -12,6 +12,7 @@ import com.studentpal.app.db.DBaseManager;
 import com.studentpal.engine.ClientEngine;
 import com.studentpal.engine.Event;
 import com.studentpal.model.AppTypeInfo;
+import com.studentpal.model.exception.STDException;
 import com.studentpal.util.logger.Logger;
 
 
@@ -24,7 +25,7 @@ public class SetAppTypeListRequest extends Request {
   }
 
   @Override
-  public void execute() {
+  public void execute() throws STDException {
     if (isAdminReq) {
       executeAdminRequest();
     } else {
@@ -33,10 +34,10 @@ public class SetAppTypeListRequest extends Request {
   }
 
   /////////////////////////////////////////////////////////////////////////////
-  private void executeAdminRequest() {
+  private void executeAdminRequest() throws STDException {
     try {
       if (inputArguments==null || ! (inputArguments instanceof Set<?>)) {
-        Logger.e(TAG, "Input argument format error");
+        throw new STDException("Input argument format error for "+getName());
 
       } else {
         int version = DBaseManager.getInstance().getAppTypesListVersion();

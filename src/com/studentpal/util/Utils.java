@@ -36,9 +36,11 @@ import static com.studentpal.engine.Event.TXT_RECUR_TYPE_YEARLY;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -57,6 +59,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.studentpal.model.AccessCategory;
+import com.studentpal.model.AppTypeInfo;
+import com.studentpal.model.ClientAppInfo;
 import com.studentpal.util.logger.Logger;
 
 
@@ -142,12 +147,14 @@ public class Utils {
     }
   }
 
-  public static void loadAppTypesDefFromFile(File appTypeDefFName,
-      JSONArray appTypesAry) {
+  public static void loadAppTypesDefFromFile(InputStream is,
+      Set<AppTypeInfo> appTypesAry) {
+    if (is == null) return;
+
     try {
       DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
       DocumentBuilder dbd = dbf.newDocumentBuilder();
-      Document doc = dbd.parse(appTypeDefFName);
+      Document doc = dbd.parse(is);
       Element rootElem = doc.getDocumentElement();
 
       NodeList appsTypeList = rootElem.getElementsByTagName(TAGNAME_APPLICATION_TYPE);
@@ -155,30 +162,26 @@ public class Utils {
         for (int i=0; i<appsTypeList.getLength(); i++) {
           Element appTypeElem = (Element)appsTypeList.item(i);
 
-          JSONObject appTypeObj = new JSONObject();
+          AppTypeInfo appTypeObj = new AppTypeInfo();
           NamedNodeMap attrs = appTypeElem.getAttributes();
           if (attrs != null) {
             Node typeIdNode = attrs.getNamedItem(TAGNAME_APP_TYPEID);
             if (typeIdNode!=null
                 && false==isEmptyString(typeIdNode.getNodeValue())) {
-              appTypeObj.put(TAGNAME_APP_TYPEID, typeIdNode.getNodeValue());
+              appTypeObj.setId(Integer.valueOf(typeIdNode.getNodeValue()));
             }
 
             Node typeNameNode = attrs.getNamedItem(TAGNAME_APP_TYPENAME);
             if (typeNameNode != null) {
-              appTypeObj.put(TAGNAME_APP_TYPENAME, typeNameNode.getNodeValue());
+              appTypeObj.setName(typeNameNode.getNodeValue());
             } else {
               continue;
             }
 
-            if (appTypesAry != null) appTypesAry.put(appTypeObj);
+            if (appTypesAry != null) appTypesAry.add(appTypeObj);
           }
         }
       }//appsTypeList
-
-      Logger.i(TAG,
-          "Done loading Category Definition From File: "
-              + appTypeDefFName.getPath());
 
     } catch (ParserConfigurationException e) {
       e.printStackTrace();
@@ -188,19 +191,19 @@ public class Utils {
       e.printStackTrace();
     } catch (IOException e) {
       e.printStackTrace();
-    } catch (JSONException e) {
-      e.printStackTrace();
-    } finally {
     }
   }
 
-  public static void loadCateDefFromFile(File cateDefFName,
-      JSONArray catesAry, JSONArray appsAry) {
+  public static void loadCateDefFromFile(InputStream is,
+      Set<AccessCategory> catesSet, Set<ClientAppInfo> appsSet) {
     try {
       DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
       DocumentBuilder dbd = dbf.newDocumentBuilder();
-      Document doc = dbd.parse(cateDefFName);
+      Document doc = dbd.parse(is);
       Element rootElem = doc.getDocumentElement();
+
+      JSONArray jsonCatesAry = new JSONArray();
+      JSONArray jsonAppsAry = new JSONArray();
 
       NodeList catesNodeList = rootElem.getElementsByTagName(TAGNAME_ACCESS_CATEGORY);
       if (catesNodeList!=null && catesNodeList.getLength()>0) {
@@ -287,22 +290,24 @@ public class Utils {
 
           }//rulesList
 
-          JSONObject aCateObj = new JSONObject();
+          JSONObject jsonCateObj = new JSONObject();
           NamedNodeMap cateAttrs = cateElem.getAttributes();
           if (cateAttrs != null) {
-            aCateObj.put(TAGNAME_ACCESS_CATE_ID,
+            jsonCateObj.put(TAGNAME_ACCESS_CATE_ID,
                 Integer.valueOf(cateAttrs.getNamedItem(
                     TAGNAME_ACCESS_CATE_ID).getNodeValue()));
-            aCateObj.put(TAGNAME_ACCESS_CATE_NAME,
+            jsonCateObj.put(TAGNAME_ACCESS_CATE_NAME,
                 cateAttrs.getNamedItem(TAGNAME_ACCESS_CATE_NAME).getNodeValue());
 
             //load cate ids string
-            aCateObj.put(TAGNAME_APPLICATION_TYPES,
+            jsonCateObj.put(TAGNAME_APPLICATION_TYPES,
                 cateAttrs.getNamedItem(TAGNAME_APPLICATION_TYPES).getNodeValue());
           }
-          aCateObj.put(TAGNAME_ACCESS_RULES, rulesAry);
+          jsonCateObj.put(TAGNAME_ACCESS_RULES, rulesAry);
 
-          catesAry.put(aCateObj);
+          jsonCatesAry.put(jsonCateObj);
+          //translate from JSONObject
+          catesSet.add(new AccessCategory(jsonCateObj));
         }
       }//catesList
 
@@ -319,14 +324,12 @@ public class Utils {
             anAppObj.put(TAGNAME_APP_CLASSNAME, attrs.getNamedItem(TAGNAME_APP_CLASSNAME).getNodeValue());
             anAppObj.put(TAGNAME_ACCESS_CATE_ID, attrs.getNamedItem(TAGNAME_ACCESS_CATE_ID).getNodeValue());
 
-            if (appsAry != null) appsAry.put(anAppObj);
+            if (jsonAppsAry != null) jsonAppsAry.put(anAppObj);
+            //translate from JSONObject
+            if (appsSet != null) appsSet.add(new ClientAppInfo(anAppObj));
           }
         }
       }//appsList
-
-      Logger.i(TAG,
-          "Over loading Category Definition From File: "
-              + cateDefFName.getPath());
 
     } catch (ParserConfigurationException e) {
       e.printStackTrace();
