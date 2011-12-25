@@ -85,8 +85,12 @@ public class DBaseManager /*implements AppHandler*/ {
   }
 
   /////////////////////////////////////////////////////////////////////////////
-  public void saveAccessCategoriesToDB(List<AccessCategory> catesList) {
-    if (catesList==null || catesList.size()==0) return;
+  public void saveAccessCategoriesToDB(Set<AccessCategory> catesSet) {
+    saveAccessCategoriesToDB(null, catesSet);
+  }
+  public void saveAccessCategoriesToDB(String targetPhoneNo,
+      Set<AccessCategory> catesSet) {
+    if (catesSet==null || catesSet.size()==0) return;
     Logger.i(TAG, "enter saveAccessCategoriesToDB()!");
 
     try {
@@ -100,18 +104,31 @@ public class DBaseManager /*implements AppHandler*/ {
       //mDb.execSQL(sqlStr);
 
       long res = -1;
-      res = mDb.delete(TABLE_NAME_ACCESS_CATEGORIES, "1", null);
-      res = mDb.delete(TABLE_NAME_ACCESS_RULES, "1", null);
-      if (! isAdmin) {
+      if (false == isAdmin) {
         //对于管理端，不能将所有的受控程序记录首先删除
+        res = mDb.delete(TABLE_NAME_ACCESS_CATEGORIES, "1", null);
+        res = mDb.delete(TABLE_NAME_ACCESS_RULES, "1", null);
         res = mDb.delete(TABLE_NAME_MANAGED_APPS, "1", null);
+      } else {
+        res = mDb.delete(TABLE_NAME_ACCESS_CATEGORIES,
+            TAGNAME_OWNERID+"=?", new String[] {targetPhoneNo});
       }
 
       ContentValues cv;
-      for (AccessCategory aCate : catesList) {
+      for (AccessCategory aCate : catesSet) {
+        if (isAdmin) {
+          res = mDb.delete(TABLE_NAME_ACCESS_RULES,
+              TAGNAME_ACCESS_CATE_ID+"=?",
+              new String[] {String.valueOf(aCate.get_id())}
+          );
+        }
+
         cv = new ContentValues();
         cv.put(TAGNAME_ACCESS_CATE_ID,    aCate.get_id());
         cv.put(TAGNAME_ACCESS_CATE_NAME,  aCate.get_name());
+        if (targetPhoneNo != null) {
+          cv.put(TAGNAME_OWNERID,  targetPhoneNo);
+        }
         res = mDb.insert(TABLE_NAME_ACCESS_CATEGORIES, null, cv);
 
         //Insert access rules records
@@ -739,13 +756,6 @@ public class DBaseManager /*implements AppHandler*/ {
       return;
     }
 
-    final String create_catory_table_sql = new StringBuffer().append(
-      "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_ACCESS_CATEGORIES).append(
-      "( " +TAGNAME_ACCESS_CATE_ID+   " INTEGER PRIMARY KEY ").append(
-      ", " +TAGNAME_ACCESS_CATE_NAME+ " TEXT").append(
-      ");").toString();
-    dbase.execSQL(create_catory_table_sql);
-
     final String create_rules_table_sql = new StringBuffer().append(
       "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_ACCESS_RULES).append(
       "(  _id INTEGER PRIMARY KEY AUTOINCREMENT ").append(
@@ -755,7 +765,9 @@ public class DBaseManager /*implements AppHandler*/ {
       ", " +TAGNAME_RULE_REPEAT_STARTTIME+ " TEXT").append(
       ", " +TAGNAME_RULE_REPEAT_ENDTIME+   " TEXT").append(
       ", " +TAGNAME_ACCESS_CATE_ID+        " INTEGER").append(
-      ", FOREIGN KEY(" +TAGNAME_ACCESS_CATE_ID+ ") REFERENCES " +TABLE_NAME_ACCESS_CATEGORIES+ "(" +TAGNAME_ACCESS_CATE_ID+ ")").append(
+      ", FOREIGN KEY(" +TAGNAME_ACCESS_CATE_ID+ ") REFERENCES "
+          +TABLE_NAME_ACCESS_CATEGORIES+ "("
+          +TAGNAME_ACCESS_CATE_ID+ ") ON DELETE CASCADE ").append(
       ");").toString();
     dbase.execSQL(create_rules_table_sql);
 
@@ -767,7 +779,7 @@ public class DBaseManager /*implements AppHandler*/ {
           "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_ADMIN_DEVICE).append(
           "( " +TAGNAME_PHONE_NUM+       " TEXT").append(
           ", " +TAGNAME_PHONE_IMSI+      " TEXT").append(
-          ", " +TAGNAME_NICKNAME+        " TEXT").append(
+          ", " +TAGNAME_NICKNAME+        " TEXT").append(  //default to be the phone number
           ", " +COL_NAME_APPTYPES_VERSION+ " INTEGER DEFAULT 0").append(
           ");").toString();
       dbase.execSQL(create_admin_device_table_sql);
@@ -790,6 +802,9 @@ public class DBaseManager /*implements AppHandler*/ {
           ", " +TAGNAME_APP_TYPENAME+       " TEXT").append(
           ", " +TAGNAME_APP_TYPEDESC+       " TEXT").append(
           ", " +TAGNAME_SYS_PRESET+         " INTEGER DEFAULT 0").append(
+          /*
+           * 无需使用OWNERID字段，owner即是admin phone自身
+           */
           //", " +TAGNAME_OWNERID+            " INTEGER").append(
           //", FOREIGN KEY(" +TAGNAME_OWNERID+ ") REFERENCES " +TABLE_NAME_MANAGED_DEVICE+ "(" +TAGNAME_PHONE_NUM+ ")").append(
           ");").toString();
@@ -802,12 +817,23 @@ public class DBaseManager /*implements AppHandler*/ {
           ", " +TAGNAME_APP_NAME+       " TEXT").append(
           ", " +TAGNAME_APP_PKGNAME+    " TEXT").append(
           ", " +TAGNAME_APP_CLASSNAME+  " TEXT").append(
+          //相比client多出如下字段
           ", " +TAGNAME_APP_TYPEID+     " INTEGER").append(
-          ", " +TAGNAME_OWNERID+    " INTEGER").append(
+          ", " +TAGNAME_OWNERID+        " INTEGER").append(
           //", FOREIGN KEY(" +TAGNAME_APP_TYPEID+ ") REFERENCES " +TABLE_NAME_MANAGED_APPTYPES+ "( _id )").append(
           ", FOREIGN KEY(" +TAGNAME_OWNERID+ ") REFERENCES " +TABLE_NAME_MANAGED_DEVICE+ "(" +TAGNAME_PHONE_NUM+ ")").append(
           ");").toString();
       dbase.execSQL(create_applications_table_sql);
+
+      final String create_catory_table_sql = new StringBuffer().append(
+          "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_ACCESS_CATEGORIES).append(
+          "( " +TAGNAME_ACCESS_CATE_ID+   " INTEGER PRIMARY KEY ").append(
+          ", " +TAGNAME_ACCESS_CATE_NAME+ " TEXT").append(
+          //相比client多出如下字段
+          ", " +TAGNAME_OWNERID+          " INTEGER").append(
+          ", FOREIGN KEY(" +TAGNAME_OWNERID+ ") REFERENCES " +TABLE_NAME_MANAGED_DEVICE+ "(" +TAGNAME_PHONE_NUM+ ")").append(
+          ");").toString();
+      dbase.execSQL(create_catory_table_sql);
 
     } else {
       final String create_applications_table_sql = new StringBuffer().append(
@@ -821,6 +847,12 @@ public class DBaseManager /*implements AppHandler*/ {
           ");").toString();
       dbase.execSQL(create_applications_table_sql);
 
+      final String create_catory_table_sql = new StringBuffer().append(
+          "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_ACCESS_CATEGORIES).append(
+          "( " +TAGNAME_ACCESS_CATE_ID+   " INTEGER PRIMARY KEY ").append(
+          ", " +TAGNAME_ACCESS_CATE_NAME+ " TEXT").append(
+          ");").toString();
+        dbase.execSQL(create_catory_table_sql);
     }
 
   }

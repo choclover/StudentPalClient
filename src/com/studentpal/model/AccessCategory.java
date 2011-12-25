@@ -234,7 +234,9 @@ public class AccessCategory {
 
     _id   = cateObj.getInt(TAGNAME_ACCESS_CATE_ID);
     _name = cateObj.getString(TAGNAME_ACCESS_CATE_NAME);
-    managedAppTypes = cateObj.getString(TAGNAME_APPLICATION_TYPES);
+    if (cateObj.has(TAGNAME_APPLICATION_TYPES)) {
+      managedAppTypes = cateObj.getString(TAGNAME_APPLICATION_TYPES);
+    }
 
     if (cateObj.has(TAGNAME_ACCESS_RULES) == true) {
       JSONArray rulesAry = cateObj.getJSONArray(TAGNAME_ACCESS_RULES);

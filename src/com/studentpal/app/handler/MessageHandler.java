@@ -427,7 +427,7 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
 
     } else if (Request
         .isEqualRequestType(respType, TASKNAME_SyncAccessCategory)) {
-      List<AccessCategory> appsInfoSet = null;
+      Set<AccessCategory> appsInfoSet = null;
       switch (errCode) {
       case ERRCODE_NOERROR:
         if (resultObj != null) {
@@ -583,30 +583,30 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     return result;
   }
 
-  private List<AccessCategory> saveAccessCatesInfoToDB(JSONObject jsonResObj) {
+  private Set<AccessCategory> saveAccessCatesInfoToDB(JSONObject jsonResObj) {
     if (jsonResObj == null) {
       Logger.w(TAG,  "Input result obj should NOT be NULL");
       return null;
     }
 
-    List<AccessCategory> result = null;
+    Set<AccessCategory> result = null;
     try {
-      if (jsonResObj.has(TAGNAME_ACCESS_CATEGORIES)) {
-        JSONArray jsonCatesAry = jsonResObj.getJSONArray(
-            TAGNAME_ACCESS_CATEGORIES);
-        if (jsonCatesAry!=null && jsonCatesAry.length()>0) {
-          result = new ArrayList<AccessCategory>();
-          for (int i=0; i<jsonCatesAry.length(); i++) {
-            AccessCategory accessCate = new AccessCategory(jsonCatesAry.getJSONObject(i));
-            result.add(accessCate);
-          }
-          DBaseManager.getInstance().saveAccessCategoriesToDB(result);
-        }
-      }
-
-      //save Access Category version to DB
       if (jsonResObj.has(Event.TAGNAME_PHONE_NUM)) {
         String phoneNum = jsonResObj.getString(Event.TAGNAME_PHONE_NUM);
+
+        if (jsonResObj.has(TAGNAME_ACCESS_CATEGORIES)) {
+          JSONArray jsonCatesAry = jsonResObj.getJSONArray(TAGNAME_ACCESS_CATEGORIES);
+          if (jsonCatesAry!=null && jsonCatesAry.length()>0) {
+            result = new HashSet<AccessCategory>();
+            for (int i=0; i<jsonCatesAry.length(); i++) {
+              AccessCategory accessCate = new AccessCategory(jsonCatesAry.getJSONObject(i));
+              result.add(accessCate);
+            }
+            DBaseManager.getInstance().saveAccessCategoriesToDB(phoneNum, result);
+          }
+        }
+
+        //save Access Category version to DB
         int version = jsonResObj.getInt(Event.TAGNAME_VERSION);
 
         ClientUser managedDev = new ClientUser(phoneNum, null, null);

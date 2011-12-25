@@ -16,6 +16,7 @@ import static com.studentpal.engine.Event.TASKNAME_SetAccessCategory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -83,8 +84,10 @@ public class SetAccessCategoryRequest extends Request {
           }
 
           //save to DB
+          Set<AccessCategory> catesSet = new HashSet<AccessCategory>();
+          catesSet.addAll(catesList);
           ClientEngine.getInstance().getDBaseManager().saveAccessCategoriesToDB(
-              catesList);
+              catesSet);
 
           //update the access controller
           ClientEngine.getInstance().getAccessController().setAccessCategories(
@@ -118,11 +121,13 @@ public class SetAccessCategoryRequest extends Request {
         throw new STDException("Input argument format error for "+getName());
 
       } else {
+        Set<AccessCategory> catesSet = (Set<AccessCategory>)inputArguments ;
+
         int version = DBaseManager.getInstance().getAccessCatesListVersion(
             this.targetPhoneNo);
 
         JSONArray jsonCatesAry = new JSONArray();
-        for (AccessCategory anCate : (Set<AccessCategory>)inputArguments) {
+        for (AccessCategory anCate : catesSet) {
           jsonCatesAry.put(anCate.toJsonObject());
         }
 
@@ -135,6 +140,11 @@ public class SetAccessCategoryRequest extends Request {
 
         JSONObject reqObj = super.generateGenericRequestHeader(getName(), argsObj);
         setOutputContent(reqObj.toString());
+
+        //Backup the sent-out categories to local DB of admin device
+        DBaseManager.getInstance().saveAccessCategoriesToDB(targetPhoneNo, catesSet);
+        Logger.i(TAG, "Done save categories to DB!");
+
       }
 
     } catch (JSONException ex) {

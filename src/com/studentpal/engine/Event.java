@@ -99,12 +99,12 @@ public class Event {
    * Intent action / Activity name constants
    */
   //launch the daemon service
-  public static final String ACTION_DAEMON_SVC          = "spaldaemon.intent.action.daemonsvc";
+  public static final String ACTION_DAEMON_SVC                = "spaldaemon.intent.action.daemonsvc";
   //launch the daemon activity screen, must be the same as value in the Daemon application's Manifest
-  public static final String ACTION_DAEMON_LAUNCHER_SCR = "spaldaemon.intent.action.launcherscr";
+  public static final String ACTION_DAEMON_LAUNCHER_SCR       = "spaldaemon.intent.action.launcherscr";
 
-  public static final String ACTION_MAINSVC_INFO_UPDATED    = "studentpal.action.mainappsvc.updated";
-  public static final String ACTION_DAEMONSVC_INFO_UPDATED  = "studentpal.action.daemonsvc.updated";
+  public static final String ACTION_MAINSVC_INFO_UPDATED      = "studentpal.action.mainappsvc.updated";
+  public static final String ACTION_DAEMONSVC_INFO_UPDATED    = "studentpal.action.daemonsvc.updated";
 
   public static final String ACTION_PKGINSTALLER_REG_FILTER   = "studentpal.intent.action.reg_filter";
   //Not used yet
@@ -159,6 +159,9 @@ public class Event {
 
   public static final int SIGNAL_SHOW_ACCESS_DENIED_NOTIFICATION = 1011;
   public static final int SIGNAL_ACCESS_RESCHEDULE_DAILY         = 1012;
+
+  public static final int SIGNAL_TYPE_STATUS_ONLINE              = 1021;
+  public static final int SIGNAL_TYPE_STATUS_OFFLNE              = 1022;
 
   //------------------------------------------------------------------
   public static final int SIGNAL_TYPE_NETWORK_FAIL               = 1050;
