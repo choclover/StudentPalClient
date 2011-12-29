@@ -25,6 +25,8 @@ import com.studentpal.app.handler.MessageHandler;
 import com.studentpal.app.receiver.SystemStateReceiver;
 import com.studentpal.engine.request.LoginRequest;
 import com.studentpal.engine.request.Request;
+import com.studentpal.engine.request.SyncAppListRequest;
+import com.studentpal.engine.request.SyncAppTypeListRequest;
 import com.studentpal.model.ClientAppInfo;
 import com.studentpal.model.exception.STDException;
 import com.studentpal.model.user.AdminUser;
@@ -321,7 +323,7 @@ public class ClientEngine implements AppHandler {
   }
 
   public void logoutServer() throws STDException {
-    Logger.i(TAG, "enter loginServerFromClient");
+    Logger.i(TAG, "enter logoutServer()!");
 
     Request request = new LoginRequest(Event.TASKNAME_LOGOUT, null);
     msgHandler.sendMessageToServer(request);
@@ -348,7 +350,48 @@ public class ClientEngine implements AppHandler {
     }
   }
 
+  public void syncDataWithServer(Set<ClientUser> clientUsers) {
+    if (clientUsers == null || clientUsers.size()<=0) {
+      Logger.w("Target client User object is EMPTY!");
+      return;
+    }
+    syncAppTypesWithServer(selfUser);
+    syncAccessCategoriesWithServer(clientUsers);
+    syncAppsListWithServer(clientUsers);
+  }
 
+  public void syncAppsListWithServer(Set<ClientUser> clientUsers) {
+    for (ClientUser clientUser : clientUsers) {
+      if (clientUser != null) {
+        SyncAppListRequest request = new SyncAppListRequest(
+            clientUser.getPhoneNum(), clientUser.getInstalledAppsListVer());
+        request.execute();
+        MessageHandler.getInstance().sendMessageToServer(request);
+      }
+    }
+  }
+
+  public void syncAccessCategoriesWithServer(Set<ClientUser> clientUsers) {
+    for (ClientUser clientUser : clientUsers) {
+      if (clientUser != null) {
+        SyncAppListRequest request = new SyncAppListRequest(
+            clientUser.getPhoneNum(), clientUser.getInstalledAppsListVer());
+        request.execute();
+        MessageHandler.getInstance().sendMessageToServer(request);
+      }
+    }
+  }
+
+  public void syncAppTypesWithServer(User user) {
+    if (user != null && user instanceof AdminUser) {
+      AdminUser adminUser = (AdminUser)user;
+      SyncAppTypeListRequest request = new SyncAppTypeListRequest(
+          adminUser.getPhoneNum(),
+          adminUser.getInstalledAppTypesVer());
+      request.execute();
+      MessageHandler.getInstance().sendMessageToServer(request);
+    }
+  }
 }
 
 

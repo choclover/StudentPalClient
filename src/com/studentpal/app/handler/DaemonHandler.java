@@ -1,7 +1,12 @@
 package com.studentpal.app.handler;
 
-import static com.studentpal.engine.Event.*;
-import static com.studentpal.app.ResourceManager.*;
+import static com.studentpal.app.ResourceManager.ACTIVITY_NAME_APPSDETAILS;
+import static com.studentpal.app.ResourceManager.ACTIVITY_NAME_MANAGEAPPS;
+import static com.studentpal.engine.Event.SIGNAL_TYPE_DAEMON_WD_REQ;
+import static com.studentpal.engine.Event.SIGNAL_TYPE_DAEMON_WD_RESP;
+import static com.studentpal.engine.Event.SIGNAL_TYPE_DAEMON_WD_TIMEOUT;
+import static com.studentpal.engine.Event.SIGNAL_TYPE_START_DAEMONTASK;
+import static com.studentpal.engine.Event.SIGNAL_TYPE_STOP_DAEMONTASK;
 
 import java.io.File;
 
@@ -22,9 +27,7 @@ import com.studentpal.engine.ClientEngine;
 import com.studentpal.engine.Event;
 import com.studentpal.model.ProcessListenerInfo;
 import com.studentpal.model.exception.STDException;
-import com.studentpal.ui.LaunchScreen;
 import com.studentpal.util.ActivityUtil;
-import com.studentpal.util.Utils;
 import com.studentpal.util.logger.Logger;
 
 public class DaemonHandler implements AppHandler, ProcessListener {

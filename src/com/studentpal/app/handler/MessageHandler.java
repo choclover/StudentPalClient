@@ -26,6 +26,7 @@ import com.studentpal.engine.request.Request;
 import com.studentpal.model.AccessCategory;
 import com.studentpal.model.AppTypeInfo;
 import com.studentpal.model.ClientAppInfo;
+import com.studentpal.model.DataManager;
 import com.studentpal.model.exception.STDException;
 import com.studentpal.model.user.AdminUser;
 import com.studentpal.model.user.ClientUser;
@@ -472,12 +473,12 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
       return null;
     }
 
-    Set<ClientUser> managedDevs = null;
+    Set<ClientUser> result = null;
     try {
       JSONArray  devAry = jsonResObj.getJSONArray(Event.TAGNAME_DEVICES);
       if (devAry!=null && devAry.length()>0) {
 
-        managedDevs = new HashSet<ClientUser>(devAry.length());
+        result = new HashSet<ClientUser>(devAry.length());
 
         for (int i=0; i<devAry.length(); i++) {
           JSONObject devObj = devAry.getJSONObject(i);
@@ -489,17 +490,19 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
           }
 
           ClientUser managedDev = new ClientUser(phoneNo, phoneImsi, phoneImei);
-          managedDevs.add(managedDev);
+          result.add(managedDev);
         }
 
-        DBaseManager.getInstance().saveManagedDevInfoToDB(managedDevs);
+        DBaseManager.getInstance().saveManagedDevInfoToDB(result);
       }
 
     } catch (JSONException e) {
       Logger.w(TAG, e.toString());
     }
 
-    return managedDevs;
+    DataManager.getInstance().setManagedDevs(result);
+
+    return result;
   }
 
   private Set<ClientAppInfo> saveManagedAppsInfoToDB(JSONObject jsonResObj) {
@@ -508,7 +511,7 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
       return null;
     }
 
-    Set<ClientAppInfo> appsInfoList = null;
+    Set<ClientAppInfo> result = null;
     try {
       String installedApps = "";
       String targetPhoneNo = jsonResObj.getString(TAGNAME_PHONE_NUM);
@@ -517,16 +520,16 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
         JSONArray jsonAppsAry = jsonResObj.getJSONArray(Event.TAGNAME_APPLICATIONS);
         if (jsonAppsAry!=null && jsonAppsAry.length()>0) {
 
-          appsInfoList = new HashSet<ClientAppInfo>();
+          result = new HashSet<ClientAppInfo>();
 
           for (int i=0; i<jsonAppsAry.length(); i++) {
             ClientAppInfo appInfo = new ClientAppInfo(jsonAppsAry.getJSONObject(i));
-            appsInfoList.add(appInfo);
+            result.add(appInfo);
 
             installedApps += appInfo.getAppPkgname() + Event.APP_PKGNAME_DELIMETER;
           }
 
-          DBaseManager.getInstance().saveManagedAppsToDB(targetPhoneNo, appsInfoList);
+          DBaseManager.getInstance().saveManagedAppsToDB(targetPhoneNo, result);
         }
       }
 
@@ -544,7 +547,9 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
       Logger.w(TAG, e.toString());
     }
 
-    return appsInfoList;
+    DataManager.getInstance().setAppsList(result);
+
+    return result;
   }
 
   private Set<AppTypeInfo> saveAppTypesInfoToDB(JSONObject jsonResObj) {
@@ -579,6 +584,8 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     } catch (JSONException e) {
       Logger.w(TAG, e.toString());
     }
+
+    DataManager.getInstance().setAppTypesList(result);
 
     return result;
   }
@@ -618,6 +625,8 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     } catch (JSONException e) {
       Logger.w(TAG, e.toString());
     }
+
+    DataManager.getInstance().setAccessCategories(result);
 
     return result;
   }

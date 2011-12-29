@@ -1,13 +1,10 @@
 package com.studentpal.app.handler;
 
-import static com.studentpal.app.listener.ProcessListener.*;
-
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -17,7 +14,6 @@ import android.app.ActivityManager.RunningAppProcessInfo;
 import android.app.ActivityManager.RunningTaskInfo;
 
 import com.studentpal.app.MainAppService;
-import com.studentpal.app.listener.ProcessListener;
 import com.studentpal.engine.ClientEngine;
 import com.studentpal.engine.Event;
 import com.studentpal.model.AccessCategory;
@@ -27,7 +23,6 @@ import com.studentpal.model.exception.STDException;
 import com.studentpal.model.rules.AccessRule;
 import com.studentpal.model.rules.Recurrence;
 import com.studentpal.model.rules.TimeRange;
-import com.studentpal.ui.AccessDeniedNotification;
 import com.studentpal.util.ActivityUtil;
 import com.studentpal.util.Utils;
 import com.studentpal.util.logger.Logger;
