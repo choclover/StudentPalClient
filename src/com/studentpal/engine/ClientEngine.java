@@ -220,7 +220,7 @@ public class ClientEngine implements AppHandler {
   }
 
   public String getPhoneNum() {
-    if (Utils.isEmptyString(mobileNo)) {
+    if (false == Utils.isEmptyString(mobileNo)) {
       return mobileNo;
     }
 

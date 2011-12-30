@@ -31,9 +31,20 @@ public class DataManager {
   public Set<ClientUser> getManagedDevs() {
     return managedDevs;
   }
-
   public void setManagedDevs(Set<ClientUser> managedDevs) {
     this.managedDevs = managedDevs;
+  }
+
+  public String[] getManagedPhoneNumAry() {
+    String[] result = null;
+    if (managedDevs!=null && managedDevs.size()>0) {
+      result = new String[managedDevs.size()];
+      int idx = 0;
+      for (ClientUser managedDev : managedDevs) {
+        result[idx++] = managedDev.getPhoneNum();
+      }
+    }
+    return result;
   }
 
   public Set<AppTypeInfo> getAppTypesList() {
