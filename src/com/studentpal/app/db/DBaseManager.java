@@ -1,6 +1,23 @@
 package com.studentpal.app.db;
 
-import static com.studentpal.engine.Event.*;
+import static com.studentpal.engine.Event.TAGNAME_ACCESS_CATE_ID;
+import static com.studentpal.engine.Event.TAGNAME_ACCESS_CATE_NAME;
+import static com.studentpal.engine.Event.TAGNAME_APP_CLASSNAME;
+import static com.studentpal.engine.Event.TAGNAME_APP_NAME;
+import static com.studentpal.engine.Event.TAGNAME_APP_PKGNAME;
+import static com.studentpal.engine.Event.TAGNAME_APP_TYPEDESC;
+import static com.studentpal.engine.Event.TAGNAME_APP_TYPEID;
+import static com.studentpal.engine.Event.TAGNAME_APP_TYPENAME;
+import static com.studentpal.engine.Event.TAGNAME_NICKNAME;
+import static com.studentpal.engine.Event.TAGNAME_OWNERID;
+import static com.studentpal.engine.Event.TAGNAME_PHONE_IMSI;
+import static com.studentpal.engine.Event.TAGNAME_PHONE_NUM;
+import static com.studentpal.engine.Event.TAGNAME_RULE_AUTH_TYPE;
+import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_ENDTIME;
+import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_STARTTIME;
+import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_TYPE;
+import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_VALUE;
+import static com.studentpal.engine.Event.TAGNAME_SYS_PRESET;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -15,7 +32,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 
 import com.studentpal.engine.ClientEngine;
-import com.studentpal.engine.Event;
 import com.studentpal.model.AccessCategory;
 import com.studentpal.model.AppTypeInfo;
 import com.studentpal.model.ClientAppInfo;
@@ -62,7 +78,7 @@ public class DBaseManager /*implements AppHandler*/ {
   /*
    * Member fields
    */
-  private static DBaseManager dataManager;
+  private static DBaseManager dbManager;
 
   private ClientEngine  engine = null;
   private SQLiteDatabase mDb;
@@ -74,10 +90,10 @@ public class DBaseManager /*implements AppHandler*/ {
    * 获取实例，应当在欢迎界面之后建立实例
    */
   public static DBaseManager getInstance() {
-    if (dataManager == null) {
-      dataManager = new DBaseManager();
+    if (dbManager == null) {
+      dbManager = new DBaseManager();
     }
-    return dataManager;
+    return dbManager;
   }
 
   private DBaseManager() {
@@ -86,7 +102,7 @@ public class DBaseManager /*implements AppHandler*/ {
 
   /////////////////////////////////////////////////////////////////////////////
   public void saveAccessCategoriesToDB(Set<AccessCategory> catesSet) {
-    saveAccessCategoriesToDB(null, catesSet);
+    saveAccessCategoriesToDB("", catesSet);
   }
   public void saveAccessCategoriesToDB(String targetPhoneNo,
       Set<AccessCategory> catesSet) {
@@ -196,14 +212,35 @@ public class DBaseManager /*implements AppHandler*/ {
   }
 
   public List<AccessCategory> loadAccessCategoriesFromDB() throws STDException {
-    List<AccessCategory> catesList = new ArrayList<AccessCategory>();
+    List<AccessCategory> catesList = null;
+    Set<AccessCategory> catesSet = loadAccessCategoriesFromDB(null);
+    if (catesSet!=null && catesSet.size()>0) {
+      catesList = new ArrayList<AccessCategory>();
+      for (AccessCategory anCateSet : catesSet) {
+        catesList.add(anCateSet);
+      }
+    }
+    return catesList;
+  }
+
+  public Set<AccessCategory> loadAccessCategoriesFromDB(String targetPhoneNo)
+      throws STDException{
     Logger.i(TAG, "enter loadAccessCategoriesFromDB()!");
+    Set<AccessCategory> result = null;
 
     try {
       mDb = openDB();
 
-      Cursor curCate = mDb.query(TABLE_NAME_ACCESS_CATEGORIES, null, null,
+      Cursor curCate = null;
+      if (targetPhoneNo != null) {
+        curCate = mDb.query(TABLE_NAME_ACCESS_CATEGORIES, null,
+            TAGNAME_OWNERID+"=?", new String[] {targetPhoneNo},
+            null, null, null, null);
+      } else {
+        curCate = mDb.query(TABLE_NAME_ACCESS_CATEGORIES, null, null,
           null, null, null, null);
+      }
+
       while (curCate.moveToNext()) {
         AccessCategory aCate = new AccessCategory();
 
@@ -266,7 +303,7 @@ public class DBaseManager /*implements AppHandler*/ {
         }//while curApp
         curApp.close();
 
-        catesList.add(aCate);
+        result.add(aCate);
 
       }//while curCate
 
@@ -279,7 +316,7 @@ public class DBaseManager /*implements AppHandler*/ {
       mDb.close();
     }
 
-    return catesList;
+    return result;
   }
 
   public void saveManagedAppsToDB(String targetPhoneNo,
@@ -335,7 +372,9 @@ public class DBaseManager /*implements AppHandler*/ {
     try {
       mDb = openDB();
 
-      Cursor curApps = mDb.query(TABLE_NAME_MANAGED_APPS, null,
+      Cursor curApps = mDb.query(TABLE_NAME_MANAGED_APPS,
+          new String[] {TAGNAME_APP_NAME, TAGNAME_APP_PKGNAME,
+            TAGNAME_APP_CLASSNAME, TAGNAME_APP_TYPEID},
           TAGNAME_OWNERID+"=?", new String[] {targetPhoneNo},
           null, null, null, null);
       while (curApps.moveToNext()) {
@@ -343,6 +382,7 @@ public class DBaseManager /*implements AppHandler*/ {
         String appPkgName = curApps.getString(1);
         String appClsName = curApps.getString(2);
         ClientAppInfo anAppInfo = new ClientAppInfo(appName, appPkgName, appClsName);
+        anAppInfo.setAppTypeId(curApps.getInt(3));
 
         result.add(anAppInfo);
       }//while
@@ -408,6 +448,36 @@ public class DBaseManager /*implements AppHandler*/ {
     } finally {
       mDb.close();
     }
+  }
+
+  public Set<AppTypeInfo> loadManagedAppTypesFromDB() {
+    Set<AppTypeInfo> result = new HashSet<AppTypeInfo>();
+    Logger.i(TAG, "enter loadManagedAppTypesFromDB()!");
+
+    try {
+      mDb = openDB();
+
+      Cursor curType = mDb.query(TABLE_NAME_MANAGED_APPTYPES,
+          null,
+          null, null,
+          null, null, null, null);
+      while (curType.moveToNext()) {
+        AppTypeInfo appType = new AppTypeInfo();
+        appType.setId(curType.getInt(0));
+        appType.setName(curType.getString(1));
+        appType.setDesc(curType.getString(2));
+        appType.setSysPreset(curType.getInt(3) == 1);
+        result.add(appType);
+      }//while
+      curType.close();
+
+    } catch (SQLiteException ex) {
+      Logger.w(TAG, ex.toString());
+    } finally {
+      mDb.close();
+    }
+
+    return result;
   }
 
   public void saveManagedDevInfoToDB(ClientUser managedDev) {
@@ -543,54 +613,6 @@ public class DBaseManager /*implements AppHandler*/ {
     saveManagedDevInfoToDB(managedDev);
   }
 
-  public int getAppsListVersion(String phone_no) {
-    Logger.i(TAG, "enter getAppsListVersion()!");
-
-    int appListVer = 0;
-    try {
-      mDb = openDB();
-      Cursor curDevice = mDb.query(TABLE_NAME_MANAGED_DEVICE,
-          new String[] {COL_NAME_APPSLIST_VERSION},
-          TAGNAME_PHONE_NUM +"=?", new String[] {phone_no},
-          null, null, null);
-
-      if (curDevice.moveToFirst()) {
-        //get the value of COL_NAME_APPSLIST_VERSION
-        appListVer = curDevice.getInt(0);
-
-//        //检查每个受控的Application记录都存在于表中，否则重新获取记录列表，即返回版本号为0
-//        String appListStr = "";
-//        appListStr = curDevice.getString(startIdx++);
-//        if (! Utils.isEmptyString(appListStr)) {
-//          String[] pkgNameAry = appListStr.split("\\"+Event.APP_PKGNAME_DELIMETER);
-//          if (pkgNameAry!=null && pkgNameAry.length>0) {
-//            for (String pkgName : pkgNameAry) {
-//              Cursor curApp = mDb.query(TABLE_NAME_MANAGED_APPS,
-//                  null, TAGNAME_APP_PKGNAME +"=?", new String[] {pkgName},
-//                  null, null, null);
-//              //当某个Application记录不存在于表中
-//              if (! curApp.moveToFirst()) {
-//                appListVer = 0;
-//                curApp.close();
-//                break;
-//              }
-//              curApp.close();
-//            }
-//          }
-//        }
-
-      }
-      curDevice.close();
-
-    } catch (SQLiteException ex) {
-      Logger.w(TAG, ex.toString());
-    } finally {
-      mDb.close();
-    }
-
-    return appListVer;
-  }
-
   public Set<ClientUser> getAllManagedDevs() {
     Logger.i(TAG, "enter getAllManagedDevs()!");
     Set<ClientUser> result = null;
@@ -609,7 +631,6 @@ public class DBaseManager /*implements AppHandler*/ {
         String phoneImsi = curDevice.getString(2);
         ClientUser managedDev = new ClientUser(phoneNum, phoneImsi);
         managedDev.setInstalledAppsListVer(curDevice.getInt(3));
-        //managedDev.setInstalledApps(curDevice.getString(4));  //donot need any more
         managedDev.setInstalledAccessCateVer(curDevice.getInt(5));
 
         result.add(managedDev);
@@ -664,6 +685,54 @@ public class DBaseManager /*implements AppHandler*/ {
     return result;
   }
 
+  public int getAppsListVersion(String phone_no) {
+    Logger.i(TAG, "enter getAppsListVersion()!");
+
+    int appListVer = 0;
+    try {
+      mDb = openDB();
+      Cursor curDevice = mDb.query(TABLE_NAME_MANAGED_DEVICE,
+          new String[] {COL_NAME_APPSLIST_VERSION},
+          TAGNAME_PHONE_NUM +"=?", new String[] {phone_no},
+          null, null, null);
+
+      if (curDevice.moveToFirst()) {
+        //get the value of COL_NAME_APPSLIST_VERSION
+        appListVer = curDevice.getInt(0);
+
+//        //检查每个受控的Application记录都存在于表中，否则重新获取记录列表，即返回版本号为0
+//        String appListStr = "";
+//        appListStr = curDevice.getString(startIdx++);
+//        if (! Utils.isEmptyString(appListStr)) {
+//          String[] pkgNameAry = appListStr.split("\\"+Event.APP_PKGNAME_DELIMETER);
+//          if (pkgNameAry!=null && pkgNameAry.length>0) {
+//            for (String pkgName : pkgNameAry) {
+//              Cursor curApp = mDb.query(TABLE_NAME_MANAGED_APPS,
+//                  null, TAGNAME_APP_PKGNAME +"=?", new String[] {pkgName},
+//                  null, null, null);
+//              //当某个Application记录不存在于表中
+//              if (! curApp.moveToFirst()) {
+//                appListVer = 0;
+//                curApp.close();
+//                break;
+//              }
+//              curApp.close();
+//            }
+//          }
+//        }
+
+      }
+      curDevice.close();
+
+    } catch (SQLiteException ex) {
+      Logger.w(TAG, ex.toString());
+    } finally {
+      mDb.close();
+    }
+
+    return appListVer;
+  }
+
   public int getAppTypesListVersion() {
     Logger.i(TAG, "enter getAppTypesListVersion()!");
     int result = INVALID_VERSION;
@@ -713,6 +782,7 @@ public class DBaseManager /*implements AppHandler*/ {
 
     return result;
   }
+
   //////////////////////////////////////////////////////////////////////////////
   private String getDatabaseRoot() {
     String result = "";
@@ -809,7 +879,7 @@ public class DBaseManager /*implements AppHandler*/ {
     /*
      * Differs between Admin & Client
      */
-    if (true == isAdmin) {
+    if (true == isAdmin) {  //for admin
       final String create_admin_device_table_sql = new StringBuffer().append(
           "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_ADMIN_DEVICE).append(
           "( " +TAGNAME_PHONE_NUM+       " TEXT").append(
@@ -852,7 +922,7 @@ public class DBaseManager /*implements AppHandler*/ {
           ", " +TAGNAME_APP_NAME+       " TEXT").append(
           ", " +TAGNAME_APP_PKGNAME+    " TEXT").append(
           ", " +TAGNAME_APP_CLASSNAME+  " TEXT").append(
-          /* 相比client多出如下字段 */
+          /* 相比client多出如下字段  */
           ", " +TAGNAME_APP_TYPEID+     " INTEGER").append(
           ", " +TAGNAME_OWNERID+        " INTEGER").append(
           //", FOREIGN KEY(" +TAGNAME_APP_TYPEID+ ") REFERENCES " +TABLE_NAME_MANAGED_APPTYPES+ "( _id )").append(
@@ -864,13 +934,13 @@ public class DBaseManager /*implements AppHandler*/ {
           "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_ACCESS_CATEGORIES).append(
           "( " +TAGNAME_ACCESS_CATE_ID+   " INTEGER PRIMARY KEY ").append(
           ", " +TAGNAME_ACCESS_CATE_NAME+ " TEXT").append(
-          //相比client多出如下字段
+          /* 相比client多出如下字段 */
           ", " +TAGNAME_OWNERID+          " INTEGER").append(
           ", FOREIGN KEY(" +TAGNAME_OWNERID+ ") REFERENCES " +TABLE_NAME_MANAGED_DEVICE+ "(" +TAGNAME_PHONE_NUM+ ")").append(
           ");").toString();
       dbase.execSQL(create_catory_table_sql);
 
-    } else {
+    } else {  //for client
       final String create_applications_table_sql = new StringBuffer().append(
           "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_MANAGED_APPS).append(
           "( _id INTEGER PRIMARY KEY AUTOINCREMENT ").append(

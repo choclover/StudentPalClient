@@ -71,6 +71,10 @@ public class ClientAppInfo {
     return app_typeid;
   }
 
+  public void setAppTypeId(int typeId) {
+    app_typeid = typeId;
+  }
+
   public String getIndexingKey() {
     return getAppPkgname();
   }

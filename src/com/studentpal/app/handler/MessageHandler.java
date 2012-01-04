@@ -475,9 +475,12 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
 
     Set<ClientUser> result = null;
     try {
-      JSONArray  devAry = jsonResObj.getJSONArray(Event.TAGNAME_DEVICES);
-      if (devAry!=null && devAry.length()>0) {
+      JSONArray devAry = null;
+      if (jsonResObj.has(Event.TAGNAME_DEVICES)) {
+        devAry = jsonResObj.getJSONArray(Event.TAGNAME_DEVICES);
+      }
 
+      if (devAry!=null && devAry.length()>0) {
         result = new HashSet<ClientUser>(devAry.length());
 
         for (int i=0; i<devAry.length(); i++) {
@@ -540,21 +543,15 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
       int version = jsonResObj.getInt(Event.TAGNAME_VERSION);
       ClientUser managedDev = new ClientUser(targetPhoneNo, null, null);
       managedDev.setInstalledAppsListVer(version);
-      //We do NOT need this field any more
-      if (true) {
-        managedDev.setInstalledApps("APPSLIST NOT USED");
-      } else {
-        //managedDev.setInstalledApps(installedApps);
+      {
+        //We do NOT need this field any more
+        if (true) {
+          managedDev.setInstalledApps("APPSLIST NOT USED");  //FIXME remove me
+        } else {
+          //managedDev.setInstalledApps(installedApps);
+        }
       }
       DBaseManager.getInstance().saveManagedDevInfoToDB(managedDev);
-
-      Set<ClientAppInfo> appInfosSet = null;
-      if (result!=null && result.size()>0) {
-        appInfosSet = result;
-      } else {
-        appInfosSet = DBaseManager.getInstance().loadManagedAppsFromDB(targetPhoneNo);
-      }
-      DataManager.getInstance().setAppsList(targetPhoneNo, appInfosSet);
 
     } catch (JSONException e) {
       Logger.w(TAG, e.toString());
@@ -596,7 +593,12 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
       Logger.w(TAG, e.toString());
     }
 
-    DataManager.getInstance().setAppTypesList(result);
+    //Store app types set to engine
+    Set<AppTypeInfo> appTypesSet = result;
+    if (appTypesSet==null || appTypesSet.size()<=0) {
+      appTypesSet = DBaseManager.getInstance().loadManagedAppTypesFromDB();
+    }
+    DataManager.getInstance().setAppTypesList(appTypesSet);
 
     return result;
   }
@@ -636,9 +638,6 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
     } catch (JSONException e) {
       Logger.w(TAG, e.toString());
     }
-
-    //DataManager.getInstance().setAccessCategories(result);
-    //FIXME
 
     return result;
   }
