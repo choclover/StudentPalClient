@@ -1,5 +1,7 @@
 package com.studentpal.model;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import com.studentpal.model.user.ClientUser;
@@ -10,15 +12,17 @@ public class DataManager {
    */
   private static DataManager instance = null;
 
-  private Set<ClientUser>     managedDevs  = null;
-  private Set<AppTypeInfo>    appTypesList = null;
-  private Set<ClientAppInfo>  appsList     = null;
-  private Set<AccessCategory> accessCates  = null;
+  private Set<ClientUser>     managedDevs      = null;
+  private Set<AppTypeInfo>    appTypesList     = null;
+  private Map<String, Set<ClientAppInfo>>  installedAppsMap = null;
+  private Map<String, Set<AccessCategory>> accessCatesMap   = null;
 
   /*
    * Methods
    */
   private DataManager() {
+    installedAppsMap = new HashMap<String, Set<ClientAppInfo>>();
+    accessCatesMap   = new HashMap<String, Set<AccessCategory>>();
   }
 
   public static DataManager getInstance() {
@@ -55,20 +59,26 @@ public class DataManager {
     this.appTypesList = appTypesList;
   }
 
-  public Set<ClientAppInfo> getAppsList() {
-    return appsList;
+  public Set<ClientAppInfo> getAppsList(String phoneNum) {
+    return installedAppsMap.get(phoneNum);
   }
 
-  public void setAppsList(Set<ClientAppInfo> appsList) {
-    this.appsList = appsList;
+  public void setAppsList(String phoneNum, Set<ClientAppInfo> appsList) {
+    installedAppsMap.remove(phoneNum);
+    if (appsList != null) {
+      installedAppsMap.put(phoneNum, appsList);
+    }
   }
 
-  public Set<AccessCategory> getAccessCategories() {
-    return accessCates;
+  public Set<AccessCategory> getAccessCategories(String phoneNum) {
+    return accessCatesMap.get(phoneNum);
   }
 
-  public void setAccessCategories(Set<AccessCategory> accessCates) {
-    this.accessCates = accessCates;
+  public void setAccessCategories(String phoneNum, Set<AccessCategory> accessCates) {
+    accessCatesMap.remove(phoneNum);
+    if (accessCates != null) {
+      accessCatesMap.put(phoneNum, accessCates);
+    }
   }
 
 }

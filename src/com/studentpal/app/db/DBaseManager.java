@@ -328,6 +328,36 @@ public class DBaseManager /*implements AppHandler*/ {
     }
   }
 
+  public Set<ClientAppInfo> loadManagedAppsFromDB(String targetPhoneNo) {
+    Set<ClientAppInfo> result = new HashSet<ClientAppInfo>();
+    Logger.i(TAG, "enter loadManagedAppsFromDB()!");
+
+    try {
+      mDb = openDB();
+
+      Cursor curApps = mDb.query(TABLE_NAME_MANAGED_APPS, null,
+          TAGNAME_OWNERID+"=?", new String[] {targetPhoneNo},
+          null, null, null, null);
+      while (curApps.moveToNext()) {
+        String appName    = curApps.getString(0);
+        String appPkgName = curApps.getString(1);
+        String appClsName = curApps.getString(2);
+        ClientAppInfo anAppInfo = new ClientAppInfo(appName, appPkgName, appClsName);
+
+        result.add(anAppInfo);
+      }//while
+
+      curApps.close();
+
+    } catch (SQLiteException ex) {
+      Logger.w(TAG, ex.toString());
+    } finally {
+      mDb.close();
+    }
+
+    return result;
+  }
+
   public void saveManagedAppTypesToDB(Set<AppTypeInfo> appTypesSet) {
     if (appTypesSet==null || appTypesSet.size()==0) return;
     Logger.i(TAG, "enter saveManagedAppTypesToDB()!");
@@ -739,6 +769,10 @@ public class DBaseManager /*implements AppHandler*/ {
     SQLiteDatabase db = null;
 
     try {
+      if (mDb!=null && mDb.isOpen()) {
+        mDb.close();
+      }
+
       db = SQLiteDatabase.openDatabase(this.mDbFile.getAbsolutePath(),
           null, SQLiteDatabase.OPEN_READWRITE + SQLiteDatabase.CREATE_IF_NECESSARY);
     } catch (SQLiteException e) {
@@ -817,7 +851,7 @@ public class DBaseManager /*implements AppHandler*/ {
           ", " +TAGNAME_APP_NAME+       " TEXT").append(
           ", " +TAGNAME_APP_PKGNAME+    " TEXT").append(
           ", " +TAGNAME_APP_CLASSNAME+  " TEXT").append(
-          //相比client多出如下字段
+          /* 相比client多出如下字段 */
           ", " +TAGNAME_APP_TYPEID+     " INTEGER").append(
           ", " +TAGNAME_OWNERID+        " INTEGER").append(
           //", FOREIGN KEY(" +TAGNAME_APP_TYPEID+ ") REFERENCES " +TABLE_NAME_MANAGED_APPTYPES+ "( _id )").append(

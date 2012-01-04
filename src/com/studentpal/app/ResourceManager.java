@@ -26,7 +26,15 @@ public class ResourceManager {
   public static final String RES_STR_START_TIME = "\u5f00\u59cb" + RES_STR_TIME; // 开始时间
   public static final String RES_STR_END_TIME = "\u7ed3\u675f" + RES_STR_TIME; // 结束时间
   public static final String RES_STR_SENDREQUEST = "\u53d1\u9001\u8bf7\u6c42"; // 发送请求
+  public static final String RES_STR_SYSTEM_DEFINED = "\u7cfb\u7edf\u5b9a\u4e49";  //系统定义
+  public static final String RES_STR_USER_DEFINED = "\u7528\u6237\u5b9a\u4e49";  //用户定义
+  public static final String RES_STR_VIEW_BY_TYPE = "\u5206\u7c7b\u67e5\u770b";  //分类查看
+  public static final String RES_STR_REFRESH_APPSLIST = "\u5237\u65b0\u5217\u8868";  //刷新列表
+  public static final String RES_STR_SORTING_METHOD = "\u6392\u5217\u65b9\u5f0f";  //排列方式
+  public static final String RES_STR_ACCESS_CONTROL_MANAGE = "\u8fd0\u884c\u63a7\u5236\u7ba1\u7406";  //运行控制管理
+  public static final String RES_STR_APP_TYPES_MANAGE = "\u7a0b\u5e8f\u7c7b\u522b\u7ba1\u7406";  //程序类别管理
 
+  /////////////////////////////////////////////////////////////
   public static final String RES_STR_NETWORK_ERROR = "\u7f51\u7edc\u9519\u8bef"; // 网络错误
   public static final String RES_STR_QUITAPP = "\u9000\u51fa\u7a0b\u5e8f\uff1f"; // 退出程序？
   public static final String RES_STR_TRYAGAIN = "\u8bf7\u91cd\u8bd5\uff01"; // 请重试！

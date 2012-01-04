@@ -543,11 +543,17 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
         DBaseManager.getInstance().saveManagedDevInfoToDB(managedDev);
       }
 
+      Set<ClientAppInfo> appInfosSet = null;
+      if (result!=null && result.size()>0) {
+        appInfosSet = result;
+      } else {
+        appInfosSet = DBaseManager.getInstance().loadManagedAppsFromDB(targetPhoneNo);
+      }
+      DataManager.getInstance().setAppsList(targetPhoneNo, appInfosSet);
+
     } catch (JSONException e) {
       Logger.w(TAG, e.toString());
     }
-
-    DataManager.getInstance().setAppsList(result);
 
     return result;
   }
@@ -626,7 +632,8 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
       Logger.w(TAG, e.toString());
     }
 
-    DataManager.getInstance().setAccessCategories(result);
+    //DataManager.getInstance().setAccessCategories(result);
+    //FIXME
 
     return result;
   }
