@@ -513,6 +513,10 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
 
     Set<ClientAppInfo> result = null;
     try {
+      if (false == jsonResObj.has(Event.TAGNAME_PHONE_NUM)) {
+        return null;
+      }
+
       String installedApps = "";
       String targetPhoneNo = jsonResObj.getString(TAGNAME_PHONE_NUM);
 
@@ -525,7 +529,7 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
           for (int i=0; i<jsonAppsAry.length(); i++) {
             ClientAppInfo appInfo = new ClientAppInfo(jsonAppsAry.getJSONObject(i));
             result.add(appInfo);
-
+            //TODO: Not needed any more so remove me.
             installedApps += appInfo.getAppPkgname() + Event.APP_PKGNAME_DELIMETER;
           }
 
@@ -533,15 +537,16 @@ public class MessageHandler extends android.os.Handler implements AppHandler {
         }
       }
 
-      if (jsonResObj.has(Event.TAGNAME_PHONE_NUM)) {
-        String phoneNum = jsonResObj.getString(Event.TAGNAME_PHONE_NUM);
-        int version = jsonResObj.getInt(Event.TAGNAME_VERSION);
-        ClientUser managedDev = new ClientUser(phoneNum, null, null);
-        managedDev.setInstalledAppsListVer(version);
-        //managedDev.setInstalledApps(installedApps);  //we donot need this field any more
-
-        DBaseManager.getInstance().saveManagedDevInfoToDB(managedDev);
+      int version = jsonResObj.getInt(Event.TAGNAME_VERSION);
+      ClientUser managedDev = new ClientUser(targetPhoneNo, null, null);
+      managedDev.setInstalledAppsListVer(version);
+      //We do NOT need this field any more
+      if (true) {
+        managedDev.setInstalledApps("APPSLIST NOT USED");
+      } else {
+        //managedDev.setInstalledApps(installedApps);
       }
+      DBaseManager.getInstance().saveManagedDevInfoToDB(managedDev);
 
       Set<ClientAppInfo> appInfosSet = null;
       if (result!=null && result.size()>0) {

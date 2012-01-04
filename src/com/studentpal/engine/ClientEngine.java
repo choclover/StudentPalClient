@@ -24,7 +24,9 @@ import com.studentpal.app.handler.IoHandler;
 import com.studentpal.app.handler.MessageHandler;
 import com.studentpal.app.receiver.SystemStateReceiver;
 import com.studentpal.engine.request.LoginRequest;
+import com.studentpal.engine.request.RefreshAppListRequest;
 import com.studentpal.engine.request.Request;
+import com.studentpal.engine.request.SyncAccessCategoryRequest;
 import com.studentpal.engine.request.SyncAppListRequest;
 import com.studentpal.engine.request.SyncAppTypeListRequest;
 import com.studentpal.model.ClientAppInfo;
@@ -350,7 +352,7 @@ public class ClientEngine implements AppHandler {
     }
   }
 
-  public void syncDataWithServer(Set<ClientUser> clientUsers) {
+  public void syncAllDataWithServer(Set<ClientUser> clientUsers) {
     if (clientUsers == null || clientUsers.size()<=0) {
       Logger.w("Target client User object is EMPTY!");
       return;
@@ -363,8 +365,8 @@ public class ClientEngine implements AppHandler {
   public void syncAppsListWithServer(Set<ClientUser> clientUsers) {
     for (ClientUser clientUser : clientUsers) {
       if (clientUser != null) {
-        SyncAppListRequest request = new SyncAppListRequest(
-            clientUser.getPhoneNum(), clientUser.getInstalledAppsListVer());
+        SyncAppListRequest request = new SyncAppListRequest(clientUser);
+            //clientUser.getPhoneNum(), clientUser.getInstalledAppsListVer());
         request.execute();
         MessageHandler.getInstance().sendMessageToServer(request);
       }
@@ -374,8 +376,9 @@ public class ClientEngine implements AppHandler {
   public void syncAccessCategoriesWithServer(Set<ClientUser> clientUsers) {
     for (ClientUser clientUser : clientUsers) {
       if (clientUser != null) {
-        SyncAppListRequest request = new SyncAppListRequest(
-            clientUser.getPhoneNum(), clientUser.getInstalledAppsListVer());
+        SyncAccessCategoryRequest request = new SyncAccessCategoryRequest(
+            clientUser);
+            //clientUser.getPhoneNum(), clientUser.getInstalledAccessCateVer());
         request.execute();
         MessageHandler.getInstance().sendMessageToServer(request);
       }
@@ -383,14 +386,21 @@ public class ClientEngine implements AppHandler {
   }
 
   public void syncAppTypesWithServer(User user) {
-    if (user != null && user instanceof AdminUser) {
+    if (user!=null && user instanceof AdminUser) {
       AdminUser adminUser = (AdminUser)user;
       SyncAppTypeListRequest request = new SyncAppTypeListRequest(
-          adminUser.getPhoneNum(),
-          adminUser.getInstalledAppTypesVer());
+          adminUser);
+          //adminUser.getPhoneNum(), adminUser.getInstalledAppTypesVer());
       request.execute();
       MessageHandler.getInstance().sendMessageToServer(request);
     }
+  }
+
+  public void refreshInstalledAppsList(String targetPhoneNum) {
+    RefreshAppListRequest request = new RefreshAppListRequest(targetPhoneNum);
+    request.setIsAdminReq(true);
+    //request.setTargetPhoneNo(user.getPhoneNum());
+    MessageHandler.getInstance().sendMessageToServer(request);
   }
 }
 

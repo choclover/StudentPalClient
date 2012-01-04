@@ -1,6 +1,8 @@
 package com.studentpal.model;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -12,8 +14,9 @@ public class DataManager {
    */
   private static DataManager instance = null;
 
-  private Set<ClientUser>     managedDevs      = null;
-  private Set<AppTypeInfo>    appTypesList     = null;
+  private Set<ClientUser>            managedDevs            = null;
+  private Map<Integer, AppTypeInfo>  appTypesMap            = null;
+  //所有的data model只存储当前UI所需的数据，更多数据保存在DB中需要时再读取出，以此减少内存的消耗
   private Map<String, Set<ClientAppInfo>>  installedAppsMap = null;
   private Map<String, Set<AccessCategory>> accessCatesMap   = null;
 
@@ -21,6 +24,8 @@ public class DataManager {
    * Methods
    */
   private DataManager() {
+    appTypesMap      = new HashMap<Integer, AppTypeInfo>();
+    //TODO  change to list
     installedAppsMap = new HashMap<String, Set<ClientAppInfo>>();
     accessCatesMap   = new HashMap<String, Set<AccessCategory>>();
   }
@@ -52,11 +57,40 @@ public class DataManager {
   }
 
   public Set<AppTypeInfo> getAppTypesList() {
-    return appTypesList;
+    Set<AppTypeInfo> result = null;
+    Collection<AppTypeInfo> c = appTypesMap.values();
+    if (c!=null && c.size()>0) {
+      result = new HashSet<AppTypeInfo>();
+      for (AppTypeInfo appType : c) {
+        result.add(appType);
+      }
+    }
+    return result;
+  }
+
+  public String getAppTypeName(int appTypeId) {
+    AppTypeInfo appType = appTypesMap.get(appTypeId);
+    if (appType != null) {
+      return appType.getName();
+    } else {
+      return "";
+    }
   }
 
   public void setAppTypesList(Set<AppTypeInfo> appTypesList) {
-    this.appTypesList = appTypesList;
+    if (appTypesMap != null) {
+      appTypesMap.clear();
+    } else {
+      appTypesMap = new HashMap<Integer, AppTypeInfo>();
+    }
+
+    if (appTypesList!=null && appTypesList.size()>0) {
+      for (AppTypeInfo appType : appTypesList) {
+        if (appType != null) {
+          appTypesMap.put(appType.getId(), appType);
+        }
+      }
+    }
   }
 
   public Set<ClientAppInfo> getAppsList(String phoneNum) {

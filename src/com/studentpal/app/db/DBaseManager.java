@@ -427,7 +427,6 @@ public class DBaseManager /*implements AppHandler*/ {
       long res = -1;
 
       ContentValues cv;
-      String appVal;
       for (ClientUser managedDev : managedDevs) {
         cv = new ContentValues();
 
@@ -437,25 +436,27 @@ public class DBaseManager /*implements AppHandler*/ {
           continue;
         }
 
-        appVal = managedDev.getPhoneImsi();
-        if (! Utils.isEmptyString(appVal)) {
-          cv.put(TAGNAME_PHONE_IMSI, appVal);
+        String targetPhoneImsi = managedDev.getPhoneImsi();
+        if (! Utils.isEmptyString(targetPhoneImsi)) {
+          cv.put(TAGNAME_PHONE_IMSI, targetPhoneImsi);
         }
 
-        int version = managedDev.getInstalledAppsListVer();
-        if (version > 0) {
-          cv.put(COL_NAME_APPSLIST_VERSION, version);
-        }
-        appVal = managedDev.getInstalledApps();
-        if (! Utils.isEmptyString(appVal)) {
-          cv.put(COL_NAME_APPSLIST, appVal);
+        int appsListVer = managedDev.getInstalledAppsListVer();
+        if (appsListVer > 0) {
+          cv.put(COL_NAME_APPSLIST_VERSION, appsListVer);
         }
 
-        version = managedDev.getInstalledAccessCateVer();
-        if (version > 0) {
-          cv.put(COL_NAME_CATESLIST_VERSION, version);
+        int accCatesVer = managedDev.getInstalledAccessCateVer();
+        if (accCatesVer > 0) {
+          cv.put(COL_NAME_CATESLIST_VERSION, accCatesVer);
         }
 
+        String appsListStr = managedDev.getInstalledApps();
+        if (! Utils.isEmptyString(appsListStr)) {
+          cv.put(COL_NAME_APPSLIST, appsListStr);
+        }
+
+        //Whether this managed device is ACTIVE or NOT
         cv.put(COL_NAME_IS_ACTIVE, 1);
 
         Cursor curDev = mDb.query(TABLE_NAME_MANAGED_DEVICE,
@@ -470,7 +471,7 @@ public class DBaseManager /*implements AppHandler*/ {
               //TAGNAME_PHONE_IMSI +"='"+ managedDev.getPhoneImsi() +"'",
               new String[] {targetPhoneNo} );
         } else {
-          cv.put(TAGNAME_PHONE_NUM, appVal);
+          cv.put(TAGNAME_PHONE_NUM, targetPhoneNo);
           res = mDb.insert(TABLE_NAME_MANAGED_DEVICE, null, cv);
         }
         curDev.close();
@@ -590,8 +591,8 @@ public class DBaseManager /*implements AppHandler*/ {
     return appListVer;
   }
 
-  public Set<ClientUser> getManagedDevsSet() {
-    Logger.i(TAG, "enter getAppsListVersion()!");
+  public Set<ClientUser> getAllManagedDevs() {
+    Logger.i(TAG, "enter getAllManagedDevs()!");
     Set<ClientUser> result = null;
 
     try {
