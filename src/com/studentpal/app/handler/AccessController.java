@@ -308,7 +308,7 @@ public class AccessController implements AppHandler {
   private void _loadAccessCategories(List intoList) {
     try {
       List<AccessCategory> catesList = ClientEngine.getInstance()
-          .getDBaseManager().loadAccessCategoriesFromDB();
+          .getDBaseManager().loadAccessCategoriesFromClientDB();
 
       for (AccessCategory cate : catesList) {
         if (cate == null) {

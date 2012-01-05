@@ -1,5 +1,6 @@
 package com.studentpal.app.db;
 
+import static com.studentpal.engine.Event.APP_PKGNAME_DELIMETER;
 import static com.studentpal.engine.Event.TAGNAME_ACCESS_CATE_ID;
 import static com.studentpal.engine.Event.TAGNAME_ACCESS_CATE_NAME;
 import static com.studentpal.engine.Event.TAGNAME_APP_CLASSNAME;
@@ -67,6 +68,7 @@ public class DBaseManager /*implements AppHandler*/ {
   private static final String COL_NAME_APPSLIST_VERSION     = "installedAppsListVer";
   private static final String COL_NAME_APPTYPES_VERSION     = "installedAppTypesVer";
   private static final String COL_NAME_CATESLIST_VERSION    = "installedCatesListVer";
+  private static final String COL_NAME_MANAGED_APPTYPES     = "managedAppTypes";
 
   private static final String COL_NAME_IS_ACTIVE            = "isActive";
   //private static final String COL_NAME_APPSLIST_NAME        = "apps_list_version";
@@ -102,7 +104,7 @@ public class DBaseManager /*implements AppHandler*/ {
 
   /////////////////////////////////////////////////////////////////////////////
   public void saveAccessCategoriesToDB(Set<AccessCategory> catesSet) {
-    saveAccessCategoriesToDB("", catesSet);
+    saveAccessCategoriesToDB(null, catesSet);
   }
   public void saveAccessCategoriesToDB(String targetPhoneNo,
       Set<AccessCategory> catesSet) {
@@ -133,6 +135,7 @@ public class DBaseManager /*implements AppHandler*/ {
       ContentValues cv;
       for (AccessCategory aCate : catesSet) {
         if (isAdmin) {
+          //对于管理端，将目标受控端的记录删除
           res = mDb.delete(TABLE_NAME_ACCESS_RULES,
               TAGNAME_ACCESS_CATE_ID+"=?",
               new String[] {String.valueOf(aCate.get_id())}
@@ -142,9 +145,13 @@ public class DBaseManager /*implements AppHandler*/ {
         cv = new ContentValues();
         cv.put(TAGNAME_ACCESS_CATE_ID,    aCate.get_id());
         cv.put(TAGNAME_ACCESS_CATE_NAME,  aCate.get_name());
-        if (targetPhoneNo != null) {
-          cv.put(TAGNAME_OWNERID,  targetPhoneNo);
+        if (isAdmin) {
+          if (Utils.isEmptyString(targetPhoneNo)) {
+            cv.put(TAGNAME_OWNERID,  targetPhoneNo);
+          }
+          cv.put(COL_NAME_MANAGED_APPTYPES, aCate.getManagedAppTypesIdStr());
         }
+
         res = mDb.insert(TABLE_NAME_ACCESS_CATEGORIES, null, cv);
 
         //Insert access rules records
@@ -211,35 +218,16 @@ public class DBaseManager /*implements AppHandler*/ {
     }
   }
 
-  public List<AccessCategory> loadAccessCategoriesFromDB() throws STDException {
-    List<AccessCategory> catesList = null;
-    Set<AccessCategory> catesSet = loadAccessCategoriesFromDB(null);
-    if (catesSet!=null && catesSet.size()>0) {
-      catesList = new ArrayList<AccessCategory>();
-      for (AccessCategory anCateSet : catesSet) {
-        catesList.add(anCateSet);
-      }
-    }
-    return catesList;
-  }
-
-  public Set<AccessCategory> loadAccessCategoriesFromDB(String targetPhoneNo)
-      throws STDException{
-    Logger.i(TAG, "enter loadAccessCategoriesFromDB()!");
-    Set<AccessCategory> result = null;
+  public List<AccessCategory> loadAccessCategoriesFromClientDB() throws STDException {
+    List<AccessCategory> result = new ArrayList<AccessCategory>();
+    Logger.i(TAG, "enter loadAccessCategoriesFromClientDB()!");
 
     try {
       mDb = openDB();
 
       Cursor curCate = null;
-      if (targetPhoneNo != null) {
-        curCate = mDb.query(TABLE_NAME_ACCESS_CATEGORIES, null,
-            TAGNAME_OWNERID+"=?", new String[] {targetPhoneNo},
-            null, null, null, null);
-      } else {
-        curCate = mDb.query(TABLE_NAME_ACCESS_CATEGORIES, null, null,
+      curCate = mDb.query(TABLE_NAME_ACCESS_CATEGORIES, null, null,
           null, null, null, null);
-      }
 
       while (curCate.moveToNext()) {
         AccessCategory aCate = new AccessCategory();
@@ -249,46 +237,7 @@ public class DBaseManager /*implements AppHandler*/ {
         aCate.set_id(cate_id);
         aCate.set_name(curCate.getString(startIdx++));  //1
 
-        Cursor curRule = mDb.query(TABLE_NAME_ACCESS_RULES, null,
-            TAGNAME_ACCESS_CATE_ID + "=?",
-            new String[] {String.valueOf(aCate.get_id())},
-            null, null, null);
-        while (curRule.moveToNext()) {
-          AccessRule aRule = new AccessRule();
-
-          startIdx = 1;
-          aRule.setAccessType(curRule.getInt(startIdx++));  //1
-          Recurrence recur = Recurrence.getInstance(curRule.getInt(startIdx++));  //2
-          if (recur.getRecurType() == Recurrence.DAILY) {
-            startIdx++;
-            recur.setRecurValue(0);
-          } else {
-            recur.setRecurValue(curRule.getInt(startIdx++));  //3
-          }
-          aRule.setRecurrence(recur);
-
-          String timeStr = curRule.getString(startIdx++);
-          StringTokenizer startTokens = new StringTokenizer(timeStr,  //4
-              TIME_LIST_DELIMETER);
-          timeStr = curRule.getString(startIdx++);
-          StringTokenizer endTokens = new StringTokenizer(timeStr,  //5
-              TIME_LIST_DELIMETER);
-          while (startTokens.hasMoreTokens()) {
-            TimeRange tr = new TimeRange();
-
-            timeStr = startTokens.nextToken();
-            tr.setTime(TimeRange.TIME_TYPE_START, timeStr);
-
-            timeStr = endTokens.nextToken();
-            tr.setTime(TimeRange.TIME_TYPE_END, timeStr);
-
-            aRule.addTimeRange(tr);
-          }//for time_ranges
-
-          aCate.addAccessRule(aRule);
-
-        }//while curRule
-        curRule.close();
+        loadAccessRulesFromDB(aCate, mDb);
 
         Cursor curApp = mDb.query(TABLE_NAME_MANAGED_APPS, null,
             TAGNAME_ACCESS_CATE_ID + "=?",
@@ -317,6 +266,117 @@ public class DBaseManager /*implements AppHandler*/ {
     }
 
     return result;
+  }
+
+  public Set<AccessCategory> loadAccessCategoriesFromAdminDB(String targetPhoneNo)
+      throws STDException {
+    Logger.i(TAG, "enter loadAccessCategoriesFromAdminDB()!");
+    Set<AccessCategory> result = new HashSet<AccessCategory>();
+
+    try {
+      mDb = openDB();
+
+      Cursor curCate = null;
+      if (targetPhoneNo != null) {
+        curCate = mDb.query(TABLE_NAME_ACCESS_CATEGORIES, null,
+            TAGNAME_OWNERID+"=?", new String[] {targetPhoneNo},
+            null, null, null, null);
+      } else {
+        curCate = mDb.query(TABLE_NAME_ACCESS_CATEGORIES, null,
+            null, null, null, null, null);
+      }
+
+      while (curCate.moveToNext()) {
+        AccessCategory aCate = new AccessCategory();
+
+        int startIdx = 0;
+        int cate_id = curCate.getInt(startIdx++);  //0
+        aCate.set_id(cate_id);
+        aCate.set_name(curCate.getString(startIdx++));  //1
+
+        Set<Integer> appTypesIdSet = null;
+        String appTypesIdStr = curCate.getString(startIdx++);
+        if (appTypesIdStr != null) {
+          String[] appTypesIdAry = appTypesIdStr.split("\\"+APP_PKGNAME_DELIMETER);
+          if (appTypesIdAry!=null && appTypesIdAry.length>0) {
+            appTypesIdSet = new HashSet<Integer>();
+            for (int i=0; i<appTypesIdAry.length; i++) {
+              try {
+                appTypesIdSet.add(Integer.valueOf(appTypesIdAry[i]));
+              } catch (NumberFormatException ex) {
+                Logger.w(TAG, ex.getMessage());
+              }
+            }
+          }
+        }
+        aCate.setManagedAppTypesIdSet(appTypesIdSet);
+
+        loadAccessRulesFromDB(aCate, mDb);
+
+        result.add(aCate);
+
+      }//while curCate
+
+      curCate.close();
+
+    } catch (SQLiteException ex) {
+      Logger.w(TAG, ex.toString());
+      //rebuildTables(mDb);
+    } finally {
+      mDb.close();
+    }
+
+    return result;
+  }
+
+  public void loadAccessRulesFromDB(AccessCategory aCate, SQLiteDatabase mDb)
+      throws STDException {
+    if (aCate==null || mDb==null) {
+      Logger.w(TAG, "Input params should NOT be NULL!");
+    }
+    Logger.i(TAG, "enter loadAccessRuleFromDB()!");
+
+    Cursor curRule = mDb.query(TABLE_NAME_ACCESS_RULES, null,
+        TAGNAME_ACCESS_CATE_ID + "=?",
+        new String[] {String.valueOf(aCate.get_id())},
+        null, null, null);
+    while (curRule.moveToNext()) {
+      AccessRule aRule = new AccessRule();
+
+      int startIdx = 1;
+      aRule.setAccessType(curRule.getInt(startIdx++));  //1
+      Recurrence recur = Recurrence.getInstance(curRule.getInt(startIdx++));  //2
+      if (recur.getRecurType() == Recurrence.DAILY) {
+        startIdx++;
+        recur.setRecurValue(0);
+      } else {
+        recur.setRecurValue(curRule.getInt(startIdx++));  //3
+      }
+      aRule.setRecurrence(recur);
+
+      String timeStr = curRule.getString(startIdx++);
+      StringTokenizer startTokens = new StringTokenizer(timeStr,  //4
+          TIME_LIST_DELIMETER);
+      timeStr = curRule.getString(startIdx++);
+      StringTokenizer endTokens = new StringTokenizer(timeStr,  //5
+          TIME_LIST_DELIMETER);
+      while (startTokens.hasMoreTokens()) {
+        TimeRange tr = new TimeRange();
+
+        timeStr = startTokens.nextToken();
+        tr.setTime(TimeRange.TIME_TYPE_START, timeStr);
+
+        timeStr = endTokens.nextToken();
+        tr.setTime(TimeRange.TIME_TYPE_END, timeStr);
+
+        aRule.addTimeRange(tr);
+      }//for time_ranges
+
+      aCate.addAccessRule(aRule);
+
+    }//while curRule
+    curRule.close();
+
   }
 
   public void saveManagedAppsToDB(String targetPhoneNo,
@@ -350,7 +410,7 @@ public class DBaseManager /*implements AppHandler*/ {
         if (curApps.moveToFirst()) {
           //record already exists
           res = mDb.update(TABLE_NAME_MANAGED_APPS, cv,
-              TAGNAME_APP_PKGNAME +"='"+ appInfo.getAppPkgname() +"'", null);
+              TAGNAME_APP_PKGNAME +"=?", new String[] {appInfo.getAppPkgname()} );
         } else {
           res = mDb.insert(TABLE_NAME_MANAGED_APPS, null, cv);
         }
@@ -915,6 +975,9 @@ public class DBaseManager /*implements AppHandler*/ {
           ");").toString();
       dbase.execSQL(create_app_types_table_sql);
 
+      /**
+       * 与受控客户端同名的表名
+       */
       //本地存储受控手机上安装的程序列表
       final String create_applications_table_sql = new StringBuffer().append(
           "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_MANAGED_APPS).append(
@@ -932,10 +995,11 @@ public class DBaseManager /*implements AppHandler*/ {
 
       final String create_catory_table_sql = new StringBuffer().append(
           "CREATE TABLE IF NOT EXISTS ").append(TABLE_NAME_ACCESS_CATEGORIES).append(
-          "( " +TAGNAME_ACCESS_CATE_ID+   " INTEGER PRIMARY KEY ").append(
-          ", " +TAGNAME_ACCESS_CATE_NAME+ " TEXT").append(
+          "( " +TAGNAME_ACCESS_CATE_ID+    " INTEGER PRIMARY KEY ").append(
+          ", " +TAGNAME_ACCESS_CATE_NAME+  " TEXT").append(
           /* 相比client多出如下字段 */
-          ", " +TAGNAME_OWNERID+          " INTEGER").append(
+          ", " +COL_NAME_MANAGED_APPTYPES+ " TEXT").append(
+          ", " +TAGNAME_OWNERID+           " INTEGER").append(
           ", FOREIGN KEY(" +TAGNAME_OWNERID+ ") REFERENCES " +TABLE_NAME_MANAGED_DEVICE+ "(" +TAGNAME_PHONE_NUM+ ")").append(
           ");").toString();
       dbase.execSQL(create_catory_table_sql);
@@ -947,8 +1011,11 @@ public class DBaseManager /*implements AppHandler*/ {
           ", " +TAGNAME_APP_NAME+       " TEXT").append(
           ", " +TAGNAME_APP_PKGNAME+    " TEXT").append(
           ", " +TAGNAME_APP_CLASSNAME+  " TEXT").append(
+          /* 相比admin多出如下字段  */
           ", " +TAGNAME_ACCESS_CATE_ID+ " INTEGER").append(
-          ", FOREIGN KEY(" +TAGNAME_ACCESS_CATE_ID+ ") REFERENCES " +TABLE_NAME_ACCESS_CATEGORIES+ "(" +TAGNAME_ACCESS_CATE_ID+ ")").append(
+          ", FOREIGN KEY(" +TAGNAME_ACCESS_CATE_ID+ ") REFERENCES "
+              +TABLE_NAME_ACCESS_CATEGORIES+ "("
+              +TAGNAME_ACCESS_CATE_ID+ ")").append(
           ");").toString();
       dbase.execSQL(create_applications_table_sql);
 

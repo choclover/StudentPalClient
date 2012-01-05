@@ -14,12 +14,14 @@ import static com.studentpal.engine.Event.TAGNAME_RULE_REPEAT_VALUE;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.studentpal.app.handler.RuleScheduler;
+import com.studentpal.engine.Event;
 import com.studentpal.model.exception.STDException;
 import com.studentpal.model.rules.AccessRule;
 import com.studentpal.model.rules.Recurrence;
@@ -36,11 +38,12 @@ public class AccessCategory {
   private int _id;
   private RuleScheduler scheduler;
 
-  private String managedAppTypes;
+  //private String managedAppTypes;
+  private Set<Integer> managedAppTypesIdSet;
 
-  /*
-   * ClientAppInfo -- An AppInfo instance managed by this category Integer --
-   * Count of Restricted Rules upon this ClientAppInfo
+  /**
+   * ClientAppInfo -- An AppInfo instance managed by this category
+   * Integer       -- Counter of Restricted Rules upon this ClientAppInfo
    */
   private HashMap<ClientAppInfo, Integer> _managedAppsMap;
   private List<AccessRule> _rulesList;
@@ -164,6 +167,24 @@ public class AccessCategory {
     _id = id;
   }
 
+  public void setManagedAppTypesIdSet(Set<Integer> idsSet) {
+    managedAppTypesIdSet = idsSet;
+  }
+
+  public Set<Integer> getManagedAppTypesIdSet() {
+    return managedAppTypesIdSet;
+  }
+
+  public String getManagedAppTypesIdStr() {
+    String result = "";
+    if (managedAppTypesIdSet != null) {
+      for (Integer typeId : managedAppTypesIdSet) {
+        result += typeId + Event.APP_PKGNAME_DELIMETER;
+      }
+    }
+    return result;
+  }
+  @Override
   public String toString() {
     StringBuffer buff = new StringBuffer();
     buff.append("\nCate ID: "+_id).append("\tCate Name: "+_name);
@@ -218,9 +239,15 @@ public class AccessCategory {
 
     result.put(TAGNAME_ACCESS_CATE_ID, _id);
     result.put(TAGNAME_ACCESS_CATE_NAME, _name);
-    if (managedAppTypes != null) {
-      result.put(TAGNAME_APPLICATION_TYPES, managedAppTypes);
+
+    String managedAppTypesStr = "";
+    if (managedAppTypesIdSet!=null && managedAppTypesIdSet.size()>0) {
+      for (Integer appTypeId : managedAppTypesIdSet) {
+        managedAppTypesStr += DataManager.getInstance().getAppTypeName(appTypeId);
+      }
     }
+    result.put(TAGNAME_APPLICATION_TYPES, managedAppTypesStr);
+
     result.put(TAGNAME_ACCESS_RULES, jsonRulesAry);
 
     return result;
@@ -235,7 +262,8 @@ public class AccessCategory {
     _id   = cateObj.getInt(TAGNAME_ACCESS_CATE_ID);
     _name = cateObj.getString(TAGNAME_ACCESS_CATE_NAME);
     if (cateObj.has(TAGNAME_APPLICATION_TYPES)) {
-      managedAppTypes = cateObj.getString(TAGNAME_APPLICATION_TYPES);
+      //TODO: populate app types and ids
+      //managedAppTypes = cateObj.getString(TAGNAME_APPLICATION_TYPES);
     }
 
     if (cateObj.has(TAGNAME_ACCESS_RULES) == true) {
@@ -278,6 +306,7 @@ public class AccessCategory {
 
   }//populate
 
+  @Override
   public AccessCategory clone() {
     AccessCategory result = new AccessCategory();
     //TODO
